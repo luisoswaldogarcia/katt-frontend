@@ -16,11 +16,11 @@ export default function DoctorAlta() {
   const isEdit = !!id
   const initialData = isEdit ? doctorStore.getById(Number(id)) : undefined
 
-  const handleSubmit = (data: Record<string, string>, custom: Record<string, unknown>) => {
+  const handleSubmit = (data: Record<string, string>, custom: Record<string, unknown>, foto?: string) => {
     if (isEdit) {
-      doctorStore.update(Number(id), { ...data, custom })
+      doctorStore.update(Number(id), { ...data, custom, foto })
     } else {
-      doctorStore.create({ ...data, custom } as never)
+      doctorStore.create({ ...data, custom, foto } as never)
     }
     navigate('/doctor')
   }

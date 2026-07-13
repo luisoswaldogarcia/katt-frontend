@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
-import { citaStore } from '../lib/demoStore'
+import { useState, useMemo, useRef } from 'react'
+import { citaStore, pacienteStore, doctorStore } from '../lib/demoStore'
 import type { CitaData } from '../lib/demoStore'
 import { labels } from '../lib/labels'
+import { ConfirmModal } from '../components/ConfirmModal'
 
 type View = 'dia' | 'semana' | 'mes'
 
@@ -35,11 +36,53 @@ function getDaysInMonth(d: Date): number {
 
 const inputClass = 'w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500'
 
+function Autocomplete({ name, placeholder, options, defaultValue }: { name: string; placeholder: string; options: string[]; defaultValue?: string }) {
+  const [query, setQuery] = useState(defaultValue || '')
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  const filtered = query.length > 0
+    ? options.filter(o => o.toLowerCase().includes(query.toLowerCase())).slice(0, 6)
+    : []
+
+  return (
+    <div ref={ref} className="relative">
+      <input
+        name={name}
+        required
+        placeholder={placeholder}
+        value={query}
+        onChange={e => { setQuery(e.target.value); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        className={inputClass}
+        autoComplete="off"
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute z-10 mt-1 w-full rounded-lg border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-900 shadow-lg max-h-40 overflow-y-auto">
+          {filtered.map(opt => (
+            <button
+              key={opt}
+              type="button"
+              onMouseDown={() => { setQuery(opt); setOpen(false) }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors"
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Agenda() {
   const [view, setView] = useState<View>('semana')
   const [currentDate, setCurrentDate] = useState(() => new Date())
   const [selected, setSelected] = useState<CitaData | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [editing, setEditing] = useState<CitaData | null>(null)
+  const [confirmCancel, setConfirmCancel] = useState<CitaData | null>(null)
 
   const [, forceUpdate] = useState(0)
   const today = formatDate(new Date())
@@ -55,6 +98,29 @@ export default function Agenda() {
       motivo: fd.get('motivo') as string,
     })
     setShowForm(false)
+    forceUpdate(n => n + 1)
+  }
+
+  function handleEdit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!editing) return
+    const fd = new FormData(e.currentTarget)
+    citaStore.update(editing.id, {
+      paciente: fd.get('paciente') as string,
+      doctor: fd.get('doctor') as string,
+      fecha: fd.get('fecha') as string,
+      hora: fd.get('hora') as string,
+      motivo: fd.get('motivo') as string,
+    })
+    setEditing(null)
+    setSelected(null)
+    forceUpdate(n => n + 1)
+  }
+
+  function handleCancel(id: number) {
+    citaStore.remove(id)
+    setSelected(null)
+    setConfirmCancel(null)
     forceUpdate(n => n + 1)
   }
 
@@ -136,8 +202,8 @@ export default function Agenda() {
               </button>
             </div>
             <form onSubmit={handleCreate} className="space-y-3">
-              <input name="paciente" required placeholder={labels.paciente} className={inputClass} />
-              <input name="doctor" required placeholder={labels.doctor} className={inputClass} />
+              <Autocomplete name="paciente" placeholder={labels.paciente} options={pacienteStore.getAll().map(p => p.nombre)} />
+              <Autocomplete name="doctor" placeholder={labels.doctor} options={doctorStore.getAll().map(d => d.nombre)} />
               <input name="fecha" type="date" required defaultValue={formatDate(currentDate)} className={inputClass} />
               <input name="hora" type="time" required className={inputClass} />
               <input name="motivo" required placeholder="Motivo" className={inputClass} />
@@ -150,7 +216,7 @@ export default function Agenda() {
       )}
 
       {/* Detail modal */}
-      {selected && (
+      {selected && !editing && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
           <div className="bg-white dark:bg-katt-900 rounded-xl p-5 w-full max-w-sm space-y-3 border border-katt-200 dark:border-katt-700" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
@@ -166,8 +232,54 @@ export default function Agenda() {
               <div><span className="text-katt-500 dark:text-katt-400">Hora:</span> {selected.hora}</div>
               <div><span className="text-katt-500 dark:text-katt-400">Motivo:</span> {selected.motivo}</div>
             </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setEditing(selected)}
+                className="flex-1 px-4 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors"
+              >
+                Modificar
+              </button>
+              <button
+                onClick={() => setConfirmCancel(selected)}
+                className="flex-1 px-4 py-2 rounded-lg border border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium transition-colors"
+              >
+                Cancelar cita
+              </button>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* Edit modal */}
+      {editing && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setEditing(null)}>
+          <div className="bg-white dark:bg-katt-900 rounded-xl p-5 w-full max-w-sm space-y-4 border border-katt-200 dark:border-katt-700" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-sm">Modificar cita</h3>
+              <button onClick={() => setEditing(null)} className="p-1 rounded hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <form onSubmit={handleEdit} className="space-y-3">
+              <Autocomplete name="paciente" placeholder={labels.paciente} options={pacienteStore.getAll().map(p => p.nombre)} defaultValue={editing.paciente} />
+              <Autocomplete name="doctor" placeholder={labels.doctor} options={doctorStore.getAll().map(d => d.nombre)} defaultValue={editing.doctor} />
+              <input name="fecha" type="date" required defaultValue={editing.fecha} className={inputClass} />
+              <input name="hora" type="time" required defaultValue={editing.hora} className={inputClass} />
+              <input name="motivo" required placeholder="Motivo" defaultValue={editing.motivo} className={inputClass} />
+              <button type="submit" className="w-full px-4 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors">
+                Guardar cambios
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {confirmCancel && (
+        <ConfirmModal
+          message={`¿Cancelar la cita de ${confirmCancel.paciente}? Esta acción no se puede deshacer.`}
+          onConfirm={() => handleCancel(confirmCancel.id)}
+          onCancel={() => setConfirmCancel(null)}
+        />
       )}
     </div>
   )

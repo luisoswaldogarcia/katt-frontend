@@ -18,11 +18,11 @@ export default function PacienteAlta() {
   const isEdit = !!id
   const initialData = isEdit ? pacienteStore.getById(Number(id)) : undefined
 
-  const handleSubmit = (data: Record<string, string>, custom: Record<string, unknown>) => {
+  const handleSubmit = (data: Record<string, string>, custom: Record<string, unknown>, foto?: string) => {
     if (isEdit) {
-      pacienteStore.update(Number(id), { ...data, custom })
+      pacienteStore.update(Number(id), { ...data, custom, foto })
     } else {
-      pacienteStore.create({ ...data, custom } as never)
+      pacienteStore.create({ ...data, custom, foto } as never)
     }
     navigate('/paciente')
   }

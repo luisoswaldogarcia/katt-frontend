@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCustomFields } from '../lib/customFields'
+import { ConfirmModal } from './ConfirmModal'
 import type { Module } from '../lib/customFields'
 
 interface Field {
@@ -14,19 +16,27 @@ interface Props {
   basePath: string
   entityLabel: string
   onDelete: () => void
+  bare?: boolean
+  hideButtons?: boolean
+  hideCustom?: boolean
 }
 
-export function DataDetail({ data, fields, module, basePath, entityLabel, onDelete }: Props) {
+export function DataDetail({ data, fields, module, basePath, entityLabel, onDelete, bare, hideButtons, hideCustom }: Props) {
   const navigate = useNavigate()
   const customFields = getCustomFields(module)
   const custom = data.custom as Record<string, unknown> | undefined
+  const [showConfirm, setShowConfirm] = useState(false)
 
-  return (
-    <div className="p-4 h-full overflow-y-auto">
-      <div className="max-w-md mx-auto space-y-6">
+  const content = (
+    <>
+      <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-katt-200 dark:bg-katt-700 flex items-center justify-center text-xl font-bold">
-            {String(data.nombre || '?')[0]}
+          <div className="w-14 h-14 rounded-full bg-katt-200 dark:bg-katt-700 flex items-center justify-center text-xl font-bold overflow-hidden">
+            {data.foto ? (
+              <img src={String(data.foto)} alt="" className="w-full h-full object-cover" />
+            ) : (
+              String(data.nombre || '?')[0]
+            )}
           </div>
           <div>
             <h2 className="text-lg font-bold">{String(data.nombre)}</h2>
@@ -43,7 +53,7 @@ export function DataDetail({ data, fields, module, basePath, entityLabel, onDele
           ))}
         </div>
 
-        {custom && customFields.length > 0 && (
+        {!hideCustom && custom && customFields.length > 0 && (
           <div className="space-y-3 rounded-lg border border-katt-200 dark:border-katt-800 p-4">
             {customFields.map(f => {
               const val = custom[f.id]
@@ -58,28 +68,39 @@ export function DataDetail({ data, fields, module, basePath, entityLabel, onDele
           </div>
         )}
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => navigate(`${basePath}/editar/${data.id}`)}
-            className="flex-1 px-4 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors"
-          >
-            Editar
-          </button>
-          <button
-            onClick={onDelete}
-            className="flex-1 px-4 py-2 rounded-lg border border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium transition-colors"
-          >
-            Eliminar
-          </button>
-        </div>
-
-        <button
-          onClick={() => navigate(basePath)}
-          className="w-full px-4 py-2 rounded-lg text-sm hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors border border-katt-200 dark:border-katt-800"
-        >
-          Volver
-        </button>
+        {!hideButtons && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate(`${basePath}/editar/${data.id}`)}
+              className="flex-1 px-3 py-1.5 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-xs font-medium transition-colors"
+            >
+              Editar
+            </button>
+            <button
+              onClick={() => setShowConfirm(true)}
+              className="flex-1 px-3 py-1.5 rounded-lg border border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs font-medium transition-colors"
+            >
+              Eliminar
+            </button>
+          </div>
+        )}
       </div>
+
+      {showConfirm && (
+        <ConfirmModal
+          message={`¿Eliminar "${String(data.nombre)}"? Esta acción no se puede deshacer.`}
+          onConfirm={onDelete}
+          onCancel={() => setShowConfirm(false)}
+        />
+      )}
+    </>
+  )
+
+  if (bare) return content
+
+  return (
+    <div className="p-4 h-full overflow-y-auto space-y-6">
+      {content}
     </div>
   )
 }

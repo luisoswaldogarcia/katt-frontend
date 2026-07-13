@@ -27,11 +27,20 @@ export interface CustomField {
 
 const STORAGE_KEY_PREFIX = 'katt-custom-fields'
 
-export type Module = 'paciente' | 'doctor'
+export type Module = 'paciente' | 'doctor' | 'inventario'
 
 export function getCustomFields(module: Module): CustomField[] {
   const stored = localStorage.getItem(`${STORAGE_KEY_PREFIX}-${module}`)
-  return stored ? JSON.parse(stored) : []
+  if (stored) return JSON.parse(stored)
+  // Campos por defecto
+  if (module === 'paciente') {
+    const defaults: CustomField[] = [
+      { id: 'sexo', label: 'Sexo', type: 'select', required: false, options: ['Masculino', 'Femenino', 'Otro'] }
+    ]
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}-${module}`, JSON.stringify(defaults))
+    return defaults
+  }
+  return []
 }
 
 export function saveCustomFields(module: Module, fields: CustomField[]) {

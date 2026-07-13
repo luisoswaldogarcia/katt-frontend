@@ -16,9 +16,12 @@ interface Props {
   fetchPage: (page: number) => Promise<PageResult<Record<string, unknown>>>
   basePath: string
   altaPath: string
+  selectable?: boolean
+  onSelectionAction?: (ids: number[]) => void
+  selectionIcon?: React.ReactNode
 }
 
-export function DataTable({ columns, fetchPage, basePath, altaPath }: Props) {
+export function DataTable({ columns, fetchPage, basePath, altaPath, selectable = false, onSelectionAction, selectionIcon }: Props) {
   const navigate = useNavigate()
   const [data, setData] = useState<Record<string, unknown>[]>([])
   const [page, setPage] = useState(0)
@@ -27,6 +30,7 @@ export function DataTable({ columns, fetchPage, basePath, altaPath }: Props) {
   const [filters, setFilters] = useState<Record<string, string>>({})
   const [sortField, setSortField] = useState<string | null>(null)
   const [sortAsc, setSortAsc] = useState(true)
+  const [selected, setSelected] = useState<Set<number>>(new Set())
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const loadPage = useCallback(async (p: number) => {
@@ -81,6 +85,19 @@ export function DataTable({ columns, fetchPage, basePath, altaPath }: Props) {
         <table className="w-full text-sm">
           <thead className="bg-white/60 dark:bg-katt-900/60">
             <tr>
+              {selectable && (
+                <th className="px-4 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={filtered.length > 0 && filtered.every(r => selected.has(r.id as number))}
+                    onChange={e => {
+                      if (e.target.checked) setSelected(new Set(filtered.map(r => r.id as number)))
+                      else setSelected(new Set())
+                    }}
+                    className="accent-katt-500"
+                  />
+                </th>
+              )}
               {columns.map(col => col.filterable ? (
                 <ColumnFilter
                   key={col.key}
@@ -108,9 +125,24 @@ export function DataTable({ columns, fetchPage, basePath, altaPath }: Props) {
             {filtered.map(row => (
               <tr
                 key={row.id as number}
-                className="hover:bg-katt-50 dark:hover:bg-katt-800/50 transition-colors cursor-pointer"
+                className={`hover:bg-katt-50 dark:hover:bg-katt-800/50 transition-colors cursor-pointer ${selected.has(row.id as number) ? 'bg-katt-50 dark:bg-katt-800/30' : ''}`}
                 onClick={() => navigate(`${basePath}/${row.id}`)}
               >
+                {selectable && (
+                  <td className="px-4 py-3 w-10" onClick={e => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selected.has(row.id as number)}
+                      onChange={() => {
+                        const next = new Set(selected)
+                        if (next.has(row.id as number)) next.delete(row.id as number)
+                        else next.add(row.id as number)
+                        setSelected(next)
+                      }}
+                      className="accent-katt-500"
+                    />
+                  </td>
+                )}
                 {columns.map((col, i) => (
                   <td
                     key={col.key}
@@ -139,11 +171,22 @@ export function DataTable({ columns, fetchPage, basePath, altaPath }: Props) {
       )}
 
       <button
-        onClick={() => navigate(altaPath)}
+        onClick={() => {
+          if (selected.size > 0 && onSelectionAction) {
+            onSelectionAction(Array.from(selected))
+            setSelected(new Set())
+          } else {
+            navigate(altaPath)
+          }
+        }}
         className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-katt-500 hover:bg-katt-600 text-white shadow-lg flex items-center justify-center transition-colors z-40"
-        aria-label="Alta"
+        aria-label={selected.size > 0 ? 'Acción masiva' : 'Alta'}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M12 5v14M5 12h14" /></svg>
+        {selected.size > 0 ? (
+          selectionIcon || <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" /></svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M12 5v14M5 12h14" /></svg>
+        )}
       </button>
     </div>
   )

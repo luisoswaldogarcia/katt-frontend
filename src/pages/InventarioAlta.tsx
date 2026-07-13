@@ -1,47 +1,39 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
+import { inventarioStore } from '../lib/demoStore'
+import { getCategorias } from '../lib/categorias'
 import { getCustomFields } from '../lib/customFields'
-import { DynamicFields } from './DynamicFields'
-import type { Module } from '../lib/customFields'
+import { DynamicFields } from '../components/DynamicFields'
 
-export interface FormField {
-  key: string
-  label: string
-  type?: 'text' | 'email' | 'tel' | 'date'
-  required?: boolean
-}
+const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
 
-interface Props {
-  fields: FormField[]
-  module: Module
-  basePath: string
-  initialData?: Record<string, unknown>
-  onSubmit: (data: Record<string, string>, custom: Record<string, unknown>, foto?: string) => void
-  isEdit?: boolean
-}
-
-export function DataForm({ fields, module, basePath, initialData, onSubmit, isEdit }: Props) {
+export default function InventarioAlta() {
+  const { id } = useParams()
   const navigate = useNavigate()
-  const customFields = getCustomFields(module)
-  const [form, setForm] = useState<Record<string, string>>({})
-  const [customValues, setCustomValues] = useState<Record<string, unknown>>({})
-  const [foto, setFoto] = useState<string | undefined>(undefined)
+  const isEdit = !!id
+  const initialData = isEdit ? inventarioStore.getById(Number(id)) : undefined
+  const categorias = getCategorias()
+  const customFields = getCustomFields('inventario')
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
 
+  const [form, setForm] = useState({ nombre: '', categoria: '', cantidad: '', unidad: '', precioUnitario: '' })
+  const [customValues, setCustomValues] = useState<Record<string, unknown>>({})
+  const [foto, setFoto] = useState<string | undefined>(undefined)
+
   useEffect(() => {
     if (initialData) {
-      const formData: Record<string, string> = {}
-      fields.forEach(f => { formData[f.key] = String(initialData[f.key] || '') })
-      setForm(formData)
-      if (initialData.custom) setCustomValues(initialData.custom as Record<string, unknown>)
-      if (initialData.foto) setFoto(initialData.foto as string)
-    } else {
-      const formData: Record<string, string> = {}
-      fields.forEach(f => { formData[f.key] = '' })
-      setForm(formData)
+      setForm({
+        nombre: initialData.nombre,
+        categoria: initialData.categoria,
+        cantidad: String(initialData.cantidad),
+        unidad: initialData.unidad,
+        precioUnitario: String(initialData.precioUnitario),
+      })
+      if (initialData.custom) setCustomValues(initialData.custom)
+      if (initialData.foto) setFoto(initialData.foto)
     }
-  }, [initialData, fields])
+  }, [initialData])
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -53,10 +45,14 @@ export function DataForm({ fields, module, basePath, initialData, onSubmit, isEd
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(form, customValues, foto)
+    const parsed = { ...form, cantidad: Number(form.cantidad), precioUnitario: Number(form.precioUnitario), custom: customValues, foto }
+    if (isEdit) {
+      inventarioStore.update(Number(id), parsed)
+    } else {
+      inventarioStore.create(parsed as never)
+    }
+    navigate('/inventario')
   }
-
-  const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
 
   return (
     <div className="p-4 h-full overflow-y-auto">
@@ -93,31 +89,24 @@ export function DataForm({ fields, module, basePath, initialData, onSubmit, isEd
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" />
         </div>
 
-        {fields.map(f => (
-          <input
-            key={f.key}
-            required={f.required !== false}
-            type={f.type || 'text'}
-            placeholder={f.label}
-            value={form[f.key] || ''}
-            onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-            className={inputClass}
-          />
-        ))}
+        <input required placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className={inputClass} />
+        <select required value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} className={inputClass}>
+          <option value="">Seleccionar categoría</option>
+          {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <input required type="number" placeholder="Cantidad" value={form.cantidad} onChange={e => setForm({ ...form, cantidad: e.target.value })} className={inputClass} />
+        <input required placeholder="Unidad" value={form.unidad} onChange={e => setForm({ ...form, unidad: e.target.value })} className={inputClass} />
+        <input required type="number" placeholder="Precio unitario" value={form.precioUnitario} onChange={e => setForm({ ...form, precioUnitario: e.target.value })} className={inputClass} />
 
         {customFields.length > 0 && (
           <>
             <hr className="border-katt-200 dark:border-katt-800" />
-            <DynamicFields
-              fields={customFields}
-              values={customValues}
-              onChange={(id, value) => setCustomValues(prev => ({ ...prev, [id]: value }))}
-            />
+            <DynamicFields fields={customFields} values={customValues} onChange={(id, value) => setCustomValues(prev => ({ ...prev, [id]: value }))} />
           </>
         )}
 
         <div className="flex gap-2 justify-end">
-          <button type="button" onClick={() => navigate(basePath)} className="px-4 py-2 rounded-lg text-sm hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
+          <button type="button" onClick={() => navigate('/inventario')} className="px-4 py-2 rounded-lg text-sm hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
             Cancelar
           </button>
           <button type="submit" className="px-4 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors">
