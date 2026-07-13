@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-katt-50: #f3e8ff;
+  --color-katt-100: #e9d5ff;
+  --color-katt-200: #d8b4fe;
+  --color-katt-300: #c084fc;
+  --color-katt-400: #a855f7;
+  --color-katt-500: #7c3aed;
+  --color-katt-600: #6d28d9;
+  --color-katt-700: #5b21b6;
+  --color-katt-800: #4c1d95;
+  --color-katt-900: #2e1065;
+  --color-katt-950: #0f0a1a;
+}
+
+body {
+  @apply bg-white text-gray-900 dark:bg-katt-950 dark:text-gray-100 transition-colors duration-300;
+  font-family: system-ui, -apple-system, sans-serif;
+}
