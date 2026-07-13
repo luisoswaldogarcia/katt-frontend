@@ -1,25 +1,34 @@
-# Product Overview - Katt
+# Katt - Product Overview
 
 ## Purpose
-Katt is a cat-themed virtual assistant web application designed as a comprehensive clinic/business management platform. It provides patient management, doctor management, inventory, scheduling, chat, kanban boards, and task management — all wrapped in a modern, mobile-first PWA experience.
-
-## Key Features
-- **Patient Management** (Paciente): CRUD, appointments, detail views
-- **Doctor Management** (Doctor): Registration and detail views
-- **Inventory** (Inventario): Stock tracking, movements, registration
-- **Agenda**: Appointment scheduling
-- **Chat**: Messaging interface with unread message tracking
-- **AI Agent** (Agente): Virtual assistant interaction
-- **Kanban Board** (Tablero): Visual task/project management with drag-and-drop
-- **Task Lists** (Tareas): Task management
-- **Modular System**: Modules can be enabled/disabled per user via Settings
-- **PWA**: Installable on mobile devices, offline-capable
-- **Dark/Light Theme**: Toggle with dark mode as default
-
-## Target Users
-- Healthcare clinics and small medical practices
-- Administrative staff managing patients, doctors, and inventory
-- Spanish-speaking users (UI is entirely in Spanish)
+Katt is a mobile-first virtual assistant web application with a cat theme. It serves as a modular business management platform with chat-based AI assistant capabilities, supporting multiple business domains (patients, inventory, users, companies).
 
 ## Value Proposition
-All-in-one clinic management tool with a friendly cat-themed UI, installable as a mobile app, with modular features that can be toggled on/off based on needs.
+- Installable PWA for mobile and desktop
+- Modular architecture allowing businesses to enable/disable features
+- Dark/light theme with modern purple-toned UI
+- Spanish-language interface targeting Latin American markets
+
+## Key Features
+- **AI Chat Assistant**: Cat-themed virtual assistant (Agente)
+- **Module System**: Configurable business modules (Pacientes, Inventario, Usuarios, Empresas)
+- **Kanban Board (Tablero)**: Task management with drag-and-drop
+- **Agenda**: Scheduling and appointments (PacienteCitas)
+- **Document Management**: Upload/create documents per entity
+- **Dynamic Fields**: Custom fields per module
+- **Data CRUD**: Generic DataTable, DataForm, DataDetail components for all modules
+- **Settings**: Module configuration, categories, labels, custom fields
+- **PWA**: Offline-capable, installable on mobile devices
+
+## Target Users
+- Small/medium businesses needing a configurable management tool
+- Healthcare clinics (patient management module)
+- Inventory-based businesses
+- Teams needing task/project management
+
+## Use Cases
+- Patient registration and appointment scheduling
+- Inventory tracking with movement history
+- User/company management
+- Task organization via Kanban boards
+- Document attachment to business entities

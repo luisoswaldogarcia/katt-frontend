@@ -8,7 +8,7 @@ export interface Labels {
 }
 
 const defaults: Labels = {
-  paciente: 'Cliente',
+  paciente: 'Paciente',
   doctor: 'Usuario',
   empresa: 'Empresa',
   inventario: 'Inventario',

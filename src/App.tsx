@@ -25,6 +25,7 @@ import EmpresaAlta from './pages/EmpresaAlta'
 import EmpresaDetalle from './pages/EmpresaDetalle'
 import Modulos from './pages/Modulos'
 import Settings from './pages/Settings'
+import TiposDocumento from './pages/TiposDocumento'
 
 const titles: Record<string, string> = {
   '/': 'Inicio',
@@ -45,6 +46,7 @@ const titles: Record<string, string> = {
   '/tablero': labels.tablero,
   '/tareas': labels.tareas,
   '/settings': 'Configuración',
+  '/tipos-documento': 'Tipos de Documento',
 }
 
 function Layout() {
@@ -119,6 +121,7 @@ function Layout() {
             <Route path="/modulos" element={<Modulos />} />
             <Route path="/tablero" element={<Tablero />} />
             <Route path="/tareas" element={<TareasLista />} />
+            <Route path="/tipos-documento" element={<TiposDocumento />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
