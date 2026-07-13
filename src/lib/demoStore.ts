@@ -15,8 +15,21 @@ export interface DoctorData {
   id: number
   nombre: string
   rol: string
+  empresaId?: number
   telefono: string
   email: string
+  foto?: string
+  custom?: Record<string, unknown>
+  modules?: Partial<Record<string, boolean>>
+}
+
+export interface EmpresaData {
+  id: number
+  nombre: string
+  rfc?: string
+  telefono: string
+  email: string
+  direccion?: string
   foto?: string
   custom?: Record<string, unknown>
 }
@@ -124,12 +137,19 @@ let pacientes: PacienteData[] = [
   { id: 100, nombre: 'Ximena Cordero', doctor: 'Dr. Herrera', proximaCita: '2025-05-27', telefono: '555-0200', email: 'ximena@email.com' },
 ]
 
+let empresas: EmpresaData[] = [
+  { id: 1, nombre: 'Johnny', rfc: '', telefono: '', email: '' },
+  { id: 2, nombre: 'Odeth', rfc: '', telefono: '', email: '' },
+  { id: 3, nombre: 'Gutiérrez', rfc: '', telefono: '', email: '' },
+  { id: 4, nombre: 'Carpol', rfc: '', telefono: '', email: '' },
+]
+
 let doctores: DoctorData[] = [
-  { id: 1, nombre: 'Dr. García', rol: 'Administrador', telefono: '555-0201', email: 'garcia@clinica.com' },
-  { id: 2, nombre: 'Dra. Sánchez', rol: 'Médico', telefono: '555-0202', email: 'sanchez@clinica.com' },
-  { id: 3, nombre: 'Dra. Gómez', rol: 'Médico', telefono: '555-0203', email: 'gomez@clinica.com' },
-  { id: 4, nombre: 'Dr. Morales', rol: 'Recepcionista', telefono: '555-0204', email: 'morales@clinica.com' },
-  { id: 5, nombre: 'Dr. Herrera', rol: 'Médico', telefono: '555-0205', email: 'herrera@clinica.com' },
+  { id: 1, nombre: 'Dr. García', rol: 'Owner', telefono: '555-0201', email: 'garcia@clinica.com' },
+  { id: 2, nombre: 'Dra. Sánchez', rol: 'Administrador', empresaId: 1, telefono: '555-0202', email: 'sanchez@clinica.com' },
+  { id: 3, nombre: 'Dra. Gómez', rol: 'Médico', empresaId: 1, telefono: '555-0203', email: 'gomez@clinica.com' },
+  { id: 4, nombre: 'Dr. Morales', rol: 'Administrador', empresaId: 2, telefono: '555-0204', email: 'morales@clinica.com' },
+  { id: 5, nombre: 'Dr. Herrera', rol: 'Médico', empresaId: 2, telefono: '555-0205', email: 'herrera@clinica.com' },
 ]
 
 export interface CitaData {
@@ -346,5 +366,27 @@ export const tareaStore = {
   },
   remove: (id: number) => {
     tareas = tareas.filter(t => t.id !== id)
+  },
+}
+
+export const empresaStore = {
+  getAll: () => [...empresas],
+  getById: (id: number) => empresas.find(e => e.id === id),
+  getPage: async (page: number, limit = 15): Promise<PageResult<EmpresaData>> => {
+    await delay(600)
+    const start = page * limit
+    const data = empresas.slice(start, start + limit)
+    return { data, total: empresas.length, hasMore: start + limit < empresas.length }
+  },
+  create: (data: Omit<EmpresaData, 'id'>) => {
+    const nueva = { ...data, id: Date.now() } as EmpresaData
+    empresas = [...empresas, nueva]
+    return nueva
+  },
+  update: (id: number, data: Partial<EmpresaData>) => {
+    empresas = empresas.map(e => e.id === id ? { ...e, ...data } : e)
+  },
+  remove: (id: number) => {
+    empresas = empresas.filter(e => e.id !== id)
   },
 }

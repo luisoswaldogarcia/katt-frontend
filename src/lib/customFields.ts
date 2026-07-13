@@ -27,7 +27,7 @@ export interface CustomField {
 
 const STORAGE_KEY_PREFIX = 'katt-custom-fields'
 
-export type Module = 'paciente' | 'doctor' | 'inventario'
+export type Module = 'paciente' | 'doctor' | 'inventario' | 'empresa'
 
 export function getCustomFields(module: Module): CustomField[] {
   const stored = localStorage.getItem(`${STORAGE_KEY_PREFIX}-${module}`)

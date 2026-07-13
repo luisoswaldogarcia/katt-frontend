@@ -3,6 +3,7 @@ const STORAGE_KEY = 'katt-modules'
 export interface ModuleConfig {
   paciente: boolean
   doctor: boolean
+  empresa: boolean
   inventario: boolean
   agenda: boolean
   chat: boolean
@@ -14,6 +15,7 @@ export interface ModuleConfig {
 const defaults: ModuleConfig = {
   paciente: true,
   doctor: true,
+  empresa: true,
   inventario: true,
   agenda: true,
   chat: true,

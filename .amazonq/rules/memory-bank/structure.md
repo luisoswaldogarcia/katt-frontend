@@ -7,73 +7,56 @@ frontend/
 ├── src/
 │   ├── assets/              # Bundled assets
 │   ├── components/          # Shared reusable components
-│   │   ├── ConfirmModal.tsx # Confirmation dialog (delete actions)
-│   │   ├── DataDetail.tsx   # Generic entity detail view
-│   │   ├── DataForm.tsx     # Generic entity form (create/edit)
-│   │   ├── DataTable.tsx    # Generic entity table/list
-│   │   ├── DynamicFields.tsx# Renders custom fields dynamically
-│   │   ├── FilterBar.tsx    # Search/filter bar for lists
-│   │   ├── Sidebar.tsx      # Navigation sidebar
-│   │   └── ThemeToggle.tsx  # Dark/light mode switch
-│   ├── hooks/
-│   │   └── useTheme.ts     # Theme state management hook
-│   ├── lib/
-│   │   ├── categorias.ts   # Inventory categories CRUD (localStorage)
-│   │   ├── customFields.ts # Custom fields CRUD + types (localStorage)
-│   │   ├── demoStore.ts    # In-memory data store for demo mode
-│   │   ├── kanban.ts       # Kanban columns, task types, table config (localStorage)
-│   │   ├── labels.ts       # Configurable label presets (salud/negocio)
-│   │   ├── modules.ts      # Module visibility toggle config (localStorage)
-│   │   └── unreadMessages.ts # Unread message count (localStorage)
-│   ├── pages/
-│   │   ├── Agenda.tsx      # Calendar/scheduling page
-│   │   ├── Agente.tsx      # AI agent page
-│   │   ├── Chat.tsx        # Chat interface page
-│   │   ├── Doctor.tsx      # Doctor/company list page
-│   │   ├── DoctorAlta.tsx  # Doctor create/edit page
-│   │   ├── DoctorDetalle.tsx # Doctor detail page
-│   │   ├── Home.tsx        # Dashboard/home page
-│   │   ├── Inventario.tsx  # Inventory list page
-│   │   ├── InventarioAlta.tsx # Inventory create/edit page
-│   │   ├── InventarioDetalle.tsx # Inventory detail page
-│   │   ├── InventarioMovimiento.tsx # Inventory stock movement page
-│   │   ├── Paciente.tsx    # Patient/client list page
-│   │   ├── PacienteAlta.tsx# Patient create/edit page
-│   │   ├── PacienteCitas.tsx # Patient appointment scheduling page
-│   │   ├── PacienteDetalle.tsx # Patient detail page
-│   │   ├── Settings.tsx    # App settings page
-│   │   ├── Tablero.tsx     # Kanban board page (drag & drop)
-│   │   └── TareasLista.tsx # Tasks list/table view page
-│   ├── App.tsx             # Router + Layout (sidebar + header + routes)
-│   ├── index.css           # Global styles (Tailwind imports)
-│   └── main.tsx            # Entry point (React DOM render)
-├── .oxlintrc.json          # Oxlint configuration
-├── index.html              # HTML shell
-├── package.json            # Dependencies and scripts
-├── tsconfig.json           # TypeScript base config
-├── tsconfig.app.json       # App-specific TS config
-├── tsconfig.node.json      # Node/Vite TS config
-└── vite.config.ts          # Vite + plugins configuration
+│   │   ├── ConfirmModal.tsx
+│   │   ├── DataDetail.tsx
+│   │   ├── DataForm.tsx
+│   │   ├── DataTable.tsx
+│   │   ├── DynamicFields.tsx
+│   │   ├── FilterBar.tsx
+│   │   ├── Sidebar.tsx
+│   │   └── ThemeToggle.tsx
+│   ├── hooks/               # Custom React hooks
+│   │   └── useTheme.ts
+│   ├── lib/                 # Utilities, configs, data stores
+│   │   ├── categorias.ts
+│   │   ├── customFields.ts
+│   │   ├── demoStore.ts
+│   │   ├── kanban.ts
+│   │   ├── labels.ts
+│   │   ├── modules.ts
+│   │   └── unreadMessages.ts
+│   ├── pages/               # Page-level components (single-file philosophy)
+│   │   ├── Agenda.tsx
+│   │   ├── Agente.tsx
+│   │   ├── Chat.tsx
+│   │   ├── Doctor.tsx / DoctorAlta.tsx / DoctorDetalle.tsx
+│   │   ├── Home.tsx
+│   │   ├── Inventario.tsx / InventarioAlta.tsx / InventarioDetalle.tsx / InventarioMovimiento.tsx
+│   │   ├── Paciente.tsx / PacienteAlta.tsx / PacienteCitas.tsx / PacienteDetalle.tsx
+│   │   ├── Settings.tsx
+│   │   ├── Tablero.tsx
+│   │   └── TareasLista.tsx
+│   ├── App.tsx              # Main router and layout
+│   ├── index.css            # Global styles (Tailwind)
+│   └── main.tsx             # Entry point
+├── index.html               # HTML shell
+├── package.json
+├── vite.config.ts           # Vite + PWA + Tailwind config
+├── tsconfig.json            # TypeScript config
+└── .oxlintrc.json           # Linter config
 ```
 
 ## Architectural Patterns
+- **Single-file page components**: Each page contains its own state, logic, and markup (Vue-like philosophy)
+- **Shared components**: Generic reusable UI components in `/src/components/`
+- **localStorage-based persistence**: Data stored via `demoStore.ts` and module configs
+- **Module system**: Features toggled on/off via `lib/modules.ts` with localStorage
+- **Client-side routing**: React Router DOM v7 with route-based code organization
+- **No backend**: Currently a frontend-only demo app with local storage
 
-### Single-File Page Components (Vue-style)
-Each page in `/src/pages/` is self-contained with its own logic, markup, and inline styles via Tailwind classes.
-
-### Generic Data Components
-`DataTable`, `DataForm`, `DataDetail` are generic components that receive configuration props to render CRUD views for any entity (patient, doctor, inventory), avoiding duplication.
-
-### Routing
-React Router v7 with flat route structure in `App.tsx`. Layout component wraps all routes with sidebar + header + notification bell.
-
-### State Management
-- No external state library — local component state with `useState`
-- Demo data in module-level variables (`demoStore.ts`)
-- Settings persisted in `localStorage`
-
-### Label Abstraction
-The `labels.ts` module provides configurable terminology so the same UI works for healthcare ("Paciente"/"Doctor") or business ("Cliente"/"Empresa") contexts. Also includes labels for `inventario`, `tablero`, and `tareas`.
-
-### Module Visibility
-The `modules.ts` lib allows toggling which modules are visible in the sidebar via Settings, persisted in localStorage.
+## Core Relationships
+- `App.tsx` → defines all routes, renders `Sidebar` + page components
+- `Sidebar.tsx` → navigation, reads module config to show/hide links
+- Pages use shared components (`DataTable`, `DataForm`, `DataDetail`, `DynamicFields`)
+- `lib/demoStore.ts` → central localStorage CRUD for entities
+- `lib/modules.ts` → module enable/disable config

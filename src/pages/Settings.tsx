@@ -35,6 +35,7 @@ function DeleteBtn({ onClick }: { onClick: () => void }) {
 const moduleOptions: { key: keyof ModuleConfig; label: string; core?: boolean }[] = [
   { key: 'paciente', label: 'Pacientes', core: true },
   { key: 'doctor', label: 'Usuarios', core: true },
+  { key: 'empresa', label: 'Empresas' },
   { key: 'agenda', label: 'Agenda' },
   { key: 'inventario', label: 'Inventario' },
   { key: 'tablero', label: 'Tablero' },
@@ -51,6 +52,7 @@ export default function Settings() {
     paciente: getCustomFields('paciente'),
     doctor: getCustomFields('doctor'),
     inventario: getCustomFields('inventario'),
+    empresa: getCustomFields('empresa'),
   })
   const [categorias, setCategorias] = useState(getCategorias)
   const [newCategoria, setNewCategoria] = useState('')
@@ -158,7 +160,7 @@ export default function Settings() {
             <p className={cardTitle}>Nombres de módulos</p>
             <p className="text-xs text-gray-500">Personaliza cómo se llaman los módulos en la interfaz. Los cambios se aplican al recargar.</p>
             <div className="space-y-2">
-              {(['paciente', 'doctor', 'inventario', 'tablero', 'tareas'] as (keyof Labels)[]).map(key => (
+              {(['paciente', 'doctor', 'empresa', 'inventario', 'tablero', 'tareas'] as (keyof Labels)[]).map(key => (
                 <div key={key} className="flex items-center gap-3">
                   <span className="text-xs text-gray-500 w-20 capitalize">{key}</span>
                   <input

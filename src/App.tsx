@@ -10,9 +10,9 @@ import Paciente from './pages/Paciente'
 import PacienteAlta from './pages/PacienteAlta'
 import PacienteDetalle from './pages/PacienteDetalle'
 import Agenda from './pages/Agenda'
-import Doctor from './pages/Doctor'
-import DoctorAlta from './pages/DoctorAlta'
-import DoctorDetalle from './pages/DoctorDetalle'
+import Usuario from './pages/Usuario'
+import UsuarioAlta from './pages/UsuarioAlta'
+import UsuarioDetalle from './pages/UsuarioDetalle'
 import Inventario from './pages/Inventario'
 import InventarioAlta from './pages/InventarioAlta'
 import InventarioDetalle from './pages/InventarioDetalle'
@@ -20,6 +20,9 @@ import InventarioMovimiento from './pages/InventarioMovimiento'
 import PacienteCitas from './pages/PacienteCitas'
 import Tablero from './pages/Tablero'
 import TareasLista from './pages/TareasLista'
+import Empresa from './pages/Empresa'
+import EmpresaAlta from './pages/EmpresaAlta'
+import EmpresaDetalle from './pages/EmpresaDetalle'
 import Settings from './pages/Settings'
 
 const titles: Record<string, string> = {
@@ -35,6 +38,8 @@ const titles: Record<string, string> = {
   '/inventario/alta': 'Alta ' + labels.inventario,
   '/inventario/movimiento': 'Movimiento de inventario',
   '/paciente/citas': 'Agendar citas',
+  '/empresa': labels.empresa,
+  '/empresa/alta': 'Alta ' + labels.empresa,
   '/tablero': labels.tablero,
   '/tareas': labels.tareas,
   '/settings': 'Configuración',
@@ -52,6 +57,8 @@ function Layout() {
     : pathname.startsWith('/doctor/') ? labels.doctor
     : pathname.startsWith('/inventario/editar') ? 'Editar ' + labels.inventario
     : pathname.startsWith('/inventario/') ? labels.inventario
+    : pathname.startsWith('/empresa/editar') ? 'Editar ' + labels.empresa
+    : pathname.startsWith('/empresa/') ? labels.empresa
     : 'Katt')
 
   return (
@@ -94,15 +101,19 @@ function Layout() {
             <Route path="/paciente/editar/:id" element={<PacienteAlta />} />
             <Route path="/paciente/:id" element={<PacienteDetalle />} />
             <Route path="/agenda" element={<Agenda />} />
-            <Route path="/doctor" element={<Doctor />} />
-            <Route path="/doctor/alta" element={<DoctorAlta />} />
-            <Route path="/doctor/editar/:id" element={<DoctorAlta />} />
-            <Route path="/doctor/:id" element={<DoctorDetalle />} />
+            <Route path="/doctor" element={<Usuario />} />
+            <Route path="/doctor/alta" element={<UsuarioAlta />} />
+            <Route path="/doctor/editar/:id" element={<UsuarioAlta />} />
+            <Route path="/doctor/:id" element={<UsuarioDetalle />} />
             <Route path="/inventario" element={<Inventario />} />
             <Route path="/inventario/alta" element={<InventarioAlta />} />
             <Route path="/inventario/editar/:id" element={<InventarioAlta />} />
             <Route path="/inventario/movimiento" element={<InventarioMovimiento />} />
             <Route path="/inventario/:id" element={<InventarioDetalle />} />
+            <Route path="/empresa" element={<Empresa />} />
+            <Route path="/empresa/alta" element={<EmpresaAlta />} />
+            <Route path="/empresa/editar/:id" element={<EmpresaAlta />} />
+            <Route path="/empresa/:id" element={<EmpresaDetalle />} />
             <Route path="/tablero" element={<Tablero />} />
             <Route path="/tareas" element={<TareasLista />} />
             <Route path="/settings" element={<Settings />} />

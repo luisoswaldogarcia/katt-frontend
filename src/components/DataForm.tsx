@@ -7,7 +7,8 @@ import type { Module } from '../lib/customFields'
 export interface FormField {
   key: string
   label: string
-  type?: 'text' | 'email' | 'tel' | 'date'
+  type?: 'text' | 'email' | 'tel' | 'date' | 'select'
+  options?: (string | { value: string; label: string })[]
   required?: boolean
 }
 
@@ -93,7 +94,22 @@ export function DataForm({ fields, module, basePath, initialData, onSubmit, isEd
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" />
         </div>
 
-        {fields.map(f => (
+        {fields.map(f => f.type === 'select' ? (
+          <select
+            key={f.key}
+            required={f.required !== false}
+            value={form[f.key] || ''}
+            onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+            className={inputClass}
+          >
+            <option value="">{f.label}</option>
+            {f.options?.map(o => {
+              const val = typeof o === 'string' ? o : o.value
+              const lbl = typeof o === 'string' ? o : o.label
+              return <option key={val} value={val}>{lbl}</option>
+            })}
+          </select>
+        ) : (
           <input
             key={f.key}
             required={f.required !== false}

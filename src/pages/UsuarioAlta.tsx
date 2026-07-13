@@ -1,16 +1,19 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { doctorStore } from '../lib/demoStore'
+import { doctorStore, empresaStore } from '../lib/demoStore'
 import { DataForm } from '../components/DataForm'
 import type { FormField } from '../components/DataForm'
 
+const empresas = empresaStore.getAll()
+
 const fields: FormField[] = [
   { key: 'nombre', label: 'Nombre' },
-  { key: 'rol', label: 'Rol' },
+  { key: 'rol', label: 'Rol', type: 'select', options: ['Owner', 'Administrador', 'Médico'] },
+  { key: 'empresaId', label: 'Empresa', type: 'select', options: empresas.map(e => ({ value: String(e.id), label: e.nombre })), required: false },
   { key: 'telefono', label: 'Teléfono', type: 'tel' },
   { key: 'email', label: 'Email', type: 'email' },
 ]
 
-export default function DoctorAlta() {
+export default function UsuarioAlta() {
   const { id } = useParams()
   const navigate = useNavigate()
   const isEdit = !!id

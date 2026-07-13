@@ -1,6 +1,7 @@
 export interface Labels {
   paciente: string
   doctor: string
+  empresa: string
   inventario: string
   tablero: string
   tareas: string
@@ -9,6 +10,7 @@ export interface Labels {
 const defaults: Labels = {
   paciente: 'Cliente',
   doctor: 'Usuario',
+  empresa: 'Empresa',
   inventario: 'Inventario',
   tablero: 'Tablero',
   tareas: 'Tareas',
