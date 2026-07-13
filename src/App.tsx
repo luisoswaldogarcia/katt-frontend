@@ -23,6 +23,7 @@ import TareasLista from './pages/TareasLista'
 import Empresa from './pages/Empresa'
 import EmpresaAlta from './pages/EmpresaAlta'
 import EmpresaDetalle from './pages/EmpresaDetalle'
+import Modulos from './pages/Modulos'
 import Settings from './pages/Settings'
 
 const titles: Record<string, string> = {
@@ -40,6 +41,7 @@ const titles: Record<string, string> = {
   '/paciente/citas': 'Agendar citas',
   '/empresa': labels.empresa,
   '/empresa/alta': 'Alta ' + labels.empresa,
+  '/modulos': 'Módulos',
   '/tablero': labels.tablero,
   '/tareas': labels.tareas,
   '/settings': 'Configuración',
@@ -114,6 +116,7 @@ function Layout() {
             <Route path="/empresa/alta" element={<EmpresaAlta />} />
             <Route path="/empresa/editar/:id" element={<EmpresaAlta />} />
             <Route path="/empresa/:id" element={<EmpresaDetalle />} />
+            <Route path="/modulos" element={<Modulos />} />
             <Route path="/tablero" element={<Tablero />} />
             <Route path="/tareas" element={<TareasLista />} />
             <Route path="/settings" element={<Settings />} />

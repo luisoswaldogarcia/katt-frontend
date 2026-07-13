@@ -4,6 +4,7 @@ import { labels } from '../lib/labels'
 import { empresaStore, doctorStore } from '../lib/demoStore'
 import { saveEmpresaModules } from '../lib/modules'
 import type { ModuleConfig } from '../lib/modules'
+import { getModuleCatalog } from '../lib/moduleCatalog'
 import { DataDetail } from '../components/DataDetail'
 
 const moduleLabels: Record<keyof ModuleConfig, string> = {
@@ -32,10 +33,19 @@ export default function EmpresaDetalle() {
 
   const usuarios = doctorStore.getAll().filter(u => u.empresaId === empresa.id)
   const empresaModules = empresa.modules || {}
+  const catalog = getModuleCatalog()
 
   function isModuleActive(key: string): boolean {
     return empresaModules[key] !== false
   }
+
+  function getCosto(key: string): number {
+    return catalog.find(m => m.key === key)?.costo || 0
+  }
+
+  const costoTotal = (Object.keys(moduleLabels) as (keyof ModuleConfig)[])
+    .filter(k => isModuleActive(k))
+    .reduce((sum, k) => sum + getCosto(k), 0)
 
   function toggleModule(key: string) {
     const updated = { ...empresaModules, [key]: !isModuleActive(key) }
@@ -61,12 +71,19 @@ export default function EmpresaDetalle() {
       />
 
       <div className="space-y-3 rounded-lg border border-katt-200 dark:border-katt-800 p-4">
-        <p className="text-sm font-semibold text-katt-600 dark:text-katt-300">Módulos activos</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-katt-600 dark:text-katt-300">Módulos activos</p>
+          <span className="text-sm font-bold text-katt-500">${costoTotal}/mes</span>
+        </div>
         <p className="text-xs text-gray-500">Configura qué módulos tiene disponibles esta empresa.</p>
         <div className="space-y-2">
           {(Object.keys(moduleLabels) as (keyof ModuleConfig)[]).map(key => (
             <label key={key} className={`${listItem} cursor-pointer`}>
-              <span className="text-sm">{moduleLabels[key]}</span>
+              <div>
+                <span className="text-sm">{moduleLabels[key]}</span>
+                {getCosto(key) > 0 && <span className="ml-2 text-xs text-gray-500">${getCosto(key)}/mes</span>}
+                {getCosto(key) === 0 && <span className="ml-2 text-xs text-gray-400">Incluido</span>}
+              </div>
               <input
                 type="checkbox"
                 checked={isModuleActive(key)}
