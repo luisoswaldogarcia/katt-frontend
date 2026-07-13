@@ -26,6 +26,7 @@ import EmpresaDetalle from './pages/EmpresaDetalle'
 import Modulos from './pages/Modulos'
 import Settings from './pages/Settings'
 import TiposDocumento from './pages/TiposDocumento'
+import PuntoVenta from './pages/PuntoVenta'
 
 const titles: Record<string, string> = {
   '/': 'Inicio',
@@ -45,6 +46,7 @@ const titles: Record<string, string> = {
   '/modulos': 'Módulos',
   '/tablero': labels.tablero,
   '/tareas': labels.tareas,
+  '/pos': labels.pos,
   '/settings': 'Configuración',
   '/tipos-documento': 'Tipos de Documento',
 }
@@ -122,6 +124,7 @@ function Layout() {
             <Route path="/tablero" element={<Tablero />} />
             <Route path="/tareas" element={<TareasLista />} />
             <Route path="/tipos-documento" element={<TiposDocumento />} />
+            <Route path="/pos" element={<PuntoVenta />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>

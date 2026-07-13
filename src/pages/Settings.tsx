@@ -150,7 +150,7 @@ export default function Settings() {
             <p className={cardTitle}>Nombres de módulos</p>
             <p className="text-xs text-gray-500">Personaliza cómo se llaman los módulos en la interfaz. Los cambios se aplican al recargar.</p>
             <div className="space-y-2">
-              {(['paciente', 'doctor', 'empresa', 'inventario', 'tablero', 'tareas'] as (keyof Labels)[]).map(key => (
+              {(Object.keys(moduleLabels) as (keyof Labels)[]).map(key => (
                 <div key={key} className="flex items-center gap-3">
                   <span className="text-xs text-gray-500 w-20 capitalize">{key}</span>
                   <input

@@ -198,16 +198,17 @@ export interface InventarioData {
   cantidad: number
   unidad: string
   precioUnitario: number
+  codigoBarras?: string
   foto?: string
   custom?: Record<string, unknown>
 }
 
 let inventario: InventarioData[] = [
-  { id: 1, nombre: 'Paracetamol 500mg', categoria: 'Medicamento', cantidad: 200, unidad: 'caja', precioUnitario: 45 },
-  { id: 2, nombre: 'Ibuprofeno 400mg', categoria: 'Medicamento', cantidad: 150, unidad: 'caja', precioUnitario: 55 },
-  { id: 3, nombre: 'Guantes de látex', categoria: 'Insumo', cantidad: 500, unidad: 'par', precioUnitario: 8 },
-  { id: 4, nombre: 'Jeringa 5ml', categoria: 'Insumo', cantidad: 300, unidad: 'pieza', precioUnitario: 12 },
-  { id: 5, nombre: 'Alcohol 70%', categoria: 'Insumo', cantidad: 80, unidad: 'litro', precioUnitario: 35 },
+  { id: 1, nombre: 'Paracetamol 500mg', categoria: 'Medicamento', cantidad: 200, unidad: 'caja', precioUnitario: 45, codigoBarras: '7501001164015' },
+  { id: 2, nombre: 'Ibuprofeno 400mg', categoria: 'Medicamento', cantidad: 150, unidad: 'caja', precioUnitario: 55, codigoBarras: '7501001164022' },
+  { id: 3, nombre: 'Guantes de látex', categoria: 'Insumo', cantidad: 500, unidad: 'par', precioUnitario: 8, codigoBarras: '7501001164039' },
+  { id: 4, nombre: 'Jeringa 5ml', categoria: 'Insumo', cantidad: 300, unidad: 'pieza', precioUnitario: 12, codigoBarras: '7501001164046' },
+  { id: 5, nombre: 'Alcohol 70%', categoria: 'Insumo', cantidad: 80, unidad: 'litro', precioUnitario: 35, codigoBarras: '7501001164053' },
   { id: 6, nombre: 'Gasas estériles', categoria: 'Insumo', cantidad: 400, unidad: 'paquete', precioUnitario: 20 },
   { id: 7, nombre: 'Amoxicilina 500mg', categoria: 'Medicamento', cantidad: 120, unidad: 'caja', precioUnitario: 85 },
   { id: 8, nombre: 'Termómetro digital', categoria: 'Equipo', cantidad: 15, unidad: 'pieza', precioUnitario: 180 },

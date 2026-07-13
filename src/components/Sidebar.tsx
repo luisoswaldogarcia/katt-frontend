@@ -210,6 +210,23 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </svg>
             {labels.empresa}
           </NavLink>}
+          {modules.pos && <NavLink
+            to="/pos"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                isActive
+                  ? 'bg-katt-100 dark:bg-katt-800 text-katt-600 dark:text-katt-300 font-medium'
+                  : 'hover:bg-katt-50 dark:hover:bg-katt-800/50'
+              }`
+            }
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="M2 10h20M6 16h4" />
+            </svg>
+            {labels.pos}
+          </NavLink>}
           <NavLink
             to="/tipos-documento"
             onClick={onClose}

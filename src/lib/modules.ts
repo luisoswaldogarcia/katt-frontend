@@ -12,6 +12,7 @@ export interface ModuleConfig {
   agente: boolean
   tablero: boolean
   tareas: boolean
+  pos: boolean
 }
 
 const allEnabled: ModuleConfig = {
@@ -24,6 +25,7 @@ const allEnabled: ModuleConfig = {
   agente: true,
   tablero: true,
   tareas: true,
+  pos: true,
 }
 
 export function getActiveEmpresaId(): number | null {

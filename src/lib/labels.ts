@@ -3,8 +3,12 @@ export interface Labels {
   doctor: string
   empresa: string
   inventario: string
+  agenda: string
+  chat: string
+  agente: string
   tablero: string
   tareas: string
+  pos: string
 }
 
 const defaults: Labels = {
@@ -12,8 +16,16 @@ const defaults: Labels = {
   doctor: 'Usuario',
   empresa: 'Empresa',
   inventario: 'Inventario',
+  agenda: 'Agenda',
+  chat: 'Chat',
+  agente: 'Agente',
   tablero: 'Tablero',
   tareas: 'Tareas',
+  pos: 'Punto de Venta',
+}
+
+const demoOverrides: Partial<Labels> = {
+  pos: 'Mirada Gatuna',
 }
 
 function load(): Labels {
@@ -21,7 +33,10 @@ function load(): Labels {
   if (stored) {
     try { return { ...defaults, ...JSON.parse(stored) } } catch { /* ignore */ }
   }
-  return { ...defaults }
+  // Seed demo config on first load
+  const seeded = { ...defaults, ...demoOverrides }
+  localStorage.setItem('katt-labels', JSON.stringify(seeded))
+  return seeded
 }
 
 export let labels: Labels = load()

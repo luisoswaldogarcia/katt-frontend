@@ -17,6 +17,7 @@ const defaults: ModuleCatalogItem[] = [
   { key: 'agente', nombre: 'Agente', descripcion: 'Asistente virtual con IA', costo: 499 },
   { key: 'tablero', nombre: 'Tablero', descripcion: 'Kanban para gestión de proyectos', costo: 149 },
   { key: 'tareas', nombre: 'Tareas', descripcion: 'Listas de tareas y seguimiento', costo: 99 },
+  { key: 'pos', nombre: 'Punto de Venta', descripcion: 'Cobro rápido y registro de ventas', costo: 249 },
 ]
 
 export function getModuleCatalog(): ModuleCatalogItem[] {
