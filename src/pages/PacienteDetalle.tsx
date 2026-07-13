@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { labels } from '../lib/labels'
 import { pacienteStore } from '../lib/demoStore'
 import { DataDetail } from '../components/DataDetail'
+import { Documents } from '../components/Documents'
 import { getCustomFields } from '../lib/customFields'
 
 interface Nota {
@@ -112,6 +113,9 @@ export default function PacienteDetalle() {
         </div>
       </div>
 
+      {/* Documentos */}
+      <Documents module="paciente" entityId={Number(id)} />
+
       {/* Campos custom */}
       {(() => {
         const customFields = getCustomFields('paciente')
@@ -122,10 +126,13 @@ export default function PacienteDetalle() {
             {customFields.map(f => {
               const val = custom[f.id]
               if (val === undefined || val === '' || val === null) return null
+              const isLong = typeof val === 'string' && val.includes('\n')
               return (
-                <div key={f.id} className="flex justify-between text-sm">
-                  <span className="text-gray-500">{f.label}</span>
-                  <span>{Array.isArray(val) ? val.join(', ') : String(val)}</span>
+                <div key={f.id} className={isLong ? 'space-y-1' : 'flex justify-between'}>
+                  <span className="text-xs font-medium text-gray-500">{f.label}</span>
+                  <span className={`text-sm ${isLong ? 'block whitespace-pre-wrap bg-katt-50 dark:bg-katt-800/40 rounded-lg px-3 py-2' : ''}`}>
+                    {Array.isArray(val) ? val.join(', ') : String(val)}
+                  </span>
                 </div>
               )
             })}

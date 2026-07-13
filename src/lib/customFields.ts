@@ -29,16 +29,31 @@ const STORAGE_KEY_PREFIX = 'katt-custom-fields'
 
 export type Module = 'paciente' | 'doctor' | 'inventario' | 'empresa'
 
+const pacienteDefaults: CustomField[] = [
+  { id: 'sexo', label: 'Sexo', type: 'select', required: false, options: ['Masculino', 'Femenino', 'Otro'] },
+  { id: 'cirugias', label: 'Cirugías', type: 'textarea', required: false },
+  { id: 'enfermedades', label: 'Enfermedades', type: 'textarea', required: false },
+  { id: 'medicamentos', label: 'Medicamentos que toma', type: 'textarea', required: false },
+]
+
 export function getCustomFields(module: Module): CustomField[] {
   const stored = localStorage.getItem(`${STORAGE_KEY_PREFIX}-${module}`)
-  if (stored) return JSON.parse(stored)
-  // Campos por defecto
+  if (stored) {
+    const fields: CustomField[] = JSON.parse(stored)
+    if (module === 'paciente') {
+      const ids = fields.map(f => f.id)
+      const missing = pacienteDefaults.filter(d => !ids.includes(d.id))
+      if (missing.length > 0) {
+        const merged = [...fields, ...missing]
+        localStorage.setItem(`${STORAGE_KEY_PREFIX}-${module}`, JSON.stringify(merged))
+        return merged
+      }
+    }
+    return fields
+  }
   if (module === 'paciente') {
-    const defaults: CustomField[] = [
-      { id: 'sexo', label: 'Sexo', type: 'select', required: false, options: ['Masculino', 'Femenino', 'Otro'] }
-    ]
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}-${module}`, JSON.stringify(defaults))
-    return defaults
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}-${module}`, JSON.stringify(pacienteDefaults))
+    return pacienteDefaults
   }
   return []
 }

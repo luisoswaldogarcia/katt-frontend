@@ -37,7 +37,7 @@ export interface EmpresaData {
 }
 
 let pacientes: PacienteData[] = [
-  { id: 1, nombre: 'Juan Pérez', doctor: 'Dr. García', proximaCita: '2025-02-10', telefono: '555-0101', email: 'juan@email.com', custom: { sexo: 'Masculino' } },
+  { id: 1, nombre: 'Juan Pérez', doctor: 'Dr. García', proximaCita: '2025-02-10', telefono: '555-0101', email: 'juan@email.com', custom: { sexo: 'Masculino', cirugias: 'Apendicectomía (2019)\nArtroscopia rodilla derecha (2022)', enfermedades: 'Hipertensión arterial\nDiabetes tipo 2', medicamentos: 'Metformina 850mg - 2 veces al día\nLosartán 50mg - 1 vez al día\nAspirina 100mg - 1 vez al día' } },
   { id: 2, nombre: 'María López', doctor: 'Dr. García', proximaCita: '2025-02-12', telefono: '555-0102', email: 'maria@email.com', custom: { sexo: 'Femenino' } },
   { id: 3, nombre: 'Carlos Ramírez', doctor: 'Dra. Sánchez', proximaCita: '2025-02-14', telefono: '555-0103', email: 'carlos@email.com', custom: { sexo: 'Masculino' } },
   { id: 4, nombre: 'Ana Torres', doctor: 'Dra. Sánchez', proximaCita: '2025-02-15', telefono: '555-0104', email: 'ana@email.com', custom: { sexo: 'Femenino' } },

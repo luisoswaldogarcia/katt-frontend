@@ -8,101 +8,107 @@ interface Props {
   entityId: number
 }
 
-const cardClass = "rounded-lg border border-katt-200 dark:border-katt-800 p-4 space-y-3"
+const cardClass = "rounded-lg border border-katt-200 dark:border-katt-800 p-4 space-y-4"
 const btnPrimary = "px-3 py-1.5 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-xs font-medium transition-colors"
 const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
 
 export function Documents({ module, entityId }: Props) {
   const docTypes = getModuleDocTypes(module)
   const [docs, setDocs] = useState(() => getDocuments(module, entityId))
-  const [showCreate, setShowCreate] = useState(false)
-  const [tipoId, setTipoId] = useState('')
+
+  if (docTypes.length === 0) return null
+
+  const sorted = [...docs].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+
+  function handleSave(doc: Omit<DocumentItem, 'id' | 'fecha'>) {
+    const updated = saveDocument(module, entityId, doc)
+    setDocs(updated)
+  }
+
+  function handleDelete(docId: number) {
+    setDocs(removeDocument(module, entityId, docId))
+  }
+
+  return (
+    <div className={cardClass}>
+      <h3 className="text-sm font-bold">Documentos</h3>
+      {docTypes.map(tipo => (
+        <DocTypeSection
+          key={tipo.id}
+          tipoId={tipo.id}
+          label={tipo.label}
+          docs={sorted.filter(d => d.tipoId === tipo.id)}
+          onSave={handleSave}
+          onDelete={handleDelete}
+        />
+      ))}
+    </div>
+  )
+}
+
+function DocTypeSection({ tipoId, label, docs, onSave, onDelete }: {
+  tipoId: string
+  label: string
+  docs: DocumentItem[]
+  onSave: (doc: Omit<DocumentItem, 'id' | 'fecha'>) => void
+  onDelete: (id: number) => void
+}) {
+  const [showForm, setShowForm] = useState(false)
   const [nombre, setNombre] = useState('')
   const [contenido, setContenido] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
-  if (docTypes.length === 0) return null
-
   function handleCreate() {
-    if (!tipoId || !nombre.trim() || !contenido.trim()) return
-    const updated = saveDocument(module, entityId, { tipoId, nombre: nombre.trim(), origen: 'creado', contenido: contenido.trim() })
-    setDocs(updated)
+    if (!nombre.trim() || !contenido.trim()) return
+    onSave({ tipoId, nombre: nombre.trim(), origen: 'creado', contenido: contenido.trim() })
     setNombre('')
     setContenido('')
-    setTipoId('')
-    setShowCreate(false)
+    setShowForm(false)
   }
 
   function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!tipoId) return
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
     reader.onload = () => {
-      const updated = saveDocument(module, entityId, {
-        tipoId,
-        nombre: file.name,
-        origen: 'subido',
-        contenido: reader.result as string,
-        mimeType: file.type,
-      })
-      setDocs(updated)
-      setTipoId('')
+      onSave({ tipoId, nombre: file.name, origen: 'subido', contenido: reader.result as string, mimeType: file.type })
     }
     reader.readAsDataURL(file)
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  function handleDelete(docId: number) {
-    const updated = removeDocument(module, entityId, docId)
-    setDocs(updated)
-  }
-
-  function getTypeName(id: string) {
-    return docTypes.find(t => t.id === id)?.label || 'Documento'
-  }
-
   return (
-    <div className={cardClass}>
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold">Documentos</h3>
-        <button type="button" onClick={() => setShowCreate(!showCreate)} className={btnPrimary}>
-          {showCreate ? 'Cancelar' : '+ Documento'}
+        <span className="text-xs font-semibold text-katt-600 dark:text-katt-300">{label} ({docs.length})</span>
+        <button type="button" onClick={() => setShowForm(!showForm)} className={btnPrimary}>
+          {showForm ? 'Cancelar' : `+ ${label}`}
         </button>
       </div>
 
-      {showCreate && (
-        <div className="space-y-2 border-t border-katt-200 dark:border-katt-800 pt-3">
-          <select value={tipoId} onChange={e => setTipoId(e.target.value)} className={inputClass}>
-            <option value="">Seleccionar tipo...</option>
-            {docTypes.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-          </select>
-
-          {tipoId && (
-            <>
-              <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Nombre del documento" className={inputClass} />
-              <textarea value={contenido} onChange={e => setContenido(e.target.value)} placeholder="Contenido..." rows={3} className={`${inputClass} resize-none`} />
-              <div className="flex gap-2">
-                <button type="button" onClick={handleCreate} className={`flex-1 ${btnPrimary}`}>Crear</button>
-                <button type="button" onClick={() => fileRef.current?.click()} className={`flex-1 ${btnPrimary}`}>Subir archivo</button>
-                <input ref={fileRef} type="file" className="hidden" onChange={handleUpload} />
-              </div>
-            </>
-          )}
+      {showForm && (
+        <div className="space-y-2 pl-2 border-l-2 border-katt-300 dark:border-katt-700">
+          <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Nombre" className={inputClass} />
+          <textarea value={contenido} onChange={e => setContenido(e.target.value)} placeholder="Contenido..." rows={3} className={`${inputClass} resize-none`} />
+          <div className="flex gap-2">
+            <button type="button" onClick={handleCreate} className={`flex-1 ${btnPrimary}`}>Crear</button>
+            <button type="button" onClick={() => fileRef.current?.click()} className={`flex-1 ${btnPrimary}`}>Subir archivo</button>
+            <input ref={fileRef} type="file" className="hidden" onChange={handleUpload} />
+          </div>
         </div>
       )}
 
-      <div className="max-h-[300px] overflow-y-auto space-y-2">
-        {docs.length === 0 && <p className="text-xs text-gray-400">Sin documentos aún</p>}
+      {docs.length === 0 && <p className="text-xs text-gray-400">Sin {label.toLowerCase()} aún</p>}
+      <div className="max-h-[200px] overflow-y-auto space-y-1">
         {docs.map(doc => (
-          <DocItem key={doc.id} doc={doc} typeName={getTypeName(doc.tipoId)} onDelete={() => handleDelete(doc.id)} />
+          <DocItem key={doc.id} doc={doc} onDelete={() => onDelete(doc.id)} />
         ))}
       </div>
     </div>
   )
 }
 
-function DocItem({ doc, typeName, onDelete }: { doc: DocumentItem; typeName: string; onDelete: () => void }) {
+function DocItem({ doc, onDelete }: { doc: DocumentItem; onDelete: () => void }) {
   const [open, setOpen] = useState(false)
   const fecha = new Date(doc.fecha).toLocaleDateString()
 
@@ -111,7 +117,7 @@ function DocItem({ doc, typeName, onDelete }: { doc: DocumentItem; typeName: str
       <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-3 py-2 text-left">
         <div className="flex-1 min-w-0">
           <span className="text-sm truncate block">{doc.nombre}</span>
-          <span className="text-[10px] text-gray-400">{typeName} · {fecha} · {doc.origen === 'creado' ? 'Creado' : 'Subido'}</span>
+          <span className="text-[10px] text-gray-400">{fecha} · {doc.origen === 'creado' ? 'Creado' : 'Subido'}</span>
         </div>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`w-4 h-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}><path d="M6 9l6 6 6-6" /></svg>
       </button>
