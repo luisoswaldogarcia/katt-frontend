@@ -157,23 +157,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </svg>
             {labels.inventario}
           </NavLink>}
-          {modules.empresa && <NavLink
-            to="/empresa"
-            onClick={onClose}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                isActive
-                  ? 'bg-katt-100 dark:bg-katt-800 text-katt-600 dark:text-katt-300 font-medium'
-                  : 'hover:bg-katt-50 dark:hover:bg-katt-800/50'
-              }`
-            }
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-              <path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 3v15" />
-              <path d="M9 9h1M9 13h1M9 17h1" />
-            </svg>
-            {labels.empresa}
-          </NavLink>}
           {modules.tablero && <NavLink
             to="/tablero"
             onClick={onClose}
@@ -209,6 +192,23 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
             </svg>
             {labels.tareas}
+          </NavLink>}
+          {modules.empresa && <NavLink
+            to="/empresa"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                isActive
+                  ? 'bg-katt-100 dark:bg-katt-800 text-katt-600 dark:text-katt-300 font-medium'
+                  : 'hover:bg-katt-50 dark:hover:bg-katt-800/50'
+              }`
+            }
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+              <path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 3v15" />
+              <path d="M9 9h1M9 13h1M9 17h1" />
+            </svg>
+            {labels.empresa}
           </NavLink>}
           <NavLink
             to="/settings"
