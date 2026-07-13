@@ -5,7 +5,7 @@ import type { FormField } from '../components/DataForm'
 
 const fields: FormField[] = [
   { key: 'nombre', label: 'Nombre' },
-  { key: 'especialidad', label: 'Especialidad' },
+  { key: 'rol', label: 'Rol' },
   { key: 'telefono', label: 'Teléfono', type: 'tel' },
   { key: 'email', label: 'Email', type: 'email' },
 ]

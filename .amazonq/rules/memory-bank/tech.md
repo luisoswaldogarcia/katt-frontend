@@ -8,6 +8,7 @@
 | Vite | ^8.1.1 | Build tool + dev server |
 | Tailwind CSS | ^4.3.2 | Utility-first styling |
 | React Router DOM | ^7.18.1 | Client-side routing |
+| @hello-pangea/dnd | ^18.0.1 | Drag and drop (Kanban board) |
 | vite-plugin-pwa | ^1.3.0 | PWA support (service worker, manifest) |
 | workbox-window | ^7.4.1 | Service worker registration |
 
@@ -40,6 +41,18 @@ npm run preview  # Preview production build locally
 - **Responsive**: Mobile-first, sidebar overlay on mobile
 
 ## Data Persistence (Current)
-- `localStorage` for: theme preference, label preset, custom field definitions
-- In-memory arrays for demo entity data (patients, doctors)
+- `localStorage` for: theme preference, label preset, custom field definitions, module visibility, kanban config, inventory categories, unread messages
+- In-memory arrays for demo entity data (patients, doctors, inventory)
 - No backend API integration yet
+
+### localStorage Keys
+All localStorage keys use `katt-` prefix:
+- `katt-theme` — dark/light
+- `katt-preset` — salud/negocio
+- `katt-modules` — module visibility toggles
+- `katt-custom-fields-{module}` — custom field definitions
+- `katt-kanban-columnas` — kanban board column names
+- `katt-kanban-tipos` — task type definitions with custom fields
+- `katt-tareas-tabla-columnas` — visible columns in tasks table view
+- `katt-inventario-categorias` — inventory category list
+- `katt-unread-count` — unread notification count

@@ -4,7 +4,7 @@ import type { Column } from '../components/DataTable'
 
 const columns: Column[] = [
   { key: 'nombre', label: 'Nombre', filterable: true },
-  { key: 'especialidad', label: 'Especialidad', filterable: true },
+  { key: 'rol', label: 'Rol', filterable: true },
   { key: 'telefono', label: 'Teléfono', hiddenOn: 'md' },
   { key: 'email', label: 'Email', hiddenOn: 'lg' },
 ]

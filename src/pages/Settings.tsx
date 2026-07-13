@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ThemeToggle } from '../components/ThemeToggle'
-import { labels, presets } from '../lib/labels'
+import { labels } from '../lib/labels'
 import type { CustomField, FieldType, Module } from '../lib/customFields'
 import { fieldTypeLabels, getCustomFields, saveCustomFields } from '../lib/customFields'
 import { getCategorias, saveCategorias } from '../lib/categorias'
@@ -14,8 +14,8 @@ const sectionTitle = "text-sm font-bold text-katt-600 dark:text-katt-300"
 const sectionSubtitle = "text-xs text-gray-500"
 
 const moduleOptions: { key: keyof ModuleConfig; label: string; core?: boolean }[] = [
-  { key: 'paciente', label: 'Pacientes / Clientes', core: true },
-  { key: 'doctor', label: 'Doctores / Empresas', core: true },
+  { key: 'paciente', label: 'Pacientes', core: true },
+  { key: 'doctor', label: 'Usuarios', core: true },
   { key: 'agenda', label: 'Agenda' },
   { key: 'inventario', label: 'Inventario' },
   { key: 'tablero', label: 'Tablero' },
@@ -25,7 +25,6 @@ const moduleOptions: { key: keyof ModuleConfig; label: string; core?: boolean }[
 ]
 
 export default function Settings() {
-  const [preset, setPreset] = useState(localStorage.getItem('katt-preset') || 'salud')
   const [activeModule, setActiveModule] = useState<Module>('paciente')
   const [fields, setFields] = useState<Record<Module, CustomField[]>>({
     paciente: getCustomFields('paciente'),
@@ -46,12 +45,6 @@ export default function Settings() {
   const [showFieldForm, setShowFieldForm] = useState(false)
   const [newField, setNewField] = useState<Partial<CustomField>>({ type: 'input', required: false, options: [] })
   const [optionInput, setOptionInput] = useState('')
-
-  const handlePreset = (value: string) => {
-    localStorage.setItem('katt-preset', value)
-    setPreset(value)
-    window.location.reload()
-  }
 
   const needsOptions = (type?: FieldType) => type === 'checkbox' || type === 'radio' || type === 'select'
   const needsRange = (type?: FieldType) => type === 'range'
@@ -105,22 +98,7 @@ export default function Settings() {
               <p className={sectionTitle}>Administrador de sistema</p>
               <p className={sectionSubtitle}>Configuración global de la plataforma</p>
             </div>
-            <div className="space-y-2">
-              <span className="text-sm">Tipo de negocio</span>
-              <select
-                value={preset}
-                onChange={e => handlePreset(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-900 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
-              >
-                {Object.entries(presets).map(([key, val]) => (
-                  <option key={key} value={key}>
-                    {val.paciente} / {val.doctor}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-3 pt-2 border-t border-katt-200 dark:border-katt-800">
+            <div className="space-y-3">
               <span className="text-sm font-medium">Módulos activos</span>
               <div className="space-y-2">
                 {moduleOptions.map(mod => (

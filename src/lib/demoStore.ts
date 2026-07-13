@@ -14,7 +14,7 @@ export interface PacienteData {
 export interface DoctorData {
   id: number
   nombre: string
-  especialidad: string
+  rol: string
   telefono: string
   email: string
   foto?: string
@@ -125,11 +125,11 @@ let pacientes: PacienteData[] = [
 ]
 
 let doctores: DoctorData[] = [
-  { id: 1, nombre: 'Dr. García', especialidad: 'Medicina General', telefono: '555-0201', email: 'garcia@clinica.com' },
-  { id: 2, nombre: 'Dra. Sánchez', especialidad: 'Pediatría', telefono: '555-0202', email: 'sanchez@clinica.com' },
-  { id: 3, nombre: 'Dra. Gómez', especialidad: 'Dermatología', telefono: '555-0203', email: 'gomez@clinica.com' },
-  { id: 4, nombre: 'Dr. Morales', especialidad: 'Cardiología', telefono: '555-0204', email: 'morales@clinica.com' },
-  { id: 5, nombre: 'Dr. Herrera', especialidad: 'Traumatología', telefono: '555-0205', email: 'herrera@clinica.com' },
+  { id: 1, nombre: 'Dr. García', rol: 'Administrador', telefono: '555-0201', email: 'garcia@clinica.com' },
+  { id: 2, nombre: 'Dra. Sánchez', rol: 'Médico', telefono: '555-0202', email: 'sanchez@clinica.com' },
+  { id: 3, nombre: 'Dra. Gómez', rol: 'Médico', telefono: '555-0203', email: 'gomez@clinica.com' },
+  { id: 4, nombre: 'Dr. Morales', rol: 'Recepcionista', telefono: '555-0204', email: 'morales@clinica.com' },
+  { id: 5, nombre: 'Dr. Herrera', rol: 'Médico', telefono: '555-0205', email: 'herrera@clinica.com' },
 ]
 
 export interface CitaData {

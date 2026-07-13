@@ -16,7 +16,7 @@ export default function DoctorDetalle() {
     <DataDetail
       data={doctor as unknown as Record<string, unknown>}
       fields={[
-        { key: 'especialidad', label: 'Especialidad' },
+        { key: 'rol', label: 'Rol' },
         { key: 'telefono', label: 'Teléfono' },
         { key: 'email', label: 'Email' },
       ]}

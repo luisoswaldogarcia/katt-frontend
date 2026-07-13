@@ -66,6 +66,16 @@ The app uses generic components that receive configuration to render entity view
 />
 ```
 
+### ConfirmModal Pattern
+Reusable confirmation dialog for destructive actions:
+```tsx
+<ConfirmModal
+  message="¿Eliminar este registro?"
+  onConfirm={handleDelete}
+  onCancel={() => setShowConfirm(false)}
+/>
+```
+
 ### State Management
 - `useState` with lazy initializer for localStorage reads:
 ```tsx
@@ -87,14 +97,25 @@ const [theme, setTheme] = useState<Theme>(() =>
 - `NavLink` with `isActive` render prop for active styling in sidebar
 - Route params via `useParams()` for detail/edit pages
 
+### Drag and Drop (Kanban)
+- Uses `@hello-pangea/dnd` library (React 19 compatible fork of react-beautiful-dnd)
+- `DragDropContext` > `Droppable` > `Draggable` pattern
+- Columns and task types configurable via Settings
+
 ## Architectural Practices
 
 ### Label Abstraction
-Always use `labels.paciente` / `labels.doctor` instead of hardcoded strings to support preset switching:
+Always use `labels.paciente` / `labels.doctor` / `labels.inventario` / `labels.tablero` / `labels.tareas` instead of hardcoded strings to support preset switching:
 ```tsx
 import { labels } from '../lib/labels'
 // ✓ labels.paciente
 // ✗ 'Paciente'
+```
+
+### Module Visibility
+Modules can be toggled on/off in Settings. The sidebar and navigation respect `getModules()` config:
+```tsx
+import { getModules } from '../lib/modules'
 ```
 
 ### Custom Fields Integration
@@ -107,7 +128,13 @@ onSubmit: (data: Record<string, string>, custom: Record<string, unknown>) => voi
 All localStorage keys use `katt-` prefix:
 - `katt-theme` — dark/light
 - `katt-preset` — salud/negocio
+- `katt-modules` — module visibility config
 - `katt-custom-fields-{module}` — custom field definitions
+- `katt-kanban-columnas` — kanban column names
+- `katt-kanban-tipos` — task type definitions
+- `katt-tareas-tabla-columnas` — visible task table columns
+- `katt-inventario-categorias` — inventory categories
+- `katt-unread-count` — unread notification count
 
 ### Icons
 - Inline SVG (no icon library)
