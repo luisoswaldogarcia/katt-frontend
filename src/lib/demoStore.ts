@@ -32,6 +32,7 @@ export interface EmpresaData {
   direccion?: string
   foto?: string
   custom?: Record<string, unknown>
+  modules?: Partial<Record<string, boolean>>
 }
 
 let pacientes: PacienteData[] = [
@@ -138,10 +139,10 @@ let pacientes: PacienteData[] = [
 ]
 
 let empresas: EmpresaData[] = [
-  { id: 1, nombre: 'Johnny', rfc: '', telefono: '', email: '' },
-  { id: 2, nombre: 'Odeth', rfc: '', telefono: '', email: '' },
-  { id: 3, nombre: 'Gutiérrez', rfc: '', telefono: '', email: '' },
-  { id: 4, nombre: 'Carpol', rfc: '', telefono: '', email: '' },
+  { id: 1, nombre: 'Johnny', rfc: '', telefono: '', email: '', modules: { paciente: true, doctor: true, empresa: true, inventario: true, agenda: true, chat: true, agente: true, tablero: true, tareas: true } },
+  { id: 2, nombre: 'Odeth', rfc: '', telefono: '', email: '', modules: { paciente: false, doctor: false, empresa: false, inventario: false, agenda: false, chat: true, agente: false, tablero: false, tareas: false } },
+  { id: 3, nombre: 'Gutiérrez', rfc: '', telefono: '', email: '', modules: { paciente: false, doctor: false, empresa: false, inventario: false, agenda: false, chat: true, agente: false, tablero: false, tareas: false } },
+  { id: 4, nombre: 'Carpol', rfc: '', telefono: '', email: '', modules: { paciente: false, doctor: false, empresa: false, inventario: false, agenda: false, chat: true, agente: false, tablero: false, tareas: false } },
 ]
 
 let doctores: DoctorData[] = [

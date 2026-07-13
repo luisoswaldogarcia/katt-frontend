@@ -5,10 +5,10 @@ import type { Labels } from '../lib/labels'
 import type { CustomField, FieldType, Module } from '../lib/customFields'
 import { fieldTypeLabels, getCustomFields, saveCustomFields } from '../lib/customFields'
 import { getCategorias, saveCategorias } from '../lib/categorias'
-import { getModules } from '../lib/modules'
+import { getActiveEmpresaId, setActiveEmpresaId } from '../lib/modules'
+import { empresaStore } from '../lib/demoStore'
 import { getKanbanColumns, saveKanbanColumns, getTaskTypes, saveTaskTypes, getAllTableColumns, getVisibleTableColumns, saveVisibleTableColumns } from '../lib/kanban'
 import type { TaskType, TaskTypeField } from '../lib/kanban'
-import type { ModuleConfig } from '../lib/modules'
 
 type Tab = 'usuario' | 'sistema' | 'operativo'
 
@@ -32,17 +32,6 @@ function DeleteBtn({ onClick }: { onClick: () => void }) {
   )
 }
 
-const moduleOptions: { key: keyof ModuleConfig; label: string; core?: boolean }[] = [
-  { key: 'paciente', label: 'Pacientes', core: true },
-  { key: 'doctor', label: 'Usuarios', core: true },
-  { key: 'empresa', label: 'Empresas' },
-  { key: 'agenda', label: 'Agenda' },
-  { key: 'inventario', label: 'Inventario' },
-  { key: 'tablero', label: 'Tablero' },
-  { key: 'tareas', label: 'Tareas' },
-  { key: 'chat', label: 'Chat' },
-  { key: 'agente', label: 'Agente' },
-]
 
 export default function Settings() {
   const [tab, setTab] = useState<Tab>('usuario')
@@ -56,7 +45,11 @@ export default function Settings() {
   })
   const [categorias, setCategorias] = useState(getCategorias)
   const [newCategoria, setNewCategoria] = useState('')
-  const [modules, setModules] = useState(getModules)
+  const [activeEmpresa, setActiveEmpresa] = useState<string>(() => {
+    const id = getActiveEmpresaId()
+    return id ? String(id) : ''
+  })
+  const empresas = empresaStore.getAll()
   const [kanbanCols, setKanbanCols] = useState(getKanbanColumns)
   const [newCol, setNewCol] = useState('')
   const [taskTypes, setTaskTypes] = useState(getTaskTypes)
@@ -128,26 +121,23 @@ export default function Settings() {
       {tab === 'sistema' && (
         <div className="max-w-md space-y-4">
           <div className={cardClass}>
-            <p className={cardTitle}>Módulos activos</p>
-            <p className="text-xs text-gray-500">Activa o desactiva módulos de la plataforma. Los módulos principales no se pueden desactivar.</p>
-            <div className="space-y-2">
-              {moduleOptions.map(mod => (
-                <label key={mod.key} className={`${listItem} cursor-pointer`}>
-                  <span className="text-sm">{mod.label}</span>
-                  <input
-                    type="checkbox"
-                    checked={modules[mod.key]}
-                    disabled={mod.core}
-                    onChange={() => {
-                      const updated = { ...modules, [mod.key]: !modules[mod.key] }
-                      setModules(updated)
-                      localStorage.setItem('katt-modules', JSON.stringify(updated))
-                    }}
-                    className="w-4 h-4 rounded border-katt-300 text-katt-500 focus:ring-katt-500 disabled:opacity-50"
-                  />
-                </label>
+            <p className={cardTitle}>Empresa activa</p>
+            <p className="text-xs text-gray-500">Selecciona la empresa con la que estás trabajando. Esto determina los módulos disponibles.</p>
+            <select
+              value={activeEmpresa}
+              onChange={e => {
+                const val = e.target.value
+                setActiveEmpresa(val)
+                setActiveEmpresaId(val ? Number(val) : null)
+              }}
+              className={inputClass}
+            >
+              <option value="">Owner (todos los módulos)</option>
+              {empresas.map(e => (
+                <option key={e.id} value={String(e.id)}>{e.nombre}</option>
               ))}
-            </div>
+            </select>
+            <p className="text-xs text-gray-500">La configuración de módulos por empresa se gestiona desde el detalle de cada empresa.</p>
           </div>
         </div>
       )}

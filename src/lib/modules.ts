@@ -1,4 +1,6 @@
-const STORAGE_KEY = 'katt-modules'
+import { empresaStore } from './demoStore'
+
+const ACTIVE_EMPRESA_KEY = 'katt-active-empresa'
 
 export interface ModuleConfig {
   paciente: boolean
@@ -12,7 +14,7 @@ export interface ModuleConfig {
   tareas: boolean
 }
 
-const defaults: ModuleConfig = {
+const allEnabled: ModuleConfig = {
   paciente: true,
   doctor: true,
   empresa: true,
@@ -24,11 +26,33 @@ const defaults: ModuleConfig = {
   tareas: true,
 }
 
-export function getModules(): ModuleConfig {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  return stored ? { ...defaults, ...JSON.parse(stored) } : defaults
+export function getActiveEmpresaId(): number | null {
+  const stored = localStorage.getItem(ACTIVE_EMPRESA_KEY)
+  return stored ? Number(stored) : null
 }
 
-export function saveModules(modules: ModuleConfig) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(modules))
+export function setActiveEmpresaId(id: number | null) {
+  if (id === null) {
+    localStorage.removeItem(ACTIVE_EMPRESA_KEY)
+  } else {
+    localStorage.setItem(ACTIVE_EMPRESA_KEY, String(id))
+  }
+}
+
+export function getModules(): ModuleConfig {
+  const empresaId = getActiveEmpresaId()
+  if (!empresaId) return allEnabled
+
+  const empresa = empresaStore.getById(empresaId)
+  if (!empresa || !empresa.modules) return allEnabled
+
+  const result = { ...allEnabled }
+  for (const key of Object.keys(result) as (keyof ModuleConfig)[]) {
+    result[key] = empresa.modules[key] !== false
+  }
+  return result
+}
+
+export function saveEmpresaModules(empresaId: number, modules: Partial<Record<string, boolean>>) {
+  empresaStore.update(empresaId, { modules })
 }

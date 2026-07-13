@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { labels } from '../lib/labels'
 import { doctorStore, empresaStore } from '../lib/demoStore'
-import { getModules } from '../lib/modules'
 import type { ModuleConfig } from '../lib/modules'
 import { DataDetail } from '../components/DataDetail'
 
@@ -32,8 +31,11 @@ export default function UsuarioDetalle() {
 
   const empresa = doctor.empresaId ? empresaStore.getById(doctor.empresaId) : null
 
-  const systemModules = getModules()
-  const activeSystemModules = (Object.keys(systemModules) as (keyof ModuleConfig)[]).filter(k => systemModules[k])
+  const allModuleKeys = Object.keys(moduleLabels) as (keyof ModuleConfig)[]
+  const empresaModules = empresa?.modules || {}
+  const activeSystemModules = empresa
+    ? allModuleKeys.filter(k => empresaModules[k] !== false)
+    : allModuleKeys
   const userModules = doctor.modules || {}
 
   function toggleModule(key: string) {
