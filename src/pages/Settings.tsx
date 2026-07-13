@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ThemeToggle } from '../components/ThemeToggle'
-import { labels } from '../lib/labels'
+import { labels, getLabels, saveLabels } from '../lib/labels'
+import type { Labels } from '../lib/labels'
 import type { CustomField, FieldType, Module } from '../lib/customFields'
 import { fieldTypeLabels, getCustomFields, saveCustomFields } from '../lib/customFields'
 import { getCategorias, saveCategorias } from '../lib/categorias'
@@ -9,9 +10,27 @@ import { getKanbanColumns, saveKanbanColumns, getTaskTypes, saveTaskTypes, getAl
 import type { TaskType, TaskTypeField } from '../lib/kanban'
 import type { ModuleConfig } from '../lib/modules'
 
-const sectionClass = "space-y-4 rounded-xl border border-katt-200 dark:border-katt-800 p-4"
-const sectionTitle = "text-sm font-bold text-katt-600 dark:text-katt-300"
-const sectionSubtitle = "text-xs text-gray-500"
+type Tab = 'usuario' | 'sistema' | 'operativo'
+
+const tabClass = (active: boolean) =>
+  `px-4 py-2 text-sm font-medium rounded-lg transition-colors text-left ${active ? 'bg-katt-500 text-white' : 'hover:bg-katt-100 dark:hover:bg-katt-800 text-gray-600 dark:text-gray-400'}`
+
+const cardClass = "rounded-xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900/50 p-4 space-y-3"
+const cardTitle = "text-sm font-semibold text-katt-600 dark:text-katt-300"
+const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
+const btnPrimary = "px-3 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors"
+const btnSmall = "px-3 py-1 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-xs font-medium transition-colors"
+const listItem = "flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800"
+
+function DeleteBtn({ onClick }: { onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+        <path d="M18 6L6 18M6 6l12 12" />
+      </svg>
+    </button>
+  )
+}
 
 const moduleOptions: { key: keyof ModuleConfig; label: string; core?: boolean }[] = [
   { key: 'paciente', label: 'Pacientes', core: true },
@@ -25,6 +44,8 @@ const moduleOptions: { key: keyof ModuleConfig; label: string; core?: boolean }[
 ]
 
 export default function Settings() {
+  const [tab, setTab] = useState<Tab>('usuario')
+  const [moduleLabels, setModuleLabels] = useState<Labels>(getLabels)
   const [activeModule, setActiveModule] = useState<Module>('paciente')
   const [fields, setFields] = useState<Record<Module, CustomField[]>>({
     paciente: getCustomFields('paciente'),
@@ -74,261 +95,260 @@ export default function Settings() {
   }
 
   return (
-    <div className="p-4 space-y-6 h-full overflow-y-auto">
-      <h2 className="text-lg font-bold">Configuración</h2>
+    <div className="p-4 h-full overflow-y-auto">
+      <h2 className="text-lg font-bold mb-4">Configuración</h2>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Columna izquierda */}
-        <div className="space-y-6">
-          {/* === USUARIO === */}
-          <section className={sectionClass}>
-            <div>
-              <p className={sectionTitle}>Usuario</p>
-              <p className={sectionSubtitle}>Preferencias personales</p>
-            </div>
+      <div className="md:flex md:gap-6">
+        {/* Tabs: horizontal en mobile, vertical sidebar en desktop */}
+        <div className="flex gap-2 flex-wrap mb-4 md:mb-0 md:flex-col md:w-44 md:shrink-0">
+          <button onClick={() => setTab('usuario')} className={tabClass(tab === 'usuario')}>Usuario</button>
+          <button onClick={() => setTab('sistema')} className={tabClass(tab === 'sistema')}>Sistema</button>
+          <button onClick={() => setTab('operativo')} className={tabClass(tab === 'operativo')}>Operativo</button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+
+      {/* Tab: Usuario */}
+      {tab === 'usuario' && (
+        <div className="max-w-md space-y-4">
+          <div className={cardClass}>
+            <p className={cardTitle}>Apariencia</p>
             <div className="flex items-center justify-between">
               <span className="text-sm">Tema</span>
               <ThemeToggle />
             </div>
-          </section>
-
-          {/* === ADMINISTRADOR DE SISTEMA === */}
-          <section className={sectionClass}>
-            <div>
-              <p className={sectionTitle}>Administrador de sistema</p>
-              <p className={sectionSubtitle}>Configuración global de la plataforma</p>
-            </div>
-            <div className="space-y-3">
-              <span className="text-sm font-medium">Módulos activos</span>
-              <div className="space-y-2">
-                {moduleOptions.map(mod => (
-                  <label key={mod.key} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800 cursor-pointer">
-                    <span className="text-sm">{mod.label}</span>
-                    <input
-                      type="checkbox"
-                      checked={modules[mod.key]}
-                      disabled={mod.core}
-                      onChange={() => {
-                        const updated = { ...modules, [mod.key]: !modules[mod.key] }
-                        setModules(updated)
-                        localStorage.setItem('katt-modules', JSON.stringify(updated))
-                      }}
-                      className="w-4 h-4 rounded border-katt-300 text-katt-500 focus:ring-katt-500 disabled:opacity-50"
-                    />
-                  </label>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500">Los módulos principales no se pueden desactivar.</p>
-            </div>
-          </section>
+          </div>
         </div>
+      )}
 
-        {/* Columna derecha */}
-        <div className="space-y-6">
-          {/* === ADMINISTRADOR OPERATIVO === */}
-          <section className={sectionClass}>
-            <div>
-              <p className={sectionTitle}>Administrador operativo</p>
-              <p className={sectionSubtitle}>Configuración de módulos y datos</p>
+      {/* Tab: Sistema */}
+      {tab === 'sistema' && (
+        <div className="max-w-md space-y-4">
+          <div className={cardClass}>
+            <p className={cardTitle}>Módulos activos</p>
+            <p className="text-xs text-gray-500">Activa o desactiva módulos de la plataforma. Los módulos principales no se pueden desactivar.</p>
+            <div className="space-y-2">
+              {moduleOptions.map(mod => (
+                <label key={mod.key} className={`${listItem} cursor-pointer`}>
+                  <span className="text-sm">{mod.label}</span>
+                  <input
+                    type="checkbox"
+                    checked={modules[mod.key]}
+                    disabled={mod.core}
+                    onChange={() => {
+                      const updated = { ...modules, [mod.key]: !modules[mod.key] }
+                      setModules(updated)
+                      localStorage.setItem('katt-modules', JSON.stringify(updated))
+                    }}
+                    className="w-4 h-4 rounded border-katt-300 text-katt-500 focus:ring-katt-500 disabled:opacity-50"
+                  />
+                </label>
+              ))}
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* Campos personalizados */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Campos personalizados</span>
+      {/* Tab: Operativo */}
+      {tab === 'operativo' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Nombres de módulos */}
+          <div className={cardClass}>
+            <p className={cardTitle}>Nombres de módulos</p>
+            <p className="text-xs text-gray-500">Personaliza cómo se llaman los módulos en la interfaz. Los cambios se aplican al recargar.</p>
+            <div className="space-y-2">
+              {(['paciente', 'doctor', 'inventario', 'tablero', 'tareas'] as (keyof Labels)[]).map(key => (
+                <div key={key} className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500 w-20 capitalize">{key}</span>
+                  <input
+                    value={moduleLabels[key]}
+                    onChange={e => {
+                      const updated = { ...moduleLabels, [key]: e.target.value }
+                      setModuleLabels(updated)
+                      saveLabels(updated)
+                    }}
+                    className={`flex-1 ${inputClass}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Campos personalizados */}
+          <div className={cardClass}>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <p className={cardTitle}>Campos personalizados</p>
+              <button onClick={() => setShowFieldForm(true)} className={btnSmall}>+ Campo</button>
+            </div>
+            <div className="flex gap-2">
+              {([['paciente', labels.paciente], ['doctor', labels.doctor], ['inventario', labels.inventario]] as [Module, string][]).map(([mod, label]) => (
                 <button
-                  onClick={() => setShowFieldForm(true)}
-                  className="px-3 py-1 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-xs font-medium transition-colors"
+                  key={mod}
+                  onClick={() => setActiveModule(mod)}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${activeModule === mod ? 'bg-katt-500 text-white' : 'bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700'}`}
                 >
-                  + Campo
+                  {label}
                 </button>
-              </div>
-
-              <div className="flex gap-2">
-                {([['paciente', labels.paciente], ['doctor', labels.doctor], ['inventario', labels.inventario]] as [Module, string][]).map(([mod, label]) => (
-                  <button
-                    key={mod}
-                    onClick={() => setActiveModule(mod)}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${activeModule === mod ? 'bg-katt-500 text-white' : 'bg-katt-100 dark:bg-katt-800'}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {fields[activeModule].length === 0 && (
-                <p className="text-xs text-gray-500">No hay campos personalizados para este módulo.</p>
-              )}
-
+              ))}
+            </div>
+            {fields[activeModule].length === 0 ? (
+              <p className="text-xs text-gray-500">No hay campos personalizados para este módulo.</p>
+            ) : (
               <div className="space-y-2">
                 {fields[activeModule].map(f => (
-                  <div key={f.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800">
+                  <div key={f.id} className={listItem}>
                     <div>
                       <span className="text-sm">{f.label}</span>
                       <span className="ml-2 text-xs text-gray-500">{fieldTypeLabels[f.type]}</span>
                       {f.required && <span className="ml-1 text-xs text-red-500">*</span>}
                     </div>
-                    <button
-                      onClick={() => removeField(f.id)}
-                      className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                        <path d="M18 6L6 18M6 6l12 12" />
-                      </svg>
-                    </button>
+                    <DeleteBtn onClick={() => removeField(f.id)} />
                   </div>
                 ))}
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* Categorías de inventario */}
-            <div className="space-y-3 pt-2 border-t border-katt-200 dark:border-katt-800">
-              <span className="text-sm font-medium">Categorías de inventario</span>
-              <div className="flex gap-2">
-                <input
-                  placeholder="Nueva categoría"
-                  value={newCategoria}
-                  onChange={e => setNewCategoria(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && newCategoria.trim()) {
-                      e.preventDefault()
-                      const updated = [...categorias, newCategoria.trim()]
-                      setCategorias(updated)
-                      saveCategorias(updated)
-                      setNewCategoria('')
-                    }
-                  }}
-                  className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
-                />
-                <button
-                  onClick={() => {
-                    if (newCategoria.trim()) {
-                      const updated = [...categorias, newCategoria.trim()]
-                      setCategorias(updated)
-                      saveCategorias(updated)
-                      setNewCategoria('')
-                    }
-                  }}
-                  className="px-3 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors"
-                >
-                  +
-                </button>
-              </div>
+          {/* Categorías de inventario */}
+          <div className={cardClass}>
+            <p className={cardTitle}>Categorías de inventario</p>
+            <div className="flex gap-2">
+              <input
+                placeholder="Nueva categoría"
+                value={newCategoria}
+                onChange={e => setNewCategoria(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && newCategoria.trim()) {
+                    e.preventDefault()
+                    const updated = [...categorias, newCategoria.trim()]
+                    setCategorias(updated)
+                    saveCategorias(updated)
+                    setNewCategoria('')
+                  }
+                }}
+                className={`flex-1 ${inputClass}`}
+              />
+              <button
+                onClick={() => {
+                  if (newCategoria.trim()) {
+                    const updated = [...categorias, newCategoria.trim()]
+                    setCategorias(updated)
+                    saveCategorias(updated)
+                    setNewCategoria('')
+                  }
+                }}
+                className={btnPrimary}
+              >
+                +
+              </button>
+            </div>
+            {categorias.length > 0 && (
               <div className="space-y-1">
                 {categorias.map((cat, i) => (
-                  <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800">
+                  <div key={i} className={listItem}>
                     <span className="text-sm">{cat}</span>
-                    <button
-                      onClick={() => {
-                        const updated = categorias.filter((_, idx) => idx !== i)
-                        setCategorias(updated)
-                        saveCategorias(updated)
-                      }}
-                      className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                        <path d="M18 6L6 18M6 6l12 12" />
-                      </svg>
-                    </button>
+                    <DeleteBtn onClick={() => {
+                      const updated = categorias.filter((_, idx) => idx !== i)
+                      setCategorias(updated)
+                      saveCategorias(updated)
+                    }} />
                   </div>
                 ))}
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* Columnas del Kanban */}
-            <div className="space-y-3 pt-2 border-t border-katt-200 dark:border-katt-800">
-              <span className="text-sm font-medium">Columnas del tablero de tareas</span>
-              <div className="flex gap-2">
-                <input
-                  placeholder="Nueva columna"
-                  value={newCol}
-                  onChange={e => setNewCol(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && newCol.trim()) {
-                      e.preventDefault()
-                      const updated = [...kanbanCols, newCol.trim()]
-                      setKanbanCols(updated)
-                      saveKanbanColumns(updated)
-                      setNewCol('')
-                    }
-                  }}
-                  className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
-                />
-                <button
-                  onClick={() => {
-                    if (newCol.trim()) {
-                      const updated = [...kanbanCols, newCol.trim()]
-                      setKanbanCols(updated)
-                      saveKanbanColumns(updated)
-                      setNewCol('')
-                    }
-                  }}
-                  className="px-3 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors"
-                >
-                  +
-                </button>
-              </div>
+          {/* Columnas del tablero */}
+          <div className={cardClass}>
+            <p className={cardTitle}>Columnas del tablero</p>
+            <div className="flex gap-2">
+              <input
+                placeholder="Nueva columna"
+                value={newCol}
+                onChange={e => setNewCol(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && newCol.trim()) {
+                    e.preventDefault()
+                    const updated = [...kanbanCols, newCol.trim()]
+                    setKanbanCols(updated)
+                    saveKanbanColumns(updated)
+                    setNewCol('')
+                  }
+                }}
+                className={`flex-1 ${inputClass}`}
+              />
+              <button
+                onClick={() => {
+                  if (newCol.trim()) {
+                    const updated = [...kanbanCols, newCol.trim()]
+                    setKanbanCols(updated)
+                    saveKanbanColumns(updated)
+                    setNewCol('')
+                  }
+                }}
+                className={btnPrimary}
+              >
+                +
+              </button>
+            </div>
+            {kanbanCols.length > 0 && (
               <div className="space-y-1">
                 {kanbanCols.map((col, i) => (
-                  <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800">
+                  <div key={i} className={listItem}>
                     <span className="text-sm">{col}</span>
-                    <button
-                      onClick={() => {
-                        const updated = kanbanCols.filter((_, idx) => idx !== i)
-                        setKanbanCols(updated)
-                        saveKanbanColumns(updated)
-                      }}
-                      className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                        <path d="M18 6L6 18M6 6l12 12" />
-                      </svg>
-                    </button>
+                    <DeleteBtn onClick={() => {
+                      const updated = kanbanCols.filter((_, idx) => idx !== i)
+                      setKanbanCols(updated)
+                      saveKanbanColumns(updated)
+                    }} />
                   </div>
                 ))}
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* Columnas visibles en tabla de tareas */}
-            <div className="space-y-3 pt-2 border-t border-katt-200 dark:border-katt-800">
-              <span className="text-sm font-medium">Columnas visibles en tabla de tareas</span>
-              <div className="space-y-1">
-                {getAllTableColumns().map(col => {
-                  const visible = getVisibleTableColumns()
-                  const checked = visible.includes(col.key)
-                  return (
-                    <label key={col.key} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => {
-                          const updated = checked ? visible.filter(k => k !== col.key) : [...visible, col.key]
-                          saveVisibleTableColumns(updated)
-                          forceUpdate(n => n + 1)
-                        }}
-                        className="rounded"
-                      />
-                      <span className="text-sm">{col.label}</span>
-                    </label>
-                  )
-                })}
-              </div>
+          {/* Columnas visibles en tabla de tareas */}
+          <div className={cardClass}>
+            <p className={cardTitle}>Columnas visibles en tabla de tareas</p>
+            <div className="space-y-1">
+              {getAllTableColumns().map(col => {
+                const visible = getVisibleTableColumns()
+                const checked = visible.includes(col.key)
+                return (
+                  <label key={col.key} className={`${listItem} cursor-pointer`}>
+                    <span className="text-sm">{col.label}</span>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const updated = checked ? visible.filter(k => k !== col.key) : [...visible, col.key]
+                        saveVisibleTableColumns(updated)
+                        forceUpdate(n => n + 1)
+                      }}
+                      className="w-4 h-4 rounded border-katt-300 text-katt-500 focus:ring-katt-500"
+                    />
+                  </label>
+                )
+              })}
             </div>
+          </div>
 
-            {/* Tipos de tarea */}
-            <div className="space-y-3 pt-2 border-t border-katt-200 dark:border-katt-800">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Tipos de tarea</span>
-                <button
-                  onClick={() => { setEditingType(null); setTypeName(''); setTypeFields([]); setShowTypeForm(true) }}
-                  className="px-3 py-1 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-xs font-medium transition-colors"
-                >
-                  + Tipo
-                </button>
-              </div>
+          {/* Tipos de tarea */}
+          <div className={cardClass}>
+            <div className="flex items-center justify-between">
+              <p className={cardTitle}>Tipos de tarea</p>
+              <button
+                onClick={() => { setEditingType(null); setTypeName(''); setTypeFields([]); setShowTypeForm(true) }}
+                className={btnSmall}
+              >
+                + Tipo
+              </button>
+            </div>
+            {taskTypes.length > 0 && (
               <div className="space-y-1">
                 {taskTypes.map(tt => (
-                  <div key={tt.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800">
+                  <div key={tt.id} className={listItem}>
                     <div>
                       <span className="text-sm">{tt.nombre}</span>
                       <span className="ml-2 text-xs text-gray-500">{tt.fields.length} campo{tt.fields.length !== 1 && 's'}</span>
@@ -343,28 +363,24 @@ export default function Settings() {
                           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
                       </button>
-                      <button
-                        onClick={() => {
-                          const updated = taskTypes.filter(t => t.id !== tt.id)
-                          setTaskTypes(updated)
-                          saveTaskTypes(updated)
-                        }}
-                        className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
-                          <path d="M18 6L6 18M6 6l12 12" />
-                        </svg>
-                      </button>
+                      <DeleteBtn onClick={() => {
+                        const updated = taskTypes.filter(t => t.id !== tt.id)
+                        setTaskTypes(updated)
+                        saveTaskTypes(updated)
+                      }} />
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          </section>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Modal nuevo campo */}
+        </div>{/* end flex-1 content */}
+      </div>{/* end md:flex */}
+
+      {/* Modal: nuevo campo */}
       {showFieldForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowFieldForm(false)}>
           <div onClick={e => e.stopPropagation()} className="w-full max-w-sm bg-white dark:bg-katt-900 rounded-xl p-5 space-y-4 border border-katt-200 dark:border-katt-800">
@@ -373,12 +389,12 @@ export default function Settings() {
               placeholder="Nombre del campo"
               value={newField.label || ''}
               onChange={e => setNewField({ ...newField, label: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
+              className={inputClass}
             />
             <select
               value={newField.type}
               onChange={e => setNewField({ ...newField, type: e.target.value as FieldType, options: [] })}
-              className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
+              className={inputClass}
             >
               {Object.entries(fieldTypeLabels).map(([key, label]) => (
                 <option key={key} value={key}>{label}</option>
@@ -399,7 +415,7 @@ export default function Settings() {
                         setOptionInput('')
                       }
                     }}
-                    className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
+                    className={`flex-1 ${inputClass}`}
                   />
                   <button
                     type="button"
@@ -432,14 +448,14 @@ export default function Settings() {
                   placeholder="Mín"
                   value={newField.min ?? 0}
                   onChange={e => setNewField({ ...newField, min: Number(e.target.value) })}
-                  className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
+                  className={`flex-1 ${inputClass}`}
                 />
                 <input
                   type="number"
                   placeholder="Máx"
                   value={newField.max ?? 10}
                   onChange={e => setNewField({ ...newField, max: Number(e.target.value) })}
-                  className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
+                  className={`flex-1 ${inputClass}`}
                 />
               </div>
             )}
@@ -475,7 +491,7 @@ export default function Settings() {
               placeholder="Nombre del tipo"
               value={typeName}
               onChange={e => setTypeName(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
+              className={inputClass}
             />
 
             <div className="space-y-2">
