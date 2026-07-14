@@ -1,34 +1,37 @@
 # Katt - Product Overview
 
 ## Purpose
-Katt is a mobile-first virtual assistant web application with a cat theme. It serves as a modular business management platform with chat-based AI assistant capabilities, supporting multiple business domains (patients, inventory, users, companies).
+Katt is a mobile-first PWA virtual assistant application with a cat theme ("personalidad felina"). It serves as a modular business management platform that companies can configure with the specific modules they need.
 
 ## Value Proposition
-- Installable PWA for mobile and desktop
-- Modular architecture allowing businesses to enable/disable features
-- Dark/light theme with modern purple-toned UI
-- Spanish-language interface targeting Latin American markets
+- Modular SaaS-style platform where businesses enable/disable features per company
+- Mobile-first installable PWA with offline capabilities
+- Multi-tenant: supports multiple "empresas" (companies) with independent module configurations
+- OCR document scanning via Tesseract.js for mobile document capture
+- Barcode detection for inventory/POS workflows
 
-## Key Features
-- **AI Chat Assistant**: Cat-themed virtual assistant (Agente)
-- **Module System**: Configurable business modules (Pacientes, Inventario, Usuarios, Empresas)
-- **Kanban Board (Tablero)**: Task management with drag-and-drop
-- **Agenda**: Scheduling and appointments (PacienteCitas)
-- **Document Management**: Upload/create documents per entity
-- **Dynamic Fields**: Custom fields per module
-- **Data CRUD**: Generic DataTable, DataForm, DataDetail components for all modules
-- **Settings**: Module configuration, categories, labels, custom fields
-- **PWA**: Offline-capable, installable on mobile devices
+## Key Features & Modules
+- **Pacientes** - Patient management and medical records
+- **Usuarios** - User administration and roles
+- **Empresas** - Company management and configurations
+- **Inventario** - Stock control, movements, bulk loading
+- **Agenda** - Calendar and appointments
+- **Chat** - Internal messaging
+- **Agente** - AI-powered virtual assistant
+- **Tablero** - Kanban board for project management
+- **Tareas** - Task lists and tracking
+- **Punto de Venta (POS)** - Quick checkout and sales registration
+- **Documentos** - Document management with OCR scanning and file uploads
+- **Custom Fields** - Dynamic field configuration per module
+- **Settings** - Theme, module catalog pricing, document type management
 
 ## Target Users
-- Small/medium businesses needing a configurable management tool
-- Healthcare clinics (patient management module)
-- Inventory-based businesses
-- Teams needing task/project management
+- Small-to-medium businesses (clinics, retail, services) needing a configurable management platform
+- Spanish-speaking market (all UI in Spanish)
+- Mobile-heavy users who need field access (document scanning, POS, inventory)
 
-## Use Cases
-- Patient registration and appointment scheduling
-- Inventory tracking with movement history
-- User/company management
-- Task organization via Kanban boards
-- Document attachment to business entities
+## Design Philosophy
+- Dark mode by default with light mode toggle
+- Purple-toned palette with soft accents
+- Modern, clean chat/assistant-style UI
+- Fullscreen PWA experience on mobile
