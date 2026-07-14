@@ -1,8 +1,10 @@
-import { empresaStore } from '../lib/demoStore'
+import { entityConfigs } from '../lib/entityConfig'
 import { getModuleCatalog } from '../lib/moduleCatalog'
 import { DataTable } from '../components/DataTable'
 import type { Column } from '../components/DataTable'
 import type { PageResult } from '../lib/demoStore'
+
+const { basePath, altaPath, store } = entityConfigs.empresa
 
 const columns: Column[] = [
   { key: 'nombre', label: 'Nombre', filterable: true },
@@ -20,14 +22,14 @@ function calcularMonto(modules?: Partial<Record<string, boolean>>): string {
 
 export default function Empresa() {
   const fetchPage = async (page: number): Promise<PageResult<Record<string, unknown>>> => {
-    const result = await empresaStore.getPage(page)
+    const result = await store.getPage(page)
     const data = result.data.map(e => ({
       ...e,
-      montoMensual: calcularMonto(e.modules),
-      statusPago: e.statusPago || 'Sin definir',
+      montoMensual: calcularMonto((e as { modules?: Partial<Record<string, boolean>> }).modules),
+      statusPago: (e as { statusPago?: string }).statusPago || 'Sin definir',
     }))
     return { ...result, data }
   }
 
-  return <DataTable columns={columns} fetchPage={fetchPage} basePath="/empresa" altaPath="/empresa/alta" />
+  return <DataTable columns={columns} fetchPage={fetchPage} basePath={basePath} altaPath={altaPath} />
 }

@@ -1,14 +1,8 @@
-import { doctorStore } from '../lib/demoStore'
+import { entityConfigs } from '../lib/entityConfig'
 import { DataTable } from '../components/DataTable'
-import type { Column } from '../components/DataTable'
 
-const columns: Column[] = [
-  { key: 'nombre', label: 'Nombre', filterable: true },
-  { key: 'rol', label: 'Rol', filterable: true },
-  { key: 'telefono', label: 'Teléfono', hiddenOn: 'md' },
-  { key: 'email', label: 'Email', hiddenOn: 'lg' },
-]
+const { columns, basePath, altaPath, store } = entityConfigs.doctor
 
 export default function Usuario() {
-  return <DataTable columns={columns} fetchPage={(p) => doctorStore.getPage(p)} basePath="/doctor" altaPath="/doctor/alta" />
+  return <DataTable columns={columns} fetchPage={(p) => store.getPage(p)} basePath={basePath} altaPath={altaPath} />
 }

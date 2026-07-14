@@ -28,14 +28,19 @@ const btnPrimary = "px-3 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-whit
 ### Single-File Page Pattern (5/5 files)
 Each page is self-contained. Sub-components (modals, sections) are declared in the same file below the main export. No separate files for page-specific components.
 
+For simple CRUD entities, pages delegate to `EntityAlta` component:
 ```tsx
-export default function PageName() {
-  // state, handlers, render
-}
+import { EntityAlta } from '../components/EntityAlta'
 
-function SubComponent({ prop }: { prop: Type }) {
-  // local sub-component
+export default function PacienteAlta() {
+  return <EntityAlta entity="paciente" />
 }
+```
+
+For pages with extra logic (custom fetchPage, selection actions), they use `entityConfig` directly:
+```tsx
+import { entityConfigs } from '../lib/entityConfig'
+const { columns, basePath, altaPath, store } = entityConfigs.paciente
 ```
 
 ### State Management (5/5 files)
@@ -49,6 +54,8 @@ function SubComponent({ prop }: { prop: Type }) {
 - Functions return updated data after mutations: `const updated = saveDocument(...); setDocs(updated)`
 - localStorage as persistence layer with JSON serialization
 - Store pattern: `entityStore.getAll()`, `entityStore.getById(id)`, `entityStore.update(id, data)`
+- Seed data generated programmatically (loops + name arrays), not hardcoded
+- Entity configuration centralized in `lib/entityConfig.ts`
 
 ### Modal Pattern (3/5 files)
 ```tsx

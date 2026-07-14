@@ -32,5 +32,5 @@ export default function Inventario() {
     },
   ]
 
-  return <DataTable columns={columns} fetchPage={(p) => inventarioStore.getPage(p)} basePath="/inventario" altaPath="/inventario/alta" selectable onSelectionAction={(ids) => navigate('/inventario/movimiento', { state: { ids } })} fabMenu={fabMenu} />
+  return <DataTable columns={columns} fetchPage={(p) => inventarioStore.getPage(p) as unknown as Promise<import('../lib/demoStore').PageResult<Record<string, unknown>>>} basePath="/inventario" altaPath="/inventario/alta" selectable onSelectionAction={(ids) => navigate('/inventario/movimiento', { state: { ids } })} fabMenu={fabMenu} />
 }

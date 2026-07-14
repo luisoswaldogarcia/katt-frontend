@@ -1,6 +1,5 @@
-import { useParams, useNavigate } from 'react-router-dom'
-import { doctorStore, empresaStore } from '../lib/demoStore'
-import { DataForm } from '../components/DataForm'
+import { empresaStore } from '../lib/demoStore'
+import { EntityAlta } from '../components/EntityAlta'
 import type { FormField } from '../components/DataForm'
 
 const empresas = empresaStore.getAll()
@@ -14,19 +13,5 @@ const fields: FormField[] = [
 ]
 
 export default function UsuarioAlta() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const isEdit = !!id
-  const initialData = isEdit ? doctorStore.getById(Number(id)) : undefined
-
-  const handleSubmit = (data: Record<string, string>, custom: Record<string, unknown>, foto?: string) => {
-    if (isEdit) {
-      doctorStore.update(Number(id), { ...data, custom, foto })
-    } else {
-      doctorStore.create({ ...data, custom, foto } as never)
-    }
-    navigate('/doctor')
-  }
-
-  return <DataForm fields={fields} module="doctor" basePath="/doctor" initialData={initialData as never} onSubmit={handleSubmit} isEdit={isEdit} />
+  return <EntityAlta entity="doctor" extraFields={fields} />
 }

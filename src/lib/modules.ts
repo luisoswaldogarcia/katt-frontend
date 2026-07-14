@@ -15,6 +15,19 @@ export interface ModuleConfig {
   pos: boolean
 }
 
+export const moduleLabels: Record<keyof ModuleConfig, string> = {
+  paciente: 'Pacientes',
+  doctor: 'Usuarios',
+  empresa: 'Empresas',
+  inventario: 'Inventario',
+  agenda: 'Agenda',
+  chat: 'Chat',
+  agente: 'Agente',
+  tablero: 'Tablero',
+  tareas: 'Tareas',
+  pos: 'Punto de Venta',
+}
+
 const allEnabled: ModuleConfig = {
   paciente: true,
   doctor: true,

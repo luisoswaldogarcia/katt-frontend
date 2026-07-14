@@ -2,22 +2,10 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { labels } from '../lib/labels'
 import { empresaStore, doctorStore } from '../lib/demoStore'
-import { saveEmpresaModules } from '../lib/modules'
+import { saveEmpresaModules, moduleLabels } from '../lib/modules'
 import type { ModuleConfig } from '../lib/modules'
 import { getModuleCatalog } from '../lib/moduleCatalog'
 import { DataDetail } from '../components/DataDetail'
-
-const moduleLabels: Record<keyof ModuleConfig, string> = {
-  paciente: 'Pacientes',
-  doctor: 'Usuarios',
-  empresa: 'Empresas',
-  inventario: 'Inventario',
-  agenda: 'Agenda',
-  chat: 'Chat',
-  agente: 'Agente',
-  tablero: 'Tablero',
-  tareas: 'Tareas',
-}
 
 const listItem = "flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800"
 
@@ -49,7 +37,7 @@ export default function EmpresaDetalle() {
 
   function toggleModule(key: string) {
     const updated = { ...empresaModules, [key]: !isModuleActive(key) }
-    saveEmpresaModules(empresa.id, updated)
+    saveEmpresaModules(empresa!.id, updated)
     forceUpdate(n => n + 1)
   }
 
