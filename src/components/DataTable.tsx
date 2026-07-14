@@ -11,6 +11,12 @@ export interface Column {
   hiddenOn?: 'md' | 'lg'
 }
 
+export interface FabMenuItem {
+  label: string
+  icon: React.ReactNode
+  onClick: () => void
+}
+
 interface Props {
   columns: Column[]
   fetchPage: (page: number) => Promise<PageResult<Record<string, unknown>>>
@@ -19,9 +25,10 @@ interface Props {
   selectable?: boolean
   onSelectionAction?: (ids: number[]) => void
   selectionIcon?: React.ReactNode
+  fabMenu?: FabMenuItem[]
 }
 
-export function DataTable({ columns, fetchPage, basePath, altaPath, selectable = false, onSelectionAction, selectionIcon }: Props) {
+export function DataTable({ columns, fetchPage, basePath, altaPath, selectable = false, onSelectionAction, selectionIcon, fabMenu }: Props) {
   const navigate = useNavigate()
   const [data, setData] = useState<Record<string, unknown>[]>([])
   const [page, setPage] = useState(0)
@@ -31,6 +38,7 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
   const [sortField, setSortField] = useState<string | null>(null)
   const [sortAsc, setSortAsc] = useState(true)
   const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [fabOpen, setFabOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const loadPage = useCallback(async (p: number) => {
@@ -170,16 +178,31 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
         <p className="text-center text-xs text-gray-500 py-2">No hay más registros</p>
       )}
 
+      {fabOpen && <div className="fixed inset-0 z-30" onClick={() => setFabOpen(false)} />}
+
+      {fabMenu && fabOpen && (
+        <div className="fixed bottom-24 right-6 z-40 flex flex-col items-end gap-2">
+          {fabMenu.map((item, i) => (
+            <button key={i} onClick={() => { item.onClick(); setFabOpen(false) }} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-katt-800 shadow-lg border border-katt-200 dark:border-katt-700 text-sm font-medium text-katt-700 dark:text-katt-200 hover:bg-katt-50 dark:hover:bg-katt-700 transition-colors">
+              {item.label}
+              <span className="w-8 h-8 rounded-full bg-katt-500 text-white flex items-center justify-center">{item.icon}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <button
         onClick={() => {
           if (selected.size > 0 && onSelectionAction) {
             onSelectionAction(Array.from(selected))
             setSelected(new Set())
+          } else if (fabMenu) {
+            setFabOpen(!fabOpen)
           } else {
             navigate(altaPath)
           }
         }}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-katt-500 hover:bg-katt-600 text-white shadow-lg flex items-center justify-center transition-colors z-40"
+        className={`fixed bottom-6 right-6 w-14 h-14 rounded-full bg-katt-500 hover:bg-katt-600 text-white shadow-lg flex items-center justify-center transition-all z-40 ${fabOpen ? 'rotate-45' : ''}`}
         aria-label={selected.size > 0 ? 'Acción masiva' : 'Alta'}
       >
         {selected.size > 0 ? (

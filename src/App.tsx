@@ -17,6 +17,7 @@ import Inventario from './pages/Inventario'
 import InventarioAlta from './pages/InventarioAlta'
 import InventarioDetalle from './pages/InventarioDetalle'
 import InventarioMovimiento from './pages/InventarioMovimiento'
+import InventarioCarga from './pages/InventarioCarga'
 import PacienteCitas from './pages/PacienteCitas'
 import Tablero from './pages/Tablero'
 import TareasLista from './pages/TareasLista'
@@ -39,6 +40,7 @@ const titles: Record<string, string> = {
   '/doctor/alta': 'Alta ' + labels.doctor,
   '/inventario': labels.inventario,
   '/inventario/alta': 'Alta ' + labels.inventario,
+  '/inventario/carga': 'Alta masiva',
   '/inventario/movimiento': 'Movimiento de inventario',
   '/paciente/citas': 'Agendar citas',
   '/empresa': labels.empresa,
@@ -113,6 +115,7 @@ function Layout() {
             <Route path="/doctor/:id" element={<UsuarioDetalle />} />
             <Route path="/inventario" element={<Inventario />} />
             <Route path="/inventario/alta" element={<InventarioAlta />} />
+            <Route path="/inventario/carga" element={<InventarioCarga />} />
             <Route path="/inventario/editar/:id" element={<InventarioAlta />} />
             <Route path="/inventario/movimiento" element={<InventarioMovimiento />} />
             <Route path="/inventario/:id" element={<InventarioDetalle />} />

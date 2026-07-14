@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import Tesseract from 'tesseract.js'
 import type { Module } from '../lib/customFields'
 import { getModuleDocTypes, getDocuments, saveDocument, removeDocument } from '../lib/documents'
 import type { DocumentItem } from '../lib/documents'
@@ -56,7 +57,9 @@ function DocTypeSection({ tipoId, label, docs, onSave, onDelete }: {
   const [showForm, setShowForm] = useState(false)
   const [nombre, setNombre] = useState('')
   const [contenido, setContenido] = useState('')
+  const [scanning, setScanning] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
 
   function handleCreate() {
     if (!nombre.trim() || !contenido.trim()) return
@@ -64,6 +67,18 @@ function DocTypeSection({ tipoId, label, docs, onSave, onDelete }: {
     setNombre('')
     setContenido('')
     setShowForm(false)
+  }
+
+  async function handleOCR(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setScanning(true)
+    try {
+      const { data: { text } } = await Tesseract.recognize(file, 'spa')
+      setContenido(prev => prev ? `${prev}\n${text}` : text)
+    } catch { /* ignore */ }
+    setScanning(false)
+    if (cameraRef.current) cameraRef.current.value = ''
   }
 
   function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -90,10 +105,14 @@ function DocTypeSection({ tipoId, label, docs, onSave, onDelete }: {
         <div className="space-y-2 pl-2 border-l-2 border-katt-300 dark:border-katt-700">
           <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Nombre" className={inputClass} />
           <textarea value={contenido} onChange={e => setContenido(e.target.value)} placeholder="Contenido..." rows={3} className={`${inputClass} resize-none`} />
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button type="button" onClick={handleCreate} className={`flex-1 ${btnPrimary}`}>Crear</button>
             <button type="button" onClick={() => fileRef.current?.click()} className={`flex-1 ${btnPrimary}`}>Subir archivo</button>
+            <button type="button" disabled={scanning} onClick={() => cameraRef.current?.click()} className={`flex-1 ${btnPrimary} ${scanning ? 'opacity-50' : ''}`}>
+              {scanning ? 'Escaneando...' : 'Escanear texto'}
+            </button>
             <input ref={fileRef} type="file" className="hidden" onChange={handleUpload} />
+            <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleOCR} />
           </div>
         </div>
       )}
