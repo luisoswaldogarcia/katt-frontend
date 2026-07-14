@@ -10,7 +10,7 @@ function getCitaFutura(nombre: string): CitaData | undefined {
   return citaStore.getByDateRange(hoy, '2099-12-31').find(c => c.paciente === nombre)
 }
 
-export default function PacienteCitas() {
+export default function ClienteCitas() {
   const navigate = useNavigate()
   const { state } = useLocation() as { state: { ids: number[] } | null }
   const ids: number[] = state?.ids || []

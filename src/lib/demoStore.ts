@@ -276,6 +276,7 @@ let tareas: TareaData[] = [
   { id: 3, titulo: 'Revisar expedientes', tipo: 'general', estado: 'Pendiente', asignado: 'Dra. Sánchez', campos: { descripcion: 'Actualizar expedientes pendientes', fechaLimite: '2025-02-15' } },
   { id: 4, titulo: 'Cobrar seguro paciente Torres', tipo: 'cobrar-seguro', estado: 'Completada', asignado: 'Admin', campos: { monto: '3200' } },
   { id: 5, titulo: 'Crear QR farmacia', tipo: 'crear-qr', estado: 'Pendiente', asignado: 'Dr. Morales', campos: { fechaLimite: '2025-02-25', descripcion: 'QR para inventario farmacia' } },
+  { id: 6, titulo: 'Implementar login con Amplify + Cognito', tipo: 'general', estado: 'Pendiente', asignado: 'Dev', campos: { descripcion: 'Integrar AWS Amplify Auth con Cognito User Pool. Incluye: pantalla de login, protección de rutas, signIn/signUp/signOut. Evaluar si hacer mock primero o ir directo a Cognito.', fechaLimite: '2025-03-01' } },
 ]
 
 export const tareaStore = {

@@ -13,6 +13,7 @@ export interface ModuleConfig {
   tablero: boolean
   tareas: boolean
   pos: boolean
+  compras: boolean
 }
 
 export const moduleLabels: Record<keyof ModuleConfig, string> = {
@@ -26,6 +27,7 @@ export const moduleLabels: Record<keyof ModuleConfig, string> = {
   tablero: 'Tablero',
   tareas: 'Tareas',
   pos: 'Punto de Venta',
+  compras: 'Compras',
 }
 
 const allEnabled: ModuleConfig = {
@@ -39,6 +41,7 @@ const allEnabled: ModuleConfig = {
   tablero: true,
   tareas: true,
   pos: true,
+  compras: true,
 }
 
 export function getActiveEmpresaId(): number | null {

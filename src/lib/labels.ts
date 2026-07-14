@@ -9,10 +9,11 @@ export interface Labels {
   tablero: string
   tareas: string
   pos: string
+  compras: string
 }
 
 const defaults: Labels = {
-  paciente: 'Paciente',
+  paciente: 'Cliente',
   doctor: 'Usuario',
   empresa: 'Empresa',
   inventario: 'Inventario',
@@ -22,6 +23,7 @@ const defaults: Labels = {
   tablero: 'Tablero',
   tareas: 'Tareas',
   pos: 'Punto de Venta',
+  compras: 'Compras',
 }
 
 const demoOverrides: Partial<Labels> = {

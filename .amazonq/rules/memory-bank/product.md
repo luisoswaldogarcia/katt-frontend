@@ -1,37 +1,34 @@
-# Katt - Product Overview
+# Product Overview - Katt
 
 ## Purpose
-Katt is a mobile-first PWA virtual assistant application with a cat theme ("personalidad felina"). It serves as a modular business management platform that companies can configure with the specific modules they need.
+Katt is a cat-themed virtual assistant web application that serves as a business management platform. It provides modules for patient/client management, inventory, point of sale, scheduling, chat, task boards, and more — all wrapped in a modern PWA installable on mobile devices.
 
 ## Value Proposition
-- Modular SaaS-style platform where businesses enable/disable features per company
-- Mobile-first installable PWA with offline capabilities
-- Multi-tenant: supports multiple "empresas" (companies) with independent module configurations
-- OCR document scanning via Tesseract.js for mobile document capture
-- Barcode detection for inventory/POS workflows
+- All-in-one business management tool with multi-empresa (company) support
+- Mobile-first PWA with offline capabilities
+- Modular architecture — empresas can enable/disable specific modules
+- Dark/light theme with a purple-accented modern UI
 
-## Key Features & Modules
-- **Pacientes** - Patient management and medical records
-- **Usuarios** - User administration and roles
-- **Empresas** - Company management and configurations
-- **Inventario** - Stock control, movements, bulk loading
-- **Agenda** - Calendar and appointments
-- **Chat** - Internal messaging
-- **Agente** - AI-powered virtual assistant
-- **Tablero** - Kanban board for project management
-- **Tareas** - Task lists and tracking
-- **Punto de Venta (POS)** - Quick checkout and sales registration
-- **Documentos** - Document management with OCR scanning and file uploads
-- **Custom Fields** - Dynamic field configuration per module
-- **Settings** - Theme, module catalog pricing, document type management
+## Key Features
+- **Entity Management**: CRUD for pacientes, doctores, empresas, usuarios, inventario
+- **Punto de Venta (POS)**: Point of sale system with barcode scanning
+- **Inventario**: Inventory management with image uploads, bulk loading, and stock movements
+- **Agenda**: Scheduling and appointments (ClienteCitas)
+- **Chat**: Messaging system with unread message tracking
+- **Agente**: AI agent interface
+- **Tablero/Tareas**: Kanban board and task lists
+- **Compras**: Purchase management
+- **Documents**: Document type management and file handling
+- **Custom Fields**: Dynamic field configuration per entity
+- **Module Catalog**: Configurable modules per empresa
 
 ## Target Users
-- Small-to-medium businesses (clinics, retail, services) needing a configurable management platform
-- Spanish-speaking market (all UI in Spanish)
-- Mobile-heavy users who need field access (document scanning, POS, inventory)
+- Small-to-medium businesses (clinics, retail, services)
+- Spanish-speaking market (all UI labels in Spanish)
+- Mobile-first users who need business tools on the go
 
-## Design Philosophy
-- Dark mode by default with light mode toggle
-- Purple-toned palette with soft accents
-- Modern, clean chat/assistant-style UI
-- Fullscreen PWA experience on mobile
+## Use Cases
+- Managing patient records and appointments in a clinic
+- Running a retail POS with inventory tracking
+- Multi-company management with per-company module configuration
+- Team collaboration via chat, tasks, and kanban boards

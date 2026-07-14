@@ -1,4 +1,4 @@
-# Katt - Technology Stack
+# Technology Stack - Katt Frontend
 
 ## Core Technologies
 | Technology | Version | Purpose |
@@ -12,46 +12,42 @@
 ## Key Dependencies
 | Package | Purpose |
 |---|---|
-| vite-plugin-pwa | PWA support (installable, offline) |
-| workbox-window | Service worker management |
-| tesseract.js 7 | OCR text recognition from images |
-| barcode-detector | Barcode/QR scanning |
-| @hello-pangea/dnd | Drag-and-drop (Kanban board) |
+| `vite-plugin-pwa` + `workbox-window` | PWA support (installable, offline) |
+| `@hello-pangea/dnd` | Drag-and-drop (Kanban board) |
+| `barcode-detector` | Barcode scanning for POS/inventory |
+| `tesseract.js` | OCR text recognition |
+| `@vitejs/plugin-basic-ssl` | Local HTTPS for dev (required for camera/PWA) |
 
 ## Dev Dependencies
 | Package | Purpose |
 |---|---|
-| @tailwindcss/vite | Tailwind CSS Vite plugin |
-| @vitejs/plugin-react | React Fast Refresh via Oxc |
-| @vitejs/plugin-basic-ssl | Local HTTPS for camera/PWA testing |
-| oxlint | Fast linter (replaces ESLint) |
+| `@tailwindcss/vite` | Tailwind CSS Vite integration |
+| `@vitejs/plugin-react` | React Fast Refresh (uses Oxc) |
+| `oxlint` | Fast linter (replaces ESLint) |
 
-## Build & Development Commands
+## Build & Dev Commands
 ```bash
-npm run dev      # Start dev server with --host (network access)
+npm run dev      # Start dev server with HTTPS (--host for network access)
 npm run build    # TypeScript check + Vite production build
 npm run lint     # Run oxlint
 npm run preview  # Preview production build
 ```
 
 ## Configuration Files
-- `vite.config.ts` - Vite plugins: React, Tailwind, PWA manifest
-- `tsconfig.json` - Project references (app + node configs)
-- `tsconfig.app.json` - App-specific TS config
-- `.oxlintrc.json` - Linter rules (react, typescript, oxc plugins)
+- `vite.config.ts` — Plugins: react, tailwindcss, basicSsl, VitePWA
+- `tsconfig.json` — Project references (app + node configs)
+- `tsconfig.app.json` — App-specific TS config
+- `.oxlintrc.json` — Linter rules
 
 ## PWA Configuration
 - Register type: autoUpdate
 - Display: fullscreen
-- Theme: #7c3aed (purple)
-- Background: #0f0a1a (dark)
+- Theme: purple (#7c3aed) with dark background (#0f0a1a)
+- Icons: 192px and 512px PNG
 
-## Data Persistence
-- All data stored in localStorage (no backend)
-- Pattern: `katt-{entity}` keys
-- JSON serialization for complex data
-
-## Platform
-- Mobile-first PWA
-- Camera access for OCR/barcode scanning
-- HTTPS required for camera APIs (basic-ssl plugin for dev)
+## Architecture Decisions
+- **No backend yet** — uses in-memory demo stores (demoStore.ts)
+- **No state management library** — React state + localStorage
+- **No CSS-in-JS** — pure Tailwind utility classes
+- **No ESLint** — uses oxlint for faster linting
+- **Module system** — ES modules (`"type": "module"` in package.json)

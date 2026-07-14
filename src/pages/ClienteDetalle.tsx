@@ -58,7 +58,7 @@ function useNotas(pacienteId: number) {
   return { notas, agregar, eliminar }
 }
 
-export default function PacienteDetalle() {
+export default function ClienteDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
   const paciente = pacienteStore.getById(Number(id))
