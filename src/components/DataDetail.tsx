@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getCustomFields } from '../lib/customFields'
+import { getCustomFields, fetchCustomFields } from '../lib/customFields'
 import { ConfirmModal } from './ConfirmModal'
 import type { Module } from '../lib/customFields'
 
@@ -23,9 +23,13 @@ interface Props {
 
 export function DataDetail({ data, fields, module, basePath, entityLabel, onDelete, bare, hideButtons, hideCustom }: Props) {
   const navigate = useNavigate()
-  const customFields = getCustomFields(module)
+  const [customFields, setCustomFields] = useState(getCustomFields(module))
   const custom = data.custom as Record<string, unknown> | undefined
   const [showConfirm, setShowConfirm] = useState(false)
+
+  useEffect(() => {
+    fetchCustomFields(module).then(setCustomFields)
+  }, [module])
 
   const content = (
     <>

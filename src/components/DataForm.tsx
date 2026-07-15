@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getCustomFields } from '../lib/customFields'
+import { getCustomFields, fetchCustomFields } from '../lib/customFields'
 import { DynamicFields } from './DynamicFields'
 import type { Module } from '../lib/customFields'
 
@@ -23,12 +23,16 @@ interface Props {
 
 export function DataForm({ fields, module, basePath, initialData, onSubmit, isEdit }: Props) {
   const navigate = useNavigate()
-  const customFields = getCustomFields(module)
+  const [customFields, setCustomFields] = useState(getCustomFields(module))
   const [form, setForm] = useState<Record<string, string>>({})
   const [customValues, setCustomValues] = useState<Record<string, unknown>>({})
   const [foto, setFoto] = useState<string | undefined>(undefined)
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    fetchCustomFields(module).then(setCustomFields)
+  }, [module])
 
   useEffect(() => {
     if (initialData) {
@@ -94,32 +98,40 @@ export function DataForm({ fields, module, basePath, initialData, onSubmit, isEd
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" />
         </div>
 
-        {fields.map(f => f.type === 'select' ? (
-          <select
-            key={f.key}
-            required={f.required !== false}
-            value={form[f.key] || ''}
-            onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-            className={inputClass}
-          >
-            <option value="">{f.label}</option>
-            {f.options?.map(o => {
-              const val = typeof o === 'string' ? o : o.value
-              const lbl = typeof o === 'string' ? o : o.label
-              return <option key={val} value={val}>{lbl}</option>
-            })}
-          </select>
-        ) : (
-          <input
-            key={f.key}
-            required={f.required !== false}
-            type={f.type || 'text'}
-            placeholder={f.label}
-            value={form[f.key] || ''}
-            onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-            className={inputClass}
-          />
-        ))}
+        {fields.map(f => {
+          const isRequired = f.required !== false
+          return (
+            <div key={f.key} className="space-y-1">
+              <label className="text-sm font-medium">
+                {f.label} {isRequired && <span className="text-red-500">*</span>}
+              </label>
+              {f.type === 'select' ? (
+                <select
+                  required={isRequired}
+                  value={form[f.key] || ''}
+                  onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                  className={inputClass}
+                >
+                  <option value="">Seleccionar...</option>
+                  {f.options?.map(o => {
+                    const val = typeof o === 'string' ? o : o.value
+                    const lbl = typeof o === 'string' ? o : o.label
+                    return <option key={val} value={val}>{lbl}</option>
+                  })}
+                </select>
+              ) : (
+                <input
+                  required={isRequired}
+                  type={f.type || 'text'}
+                  placeholder={f.label}
+                  value={form[f.key] || ''}
+                  onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                  className={inputClass}
+                />
+              )}
+            </div>
+          )
+        })}
 
         {customFields.length > 0 && (
           <>
