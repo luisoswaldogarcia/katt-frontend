@@ -42,3 +42,4 @@ export async function getToken(): Promise<string | null> {
   const session = await getSession()
   return session?.token || null
 }
+

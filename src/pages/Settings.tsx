@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { getSession } from '../lib/auth'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { labels, getLabels, saveLabels } from '../lib/labels'
 import type { Labels } from '../lib/labels'
@@ -41,6 +42,13 @@ function DeleteBtn({ onClick }: { onClick: () => void }) {
 
 export default function Settings() {
   const [tab, setTab] = useState<Tab>('usuario')
+  const [role, setRole] = useState<'owner'|'admin'|'other'>('other')
+  useEffect(() => {
+    getSession().then(s => {
+      if (s?.groups.includes('owner')) setRole('owner')
+      else if (s?.groups.includes('admin') || s?.groups.includes('administrador')) setRole('admin')
+    })
+  }, [])
   const [moduleLabels, setModuleLabels] = useState<Labels>(getLabels)
   const [brandingState, setBrandingState] = useState<Branding>(getBranding)
   const [activeModule, setActiveModule] = useState<Module>('paciente')
@@ -104,10 +112,10 @@ export default function Settings() {
         {/* Tabs: horizontal en mobile, vertical sidebar en desktop */}
         <div className="flex gap-2 flex-wrap mb-4 md:mb-0 md:flex-col md:w-44 md:shrink-0">
           <button onClick={() => setTab('usuario')} className={tabClass(tab === 'usuario')}>Usuario</button>
-          <button onClick={() => setTab('sistema')} className={tabClass(tab === 'sistema')}>Sistema</button>
-          <button onClick={() => setTab('operativo')} className={tabClass(tab === 'operativo')}>Operativo</button>
-          <button onClick={() => setTab('documentos')} className={tabClass(tab === 'documentos')}>Documentos</button>
-          <button onClick={() => setTab('modulos')} className={tabClass(tab === 'modulos')}>Módulos</button>
+          {role === 'owner' && <button onClick={() => setTab('sistema')} className={tabClass(tab === 'sistema')}>Sistema</button>}
+          {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('operativo')} className={tabClass(tab === 'operativo')}>Operativo</button>}
+          {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('documentos')} className={tabClass(tab === 'documentos')}>Documentos</button>}
+          {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('modulos')} className={tabClass(tab === 'modulos')}>Módulos</button>}
         </div>
 
         {/* Content */}
@@ -128,8 +136,8 @@ export default function Settings() {
 
       {/* Tab: Sistema */}
       {tab === 'sistema' && (
-        <div className="max-w-md space-y-4">
-          <div className={cardClass}>
+        <div className="space-y-4">
+          <div className={`max-w-md ${cardClass}`}>
             <p className={cardTitle}>Empresa activa</p>
             <p className="text-xs text-gray-500">Selecciona la empresa con la que estás trabajando. Esto determina los módulos disponibles.</p>
             <select
@@ -146,7 +154,25 @@ export default function Settings() {
                 <option key={e.id} value={String(e.id)}>{e.nombre}</option>
               ))}
             </select>
-            <p className="text-xs text-gray-500">La configuración de módulos por empresa se gestiona desde el detalle de cada empresa.</p>
+          </div>
+
+          <div className={cardClass}>
+            <div className="flex items-center justify-between">
+              <p className={cardTitle}>{labels.empresa}s</p>
+              <a href="/empresa/alta" className={btnSmall}>+ {labels.empresa}</a>
+            </div>
+            {empresas.length === 0 ? (
+              <p className="text-xs text-gray-500">No hay empresas registradas.</p>
+            ) : (
+              <div className="space-y-2">
+                {empresas.map(emp => (
+                  <a key={emp.id} href={`/empresa/${emp.id}`} className={`${listItem} hover:border-katt-400 dark:hover:border-katt-600 transition-colors`}>
+                    <span className="text-sm">{emp.nombre}</span>
+                    <span className="text-xs text-gray-500">{emp.telefono || ''}</span>
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

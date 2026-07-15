@@ -178,6 +178,10 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
         <p className="text-center text-xs text-gray-500 py-2">No hay más registros</p>
       )}
 
+      {!loading && data.length === 0 && (
+        <p className="text-center text-sm text-gray-500 py-8">No hay registros</p>
+      )}
+
       {fabOpen && <div className="fixed inset-0 z-30" onClick={() => setFabOpen(false)} />}
 
       {fabMenu && fabOpen && (
