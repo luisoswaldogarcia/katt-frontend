@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { getUnreadCount, clearUnread } from './lib/unreadMessages'
 import { getSession, signOut } from './lib/auth'
+import { preloadStores } from './lib/demoStore'
 import './lib/amplify'
 import { Sidebar } from './components/Sidebar'
 import { labels } from './lib/labels'
@@ -154,7 +155,11 @@ export default function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getSession().then(s => { setAuthenticated(!!s); setLoading(false) })
+    getSession().then(async s => {
+      if (s) await preloadStores()
+      setAuthenticated(!!s)
+      setLoading(false)
+    })
   }, [])
 
   if (loading) return <div className="h-dvh flex items-center justify-center bg-katt-50 dark:bg-katt-950"><span className="text-katt-500">Cargando...</span></div>

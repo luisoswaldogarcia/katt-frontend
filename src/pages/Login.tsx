@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { signIn } from '../lib/auth'
+import { preloadStores } from '../lib/demoStore'
 
 const inputClass = 'w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500'
 
@@ -16,6 +17,7 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
     setLoading(true)
     try {
       await signIn(email, password)
+      await preloadStores()
       onLogin()
     } catch (err: any) {
       if (err.message === 'NEW_PASSWORD_REQUIRED') {

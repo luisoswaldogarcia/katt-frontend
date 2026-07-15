@@ -1,16 +1,15 @@
+import { api } from './api'
 import { inventarioStore } from './demoStore'
 
-const STORAGE_KEY = 'katt-ventas'
-
 export interface VentaItem {
-  itemId: number
+  itemId: string
   nombre: string
   cantidad: number
   precioUnitario: number
 }
 
 export interface Venta {
-  id: number
+  id: string
   items: VentaItem[]
   total: number
   metodoPago: 'efectivo' | 'tarjeta' | 'transferencia'
@@ -18,37 +17,27 @@ export interface Venta {
   recibido?: number
 }
 
-function load(): Venta[] {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) try { return JSON.parse(stored) } catch { /* ignore */ }
-  return []
-}
+let ventasCache: Venta[] = []
 
-function save(ventas: Venta[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(ventas))
+export async function fetchVentas(): Promise<Venta[]> {
+  const res = await api.list<Venta>('ventas')
+  ventasCache = res.items
+  return ventasCache
 }
 
 export function getVentas(): Venta[] {
-  return load()
+  return ventasCache
 }
 
-export function registrarVenta(items: VentaItem[], metodoPago: Venta['metodoPago'], recibido?: number): Venta {
-  const ventas = load()
-  const venta: Venta = {
-    id: Date.now(),
-    items,
-    total: items.reduce((s, i) => s + i.cantidad * i.precioUnitario, 0),
-    metodoPago,
-    fecha: new Date().toISOString(),
-    recibido,
-  }
-  ventas.unshift(venta)
-  save(ventas)
+export async function registrarVenta(items: VentaItem[], metodoPago: Venta['metodoPago'], recibido?: number): Promise<Venta> {
+  const total = items.reduce((s, i) => s + i.cantidad * i.precioUnitario, 0)
+  const venta = await api.create<Venta>('ventas', { items, total, metodoPago, fecha: new Date().toISOString(), recibido })
+  ventasCache = [venta, ...ventasCache]
 
-  // Descontar del inventario
+  // Descontar del inventario local
   for (const item of items) {
     const prod = inventarioStore.getById(item.itemId)
-    if (prod) inventarioStore.update(item.itemId, { cantidad: prod.cantidad - item.cantidad })
+    if (prod) await inventarioStore.update(item.itemId, { cantidad: prod.cantidad - item.cantidad })
   }
 
   return venta
@@ -56,5 +45,5 @@ export function registrarVenta(items: VentaItem[], metodoPago: Venta['metodoPago
 
 export function getVentasHoy(): Venta[] {
   const hoy = new Date().toISOString().split('T')[0]
-  return load().filter(v => v.fecha.startsWith(hoy))
+  return ventasCache.filter(v => v.fecha.startsWith(hoy))
 }

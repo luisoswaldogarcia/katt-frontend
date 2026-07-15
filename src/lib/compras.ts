@@ -1,5 +1,7 @@
+import { api } from './api'
+
 export interface Proveedor {
-  id: number
+  id: string
   nombre: string
   contacto: string
   telefono: string
@@ -8,14 +10,14 @@ export interface Proveedor {
 }
 
 export interface CompraItem {
-  itemId: number
+  itemId: string
   nombre: string
   cantidad: number
   precioUnitario: number
 }
 
 export interface Compra {
-  id: number
+  id: string
   proveedor: string
   fecha: string
   items: CompraItem[]
@@ -23,66 +25,52 @@ export interface Compra {
   estado: 'Pendiente' | 'Recibida' | 'Cancelada'
 }
 
-const STORAGE_KEY = 'katt-compras'
-const PROV_KEY = 'katt-proveedores'
-
-function load(): Compra[] {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) try { return JSON.parse(stored) } catch { /* ignore */ }
-  return []
-}
-
-function save(data: Compra[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-}
-
-function loadProv(): Proveedor[] {
-  const stored = localStorage.getItem(PROV_KEY)
-  if (stored) try { return JSON.parse(stored) } catch { /* ignore */ }
-  return []
-}
-
-function saveProv(data: Proveedor[]) {
-  localStorage.setItem(PROV_KEY, JSON.stringify(data))
-}
-
-let proveedores = loadProv()
-let compras = load()
+let comprasCache: Compra[] = []
+let proveedoresCache: Proveedor[] = []
 
 export const proveedorStore = {
-  getAll: () => [...proveedores],
-  getById: (id: number) => proveedores.find(p => p.id === id),
-  create: (data: Omit<Proveedor, 'id'>) => {
-    const nuevo = { ...data, id: Date.now() }
-    proveedores = [...proveedores, nuevo]
-    saveProv(proveedores)
-    return nuevo
+  getAll: () => proveedoresCache,
+  getById: (id: string) => proveedoresCache.find(p => p.id === id),
+  fetch: async (): Promise<Proveedor[]> => {
+    // Proveedores stored as compras with tipo=proveedor
+    const res = await api.list<any>('compras')
+    proveedoresCache = res.items.filter((i: any) => i.tipo === 'proveedor')
+    return proveedoresCache
   },
-  update: (id: number, data: Partial<Proveedor>) => {
-    proveedores = proveedores.map(p => p.id === id ? { ...p, ...data } : p)
-    saveProv(proveedores)
+  create: async (data: Omit<Proveedor, 'id'>): Promise<Proveedor> => {
+    const item = await api.create<Proveedor>('compras', { ...data, tipo: 'proveedor' })
+    proveedoresCache = [...proveedoresCache, item]
+    return item
   },
-  remove: (id: number) => {
-    proveedores = proveedores.filter(p => p.id !== id)
-    saveProv(proveedores)
+  update: async (id: string, data: Partial<Proveedor>): Promise<void> => {
+    await api.update('compras', id, data)
+    proveedoresCache = proveedoresCache.map(p => p.id === id ? { ...p, ...data } : p)
+  },
+  remove: async (id: string): Promise<void> => {
+    await api.remove('compras', id)
+    proveedoresCache = proveedoresCache.filter(p => p.id !== id)
   },
 }
 
 export const compraStore = {
-  getAll: () => [...compras],
-  getById: (id: number) => compras.find(c => c.id === id),
-  create: (data: Omit<Compra, 'id'>) => {
-    const nueva = { ...data, id: Date.now() }
-    compras = [...compras, nueva]
-    save(compras)
-    return nueva
+  getAll: () => comprasCache,
+  getById: (id: string) => comprasCache.find(c => c.id === id),
+  fetch: async (): Promise<Compra[]> => {
+    const res = await api.list<any>('compras')
+    comprasCache = res.items.filter((i: any) => !i.tipo || i.tipo === 'compra')
+    return comprasCache
   },
-  update: (id: number, data: Partial<Compra>) => {
-    compras = compras.map(c => c.id === id ? { ...c, ...data } : c)
-    save(compras)
+  create: async (data: Omit<Compra, 'id'>): Promise<Compra> => {
+    const item = await api.create<Compra>('compras', { ...data, tipo: 'compra' })
+    comprasCache = [...comprasCache, item]
+    return item
   },
-  remove: (id: number) => {
-    compras = compras.filter(c => c.id !== id)
-    save(compras)
+  update: async (id: string, data: Partial<Compra>): Promise<void> => {
+    await api.update('compras', id, data)
+    comprasCache = comprasCache.map(c => c.id === id ? { ...c, ...data } : c)
+  },
+  remove: async (id: string): Promise<void> => {
+    await api.remove('compras', id)
+    comprasCache = comprasCache.filter(c => c.id !== id)
   },
 }

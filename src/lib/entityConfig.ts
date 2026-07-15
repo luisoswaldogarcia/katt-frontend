@@ -6,7 +6,7 @@ import type { FormField } from '../components/DataForm'
 export interface EntityConfig {
   columns: Column[]
   fields: FormField[]
-  store: { getPage: (p: number) => Promise<{ data: Record<string, unknown>[]; total: number; hasMore: boolean }>; getById: (id: number) => unknown; create: (data: never) => unknown; update: (id: number, data: unknown) => void; remove: (id: number) => void }
+  store: { getPage: (p: number) => Promise<{ data: Record<string, unknown>[]; total: number; hasMore: boolean }>; getById: (id: string) => Promise<unknown>; create: (data: never) => Promise<unknown>; update: (id: string, data: unknown) => Promise<void>; remove: (id: string) => Promise<void> }
   basePath: string
   altaPath: string
   module: string

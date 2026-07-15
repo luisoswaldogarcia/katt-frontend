@@ -137,7 +137,7 @@ export default function Settings() {
               onChange={e => {
                 const val = e.target.value
                 setActiveEmpresa(val)
-                setActiveEmpresaId(val ? Number(val) : null)
+                setActiveEmpresaId(val || null)
               }}
               className={inputClass}
             >
