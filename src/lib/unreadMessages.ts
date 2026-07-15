@@ -1,9 +1,13 @@
-const STORAGE_KEY = 'katt-unread-count'
+import { getConfig, saveConfig, getCached } from './configApi'
 
-export function getUnreadCount(): number {
-  return Number(localStorage.getItem(STORAGE_KEY) || '3')
+export async function fetchUnreadCount(): Promise<number> {
+  return getConfig<number>('unread-count', 0)
 }
 
-export function clearUnread(): void {
-  localStorage.setItem(STORAGE_KEY, '0')
+export function getUnreadCount(): number {
+  return getCached<number>('unread-count', 0)
+}
+
+export async function clearUnread(): Promise<void> {
+  await saveConfig('unread-count', 0)
 }

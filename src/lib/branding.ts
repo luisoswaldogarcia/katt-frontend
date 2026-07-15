@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'katt-branding'
+import { getConfig, saveConfig, getCached } from './configApi'
 
 export interface Branding {
   appName: string
@@ -10,19 +10,22 @@ const defaults: Branding = {
   appIcon: '/katt-avatar.jpeg',
 }
 
-function load(): Branding {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) try { return { ...defaults, ...JSON.parse(stored) } } catch { /* ignore */ }
-  return defaults
-}
-
-export let branding: Branding = load()
-
-export function saveBranding(updated: Partial<Branding>) {
-  branding = { ...branding, ...updated }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(branding))
+export async function fetchBranding(): Promise<Branding> {
+  return getConfig<Branding>('branding', defaults)
 }
 
 export function getBranding(): Branding {
-  return load()
+  return getCached<Branding>('branding', defaults)
+}
+
+export let branding: Branding = defaults
+
+export async function loadBranding(): Promise<Branding> {
+  branding = await fetchBranding()
+  return branding
+}
+
+export async function saveBranding(updated: Partial<Branding>) {
+  branding = { ...branding, ...updated }
+  await saveConfig('branding', branding)
 }

@@ -1,3 +1,5 @@
+import { getConfig, saveConfig, getCached } from './configApi'
+import { api } from './api'
 import type { Module } from './customFields'
 
 export interface DocType {
@@ -6,20 +8,15 @@ export interface DocType {
 }
 
 export interface DocumentItem {
-  id: number
+  id: string
   tipoId: string
   nombre: string
   origen: 'creado' | 'subido'
   contenido: string
   fecha: string
   mimeType?: string
+  s3Key?: string
 }
-
-const CATALOG_KEY = 'katt-doc-type-catalog'
-const ASSIGN_KEY = 'katt-doc-type-assign'
-const DOCS_PREFIX = 'katt-docs'
-
-// --- Global catalog of document types ---
 
 const defaultCatalog: DocType[] = [
   { id: 'receta', label: 'Receta' },
@@ -29,61 +26,70 @@ const defaultAssignments: Record<string, string[]> = {
   paciente: ['receta'],
 }
 
+// --- Doc type catalog (stored in backend config) ---
+
+export async function fetchDocTypeCatalog(): Promise<DocType[]> {
+  return getConfig<DocType[]>('doc-type-catalog', defaultCatalog)
+}
+
 export function getDocTypeCatalog(): DocType[] {
-  const stored = localStorage.getItem(CATALOG_KEY)
-  return stored ? JSON.parse(stored) : defaultCatalog
+  return getCached<DocType[]>('doc-type-catalog', defaultCatalog)
 }
 
-export function saveDocTypeCatalog(types: DocType[]) {
-  localStorage.setItem(CATALOG_KEY, JSON.stringify(types))
+export async function saveDocTypeCatalog(types: DocType[]) {
+  await saveConfig('doc-type-catalog', types)
 }
 
-// --- Assignment: which doc types are enabled per module ---
+// --- Assignments per module ---
+
+export async function fetchDocTypeAssignments(): Promise<Record<string, string[]>> {
+  return getConfig<Record<string, string[]>>('doc-type-assignments', defaultAssignments)
+}
 
 function getAssignments(): Record<string, string[]> {
-  const stored = localStorage.getItem(ASSIGN_KEY)
-  return stored ? JSON.parse(stored) : defaultAssignments
+  return getCached<Record<string, string[]>>('doc-type-assignments', defaultAssignments)
 }
 
 export function getModuleDocTypes(module: Module): DocType[] {
-  const assignments = getAssignments()
-  const ids = assignments[module] || []
-  const catalog = getDocTypeCatalog()
-  return catalog.filter(t => ids.includes(t.id))
+  const ids = getAssignments()[module] || []
+  return getDocTypeCatalog().filter(t => ids.includes(t.id))
 }
 
 export function getModuleDocTypeIds(module: string): string[] {
-  const assignments = getAssignments()
-  return assignments[module] || []
+  return getAssignments()[module] || []
 }
 
-export function saveModuleDocTypeIds(module: string, ids: string[]) {
+export async function saveModuleDocTypeIds(module: string, ids: string[]) {
   const assignments = getAssignments()
   assignments[module] = ids
-  localStorage.setItem(ASSIGN_KEY, JSON.stringify(assignments))
+  await saveConfig('doc-type-assignments', assignments)
 }
 
-// --- Documents per entity record ---
+// --- Documents per entity (stored as entity items via CRUD) ---
 
-function docsKey(module: Module, entityId: number) {
-  return `${DOCS_PREFIX}-${module}-${entityId}`
+export async function getDocuments(module: Module, entityId: string): Promise<DocumentItem[]> {
+  try {
+    const res = await api.list<DocumentItem>(`documentos?parentModule=${module}&parentId=${entityId}`)
+    return res.items || []
+  } catch {
+    return []
+  }
 }
 
-export function getDocuments(module: Module, entityId: number): DocumentItem[] {
-  const stored = localStorage.getItem(docsKey(module, entityId))
-  return stored ? JSON.parse(stored) : []
+export async function saveDocument(module: Module, entityId: string, doc: Omit<DocumentItem, 'id' | 'fecha'>): Promise<DocumentItem> {
+  return api.create<DocumentItem>('documentos', { ...doc, parentModule: module, parentId: entityId })
 }
 
-export function saveDocument(module: Module, entityId: number, doc: Omit<DocumentItem, 'id' | 'fecha'>) {
-  const docs = getDocuments(module, entityId)
-  const newDoc: DocumentItem = { ...doc, id: Date.now(), fecha: new Date().toISOString() }
-  const updated = [newDoc, ...docs]
-  localStorage.setItem(docsKey(module, entityId), JSON.stringify(updated))
-  return updated
+export async function removeDocument(_module: Module, _entityId: string, docId: string): Promise<void> {
+  await api.remove('documentos', docId)
 }
 
-export function removeDocument(module: Module, entityId: number, docId: number) {
-  const docs = getDocuments(module, entityId).filter(d => d.id !== docId)
-  localStorage.setItem(docsKey(module, entityId), JSON.stringify(docs))
-  return docs
+// --- Presigned URL helpers ---
+
+export async function getUploadPresignedUrl(filename: string, contentType: string): Promise<{ url: string; key: string }> {
+  return api.create<{ url: string; key: string }>('documentos/presign', { filename, contentType, type: 'upload' })
+}
+
+export async function getDownloadPresignedUrl(key: string): Promise<{ url: string }> {
+  return api.create<{ url: string }>('documentos/presign', { filename: key, type: 'download' })
 }

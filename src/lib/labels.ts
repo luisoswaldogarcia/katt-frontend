@@ -1,3 +1,5 @@
+import { getConfig, saveConfig, getCached } from './configApi'
+
 export interface Labels {
   paciente: string
   doctor: string
@@ -24,26 +26,22 @@ const defaults: Labels = {
   compras: 'Compras',
 }
 
-const demoOverrides: Partial<Labels> = {}
-
-function load(): Labels {
-  const stored = localStorage.getItem('katt-labels')
-  if (stored) {
-    try { return { ...defaults, ...JSON.parse(stored) } } catch { /* ignore */ }
-  }
-  // Seed demo config on first load
-  const seeded = { ...defaults, ...demoOverrides }
-  localStorage.setItem('katt-labels', JSON.stringify(seeded))
-  return seeded
-}
-
-export let labels: Labels = load()
-
-export function saveLabels(updated: Labels) {
-  labels = { ...updated }
-  localStorage.setItem('katt-labels', JSON.stringify(labels))
+export async function fetchLabels(): Promise<Labels> {
+  return getConfig<Labels>('labels', defaults)
 }
 
 export function getLabels(): Labels {
-  return load()
+  return getCached<Labels>('labels', defaults)
+}
+
+export let labels: Labels = defaults
+
+export async function loadLabels(): Promise<Labels> {
+  labels = await fetchLabels()
+  return labels
+}
+
+export async function saveLabels(updated: Labels) {
+  labels = updated
+  await saveConfig('labels', updated)
 }

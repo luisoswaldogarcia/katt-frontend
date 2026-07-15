@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-ro
 import { getUnreadCount, clearUnread } from './lib/unreadMessages'
 import { getSession, signOut } from './lib/auth'
 import { preloadStores } from './lib/demoStore'
+import { loadAllConfig } from './lib/configApi'
 import './lib/amplify'
 import { Sidebar } from './components/Sidebar'
 import { labels } from './lib/labels'
@@ -156,7 +157,10 @@ export default function App() {
 
   useEffect(() => {
     getSession().then(async s => {
-      if (s) await preloadStores()
+      if (s) {
+        await loadAllConfig()
+        await preloadStores()
+      }
       setAuthenticated(!!s)
       setLoading(false)
     })

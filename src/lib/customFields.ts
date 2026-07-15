@@ -1,3 +1,5 @@
+import { getConfig, saveConfig, getCached } from './configApi'
+
 export type FieldType =
   | 'input'
   | 'textarea'
@@ -25,8 +27,6 @@ export interface CustomField {
   max?: number
 }
 
-const STORAGE_KEY_PREFIX = 'katt-custom-fields'
-
 export type Module = 'paciente' | 'doctor' | 'inventario' | 'empresa'
 
 const pacienteDefaults: CustomField[] = [
@@ -36,30 +36,20 @@ const pacienteDefaults: CustomField[] = [
   { id: 'medicamentos', label: 'Medicamentos que toma', type: 'textarea', required: false },
 ]
 
-export function getCustomFields(module: Module): CustomField[] {
-  const stored = localStorage.getItem(`${STORAGE_KEY_PREFIX}-${module}`)
-  if (stored) {
-    const fields: CustomField[] = JSON.parse(stored)
-    if (module === 'paciente') {
-      const ids = fields.map(f => f.id)
-      const missing = pacienteDefaults.filter(d => !ids.includes(d.id))
-      if (missing.length > 0) {
-        const merged = [...fields, ...missing]
-        localStorage.setItem(`${STORAGE_KEY_PREFIX}-${module}`, JSON.stringify(merged))
-        return merged
-      }
-    }
-    return fields
-  }
-  if (module === 'paciente') {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}-${module}`, JSON.stringify(pacienteDefaults))
-    return pacienteDefaults
-  }
-  return []
+function defaultsFor(module: Module): CustomField[] {
+  return module === 'paciente' ? pacienteDefaults : []
 }
 
-export function saveCustomFields(module: Module, fields: CustomField[]) {
-  localStorage.setItem(`${STORAGE_KEY_PREFIX}-${module}`, JSON.stringify(fields))
+export async function fetchCustomFields(module: Module): Promise<CustomField[]> {
+  return getConfig<CustomField[]>(`custom-fields-${module}`, defaultsFor(module))
+}
+
+export function getCustomFields(module: Module): CustomField[] {
+  return getCached<CustomField[]>(`custom-fields-${module}`, defaultsFor(module))
+}
+
+export async function saveCustomFields(module: Module, fields: CustomField[]) {
+  await saveConfig(`custom-fields-${module}`, fields)
 }
 
 export const fieldTypeLabels: Record<FieldType, string> = {

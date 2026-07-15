@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'katt-module-catalog'
+import { getConfig, saveConfig, getCached } from './configApi'
 
 export interface ModuleCatalogItem {
   key: string
@@ -19,28 +19,28 @@ const defaults: ModuleCatalogItem[] = [
   { key: 'pos', nombre: 'Punto de Venta', descripcion: 'Cobro rápido y registro de ventas', costo: 249 },
 ]
 
+export async function fetchModuleCatalog(): Promise<ModuleCatalogItem[]> {
+  return getConfig<ModuleCatalogItem[]>('module-catalog', defaults)
+}
+
 export function getModuleCatalog(): ModuleCatalogItem[] {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    try { return JSON.parse(stored) } catch { /* ignore */ }
-  }
-  return [...defaults]
+  return getCached<ModuleCatalogItem[]>('module-catalog', defaults)
 }
 
-export function saveModuleCatalog(catalog: ModuleCatalogItem[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(catalog))
+export async function saveModuleCatalog(catalog: ModuleCatalogItem[]) {
+  await saveConfig('module-catalog', catalog)
 }
 
-export function updateModulePrice(key: string, costo: number) {
+export async function updateModulePrice(key: string, costo: number) {
   const catalog = getModuleCatalog()
   const updated = catalog.map(m => m.key === key ? { ...m, costo } : m)
-  saveModuleCatalog(updated)
+  await saveModuleCatalog(updated)
   return updated
 }
 
-export function updateModuleInfo(key: string, data: Partial<ModuleCatalogItem>) {
+export async function updateModuleInfo(key: string, data: Partial<ModuleCatalogItem>) {
   const catalog = getModuleCatalog()
   const updated = catalog.map(m => m.key === key ? { ...m, ...data } : m)
-  saveModuleCatalog(updated)
+  await saveModuleCatalog(updated)
   return updated
 }

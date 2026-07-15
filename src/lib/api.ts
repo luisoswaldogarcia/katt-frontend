@@ -28,8 +28,8 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
 
 export const api = {
   list: <T>(entity: string) => request<{ items: T[]; cursor: string | null }>(`/${entity}`),
-  get: <T>(entity: string, id: string) => request<T>(`/${entity}/${id}`),
+  get: <T>(entity: string, id: string) => request<T>(id ? `/${entity}/${id}` : `/${entity}`),
   create: <T>(entity: string, data: unknown) => request<T>(`/${entity}`, { method: 'POST', body: JSON.stringify(data) }),
-  update: (entity: string, id: string, data: unknown) => request<{ ok: boolean }>(`/${entity}/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  update: (entity: string, id: string, data: unknown) => request<{ ok: boolean }>(id ? `/${entity}/${id}` : `/${entity}`, { method: 'PUT', body: JSON.stringify(data) }),
   remove: (entity: string, id: string) => request<{ ok: boolean }>(`/${entity}/${id}`, { method: 'DELETE' }),
 }

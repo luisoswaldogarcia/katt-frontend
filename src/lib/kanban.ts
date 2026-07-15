@@ -1,5 +1,4 @@
-const COLUMNS_KEY = 'katt-kanban-columnas'
-const TASK_TYPES_KEY = 'katt-kanban-tipos'
+import { getConfig, saveConfig, getCached } from './configApi'
 
 const defaultColumns = ['Pendiente', 'En progreso', 'Completada']
 
@@ -31,27 +30,31 @@ const defaultTaskTypes: TaskType[] = [
   ]},
 ]
 
-export function getKanbanColumns(): string[] {
-  const stored = localStorage.getItem(COLUMNS_KEY)
-  return stored ? JSON.parse(stored) : defaultColumns
+export async function fetchKanbanColumns(): Promise<string[]> {
+  return getConfig<string[]>('kanban-columns', defaultColumns)
 }
 
-export function saveKanbanColumns(columns: string[]) {
-  localStorage.setItem(COLUMNS_KEY, JSON.stringify(columns))
+export function getKanbanColumns(): string[] {
+  return getCached<string[]>('kanban-columns', defaultColumns)
+}
+
+export async function saveKanbanColumns(columns: string[]) {
+  await saveConfig('kanban-columns', columns)
+}
+
+export async function fetchTaskTypes(): Promise<TaskType[]> {
+  return getConfig<TaskType[]>('task-types', defaultTaskTypes)
 }
 
 export function getTaskTypes(): TaskType[] {
-  const stored = localStorage.getItem(TASK_TYPES_KEY)
-  return stored ? JSON.parse(stored) : defaultTaskTypes
+  return getCached<TaskType[]>('task-types', defaultTaskTypes)
 }
 
-export function saveTaskTypes(types: TaskType[]) {
-  localStorage.setItem(TASK_TYPES_KEY, JSON.stringify(types))
+export async function saveTaskTypes(types: TaskType[]) {
+  await saveConfig('task-types', types)
 }
 
-// Columnas visibles en la tabla de tareas
-const TABLE_COLUMNS_KEY = 'katt-tareas-tabla-columnas'
-
+// Table columns config
 export interface TareaTableColumn {
   key: string
   label: string
@@ -71,11 +74,14 @@ export function getAllTableColumns(): TareaTableColumn[] {
   return allTableColumns
 }
 
-export function getVisibleTableColumns(): string[] {
-  const stored = localStorage.getItem(TABLE_COLUMNS_KEY)
-  return stored ? JSON.parse(stored) : defaultVisibleKeys
+export async function fetchVisibleTableColumns(): Promise<string[]> {
+  return getConfig<string[]>('tareas-table-columns', defaultVisibleKeys)
 }
 
-export function saveVisibleTableColumns(keys: string[]) {
-  localStorage.setItem(TABLE_COLUMNS_KEY, JSON.stringify(keys))
+export function getVisibleTableColumns(): string[] {
+  return getCached<string[]>('tareas-table-columns', defaultVisibleKeys)
+}
+
+export async function saveVisibleTableColumns(keys: string[]) {
+  await saveConfig('tareas-table-columns', keys)
 }

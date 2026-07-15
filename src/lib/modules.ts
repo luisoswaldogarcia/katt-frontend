@@ -1,5 +1,6 @@
+import { getConfig, saveConfig, getCached } from './configApi'
+
 const ACTIVE_EMPRESA_KEY = 'katt-active-empresa'
-const MODULES_KEY = 'katt-modules'
 
 export interface ModuleConfig {
   paciente: boolean
@@ -40,28 +41,28 @@ const allEnabled: ModuleConfig = {
   compras: true,
 }
 
+// empresaId is local-only (which empresa the user is viewing)
 export function getActiveEmpresaId(): string | null {
   return localStorage.getItem(ACTIVE_EMPRESA_KEY)
 }
 
 export function setActiveEmpresaId(id: string | null) {
-  if (id === null) {
-    localStorage.removeItem(ACTIVE_EMPRESA_KEY)
-  } else {
-    localStorage.setItem(ACTIVE_EMPRESA_KEY, id)
-  }
+  if (id === null) localStorage.removeItem(ACTIVE_EMPRESA_KEY)
+  else localStorage.setItem(ACTIVE_EMPRESA_KEY, id)
+}
+
+export async function fetchModules(): Promise<ModuleConfig> {
+  return getConfig<ModuleConfig>('modules', allEnabled)
 }
 
 export function getModules(): ModuleConfig {
-  const stored = localStorage.getItem(MODULES_KEY)
-  if (stored) try { return { ...allEnabled, ...JSON.parse(stored) } } catch { /* ignore */ }
-  return allEnabled
+  return getCached<ModuleConfig>('modules', allEnabled)
 }
 
-export function saveModules(modules: Partial<ModuleConfig>) {
-  localStorage.setItem(MODULES_KEY, JSON.stringify(modules))
+export async function saveModules(modules: Partial<ModuleConfig>) {
+  await saveConfig('modules', { ...allEnabled, ...modules })
 }
 
-export function saveEmpresaModules(_empresaId: string, modules: Partial<Record<string, boolean>>) {
-  localStorage.setItem(MODULES_KEY, JSON.stringify(modules))
+export async function saveEmpresaModules(_empresaId: string, modules: Partial<Record<string, boolean>>) {
+  await saveModules(modules as Partial<ModuleConfig>)
 }
