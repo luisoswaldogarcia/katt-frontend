@@ -6,7 +6,6 @@ export interface Labels {
   agenda: string
   chat: string
   agente: string
-  tablero: string
   tareas: string
   pos: string
   compras: string
@@ -20,7 +19,6 @@ const defaults: Labels = {
   agenda: 'Agenda',
   chat: 'Chat',
   agente: 'Agente',
-  tablero: 'Tablero',
   tareas: 'Tareas',
   pos: 'Punto de Venta',
   compras: 'Compras',

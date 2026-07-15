@@ -22,7 +22,6 @@ import InventarioMovimiento from './pages/InventarioMovimiento'
 import InventarioCarga from './pages/InventarioCarga'
 import InventarioImagenes from './pages/InventarioImagenes'
 import ClienteCitas from './pages/ClienteCitas'
-import Tablero from './pages/Tablero'
 import TareasLista from './pages/TareasLista'
 import Empresa from './pages/Empresa'
 import EmpresaAlta from './pages/EmpresaAlta'
@@ -48,7 +47,6 @@ const titles: Record<string, string> = {
   '/paciente/citas': 'Agendar citas',
   '/empresa': labels.empresa,
   '/empresa/alta': 'Alta ' + labels.empresa,
-  '/tablero': labels.tablero,
   '/tareas': labels.tareas,
   '/pos': labels.pos,
   '/compras': labels.compras,
@@ -139,7 +137,6 @@ function Layout({ onLogout }: { onLogout: () => void }) {
             <Route path="/empresa/alta" element={<EmpresaAlta />} />
             <Route path="/empresa/editar/:id" element={<EmpresaAlta />} />
             <Route path="/empresa/:id" element={<EmpresaDetalle />} />
-            <Route path="/tablero" element={<Tablero />} />
             <Route path="/tareas" element={<TareasLista />} />
             <Route path="/pos" element={<PuntoVenta />} />
             <Route path="/compras" element={<Compras />} />

@@ -10,7 +10,6 @@ export interface ModuleConfig {
   agenda: boolean
   chat: boolean
   agente: boolean
-  tablero: boolean
   tareas: boolean
   pos: boolean
   compras: boolean
@@ -24,7 +23,6 @@ export const moduleLabels: Record<keyof ModuleConfig, string> = {
   agenda: 'Agenda',
   chat: 'Chat',
   agente: 'Agente',
-  tablero: 'Tablero',
   tareas: 'Tareas',
   pos: 'Punto de Venta',
   compras: 'Compras',
@@ -38,7 +36,6 @@ const allEnabled: ModuleConfig = {
   agenda: true,
   chat: true,
   agente: true,
-  tablero: true,
   tareas: true,
   pos: true,
   compras: true,

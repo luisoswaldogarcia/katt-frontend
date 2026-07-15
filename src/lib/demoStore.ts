@@ -62,10 +62,10 @@ function generatePacientes(): PacienteData[] {
 let pacientes: PacienteData[] = generatePacientes()
 
 let empresas: EmpresaData[] = [
-  { id: 1, nombre: 'Johnny', rfc: '', telefono: '', email: '', statusPago: 'Al día', modules: { paciente: true, doctor: true, empresa: true, inventario: true, agenda: true, chat: true, agente: true, tablero: true, tareas: true } },
-  { id: 2, nombre: 'Odeth', rfc: '', telefono: '', email: '', statusPago: 'Pendiente', modules: { paciente: false, doctor: false, empresa: false, inventario: false, agenda: false, chat: true, agente: false, tablero: false, tareas: false } },
-  { id: 3, nombre: 'Gutiérrez', rfc: '', telefono: '', email: '', statusPago: 'Al día', modules: { paciente: false, doctor: false, empresa: false, inventario: false, agenda: false, chat: true, agente: false, tablero: false, tareas: false } },
-  { id: 4, nombre: 'Carpol', rfc: '', telefono: '', email: '', statusPago: 'Vencido', modules: { paciente: false, doctor: false, empresa: false, inventario: false, agenda: false, chat: true, agente: false, tablero: false, tareas: false } },
+  { id: 1, nombre: 'Johnny', rfc: '', telefono: '', email: '', statusPago: 'Al día', modules: { paciente: true, doctor: true, empresa: true, inventario: true, agenda: true, chat: true, agente: true, tareas: true } },
+  { id: 2, nombre: 'Odeth', rfc: '', telefono: '', email: '', statusPago: 'Pendiente', modules: { paciente: false, doctor: false, empresa: false, inventario: false, agenda: false, chat: true, agente: false, tareas: false } },
+  { id: 3, nombre: 'Gutiérrez', rfc: '', telefono: '', email: '', statusPago: 'Al día', modules: { paciente: false, doctor: false, empresa: false, inventario: false, agenda: false, chat: true, agente: false, tareas: false } },
+  { id: 4, nombre: 'Carpol', rfc: '', telefono: '', email: '', statusPago: 'Vencido', modules: { paciente: false, doctor: false, empresa: false, inventario: false, agenda: false, chat: true, agente: false, tareas: false } },
 ]
 
 let doctores: DoctorData[] = [
