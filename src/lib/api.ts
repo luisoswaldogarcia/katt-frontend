@@ -32,4 +32,6 @@ export const api = {
   create: <T>(entity: string, data: unknown) => request<T>(`/${entity}`, { method: 'POST', body: JSON.stringify(data) }),
   update: (entity: string, id: string, data: unknown) => request<{ ok: boolean }>(id ? `/${entity}/${id}` : `/${entity}`, { method: 'PUT', body: JSON.stringify(data) }),
   remove: (entity: string, id: string) => request<{ ok: boolean }>(`/${entity}/${id}`, { method: 'DELETE' }),
+  onboard: (data: { nombre: string; email: string }) =>
+    fetch(`${BASE_URL}/onboarding`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(r => r.json()) as Promise<{ empresaId: string; userId: string; nombre: string }>,
 }

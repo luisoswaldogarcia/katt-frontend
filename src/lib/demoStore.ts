@@ -127,7 +127,7 @@ function createStore<T extends { id: string }>(entity: string) {
 
 export const pacienteStore = createStore<PacienteData>('clientes')
 export const doctorStore = createStore<DoctorData>('usuarios')
-export const empresaStore = createStore<EmpresaData>('modulos')
+export const empresaStore = createStore<EmpresaData>('empresas')
 export const inventarioStore = createStore<InventarioData>('inventario')
 export const tareaStore = createStore<TareaData>('tareas')
 
