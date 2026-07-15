@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { getSession } from '../lib/auth'
-import { connectWs, disconnectWs, onWsEvent, wsSend, fetchChats, fetchMessages, createChat, ChatRoom, ChatMessage } from '../lib/chat'
+import { connectWs, disconnectWs, onWsEvent, wsSend, fetchChats, fetchMessages, createChat } from '../lib/chat'
+import type { ChatRoom, ChatMessage } from '../lib/chat'
 import { doctorStore } from '../lib/demoStore'
 
 const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-900 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
