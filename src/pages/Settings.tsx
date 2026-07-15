@@ -751,10 +751,17 @@ function ModulosTab() {
 
   function saveEdit() {
     if (!editing) return
-    const updated = updateModuleInfo(editing, form)
-    setCatalog(updated)
-    setEditing(null)
+    updateModuleInfo(editing, form).then(updated => {
+      setCatalog(updated)
+      setEditing(null)
+    })
   }
+
+
+
+
+
+
 
   return (
     <div className="max-w-2xl space-y-4">

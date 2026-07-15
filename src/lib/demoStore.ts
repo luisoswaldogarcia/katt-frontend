@@ -140,7 +140,7 @@ export const citaStore = {
 }
 
 export const movimientoStore = {
-  getByItem: (itemId: string): MovimientoData[] => [],
+  getByItem: (_itemId: string): MovimientoData[] => [],
   create: async (data: Omit<MovimientoData, 'id'>): Promise<MovimientoData> => {
     return api.create<MovimientoData>('inventario', { ...data, tipo: data.tipo })
   },

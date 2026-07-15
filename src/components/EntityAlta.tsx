@@ -14,12 +14,12 @@ export function EntityAlta({ entity, extraFields }: Props) {
   const navigate = useNavigate()
   const config = entityConfigs[entity]
   const isEdit = !!id
-  const initialData = isEdit ? config.store.getById(Number(id)) : undefined
+  const initialData = isEdit ? config.store.getById(id) : undefined
   const fields = extraFields || config.fields
 
   const handleSubmit = (data: Record<string, string>, custom: Record<string, unknown>, foto?: string) => {
     if (isEdit) {
-      config.store.update(Number(id), { ...data, custom, foto })
+      config.store.update(id, { ...data, custom, foto })
     } else {
       config.store.create({ ...data, custom, foto } as never)
     }

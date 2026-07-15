@@ -18,12 +18,12 @@ export default function InventarioAlta() {
   const { id } = useParams()
   const navigate = useNavigate()
   const isEdit = !!id
-  const initialData = isEdit ? inventarioStore.getById(Number(id)) : undefined
+  const initialData = isEdit ? inventarioStore.getById(id) : undefined
 
   const handleSubmit = (data: Record<string, string>, custom: Record<string, unknown>, foto?: string) => {
     const parsed = { ...data, cantidad: Number(data.cantidad), precioUnitario: Number(data.precioUnitario), custom, foto }
     if (isEdit) {
-      inventarioStore.update(Number(id), parsed)
+      inventarioStore.update(id, parsed)
     } else {
       inventarioStore.create(parsed as never)
     }

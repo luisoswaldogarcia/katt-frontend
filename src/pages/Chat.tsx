@@ -16,7 +16,7 @@ export default function Chat() {
   const [busqueda, setBusqueda] = useState('')
   const [showNuevo, setShowNuevo] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const typingTimeout = useRef<ReturnType<typeof setTimeout>>()
+  const typingTimeout = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   useEffect(() => {
     getSession().then(s => { if (s) setUserId(s.userId) })

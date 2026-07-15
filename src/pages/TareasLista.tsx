@@ -29,7 +29,7 @@ export default function TareasLista() {
   // --- Tablero logic ---
   function handleDragEnd(result: DropResult) {
     if (!result.destination) return
-    tareaStore.update(Number(result.draggableId), { estado: result.destination.droppableId })
+    tareaStore.update(result.draggableId, { estado: result.destination.droppableId })
     forceUpdate(n => n + 1)
   }
 
@@ -93,7 +93,7 @@ export default function TareasLista() {
     if (key === 'titulo') return <span className="font-medium">{t.titulo}</span>
     if (key === 'tipo') return <span className="text-xs px-2 py-0.5 rounded-full bg-katt-100 dark:bg-katt-800">{getTypeName(t.tipo)}</span>
     if (key === 'estado') return <span className="text-xs px-2 py-0.5 rounded-full bg-katt-100 dark:bg-katt-800 text-katt-600 dark:text-katt-300">{t.estado}</span>
-    if (key === 'fechaLimite') return <span className="text-gray-500">{(t.campos.fechaLimite as string) || '—'}</span>
+    if (key === 'fechaLimite') return <span className="text-gray-500">{String((t.campos.fechaLimite as string) || '—')}</span>
     if (key === 'monto') return <span className="text-gray-500">{(t.campos.monto as string) ? `$${t.campos.monto}` : '—'}</span>
     return null
   }
@@ -153,9 +153,9 @@ export default function TareasLista() {
                                     {getTypeName(t.tipo)}
                                   </span>
                                 </div>
-                                {t.campos.fechaLimite && (
+                                {t.campos.fechaLimite ? (
                                   <div className="text-xs text-gray-500">{String(t.campos.fechaLimite)}</div>
-                                )}
+                                ) : null}
                                 <div className="flex gap-1 pt-1">
                                   <button onClick={() => openEdit(t)} className="px-2 py-1 rounded text-[10px] bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700 transition-colors ml-auto">
                                     Editar

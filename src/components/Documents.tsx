@@ -6,7 +6,7 @@ import type { DocumentItem } from '../lib/documents'
 
 interface Props {
   module: Module
-  entityId: number
+  entityId: string
 }
 
 const cardClass = "rounded-lg border border-katt-200 dark:border-katt-800 p-4 space-y-4"
@@ -15,19 +15,23 @@ const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 bor
 
 export function Documents({ module, entityId }: Props) {
   const docTypes = getModuleDocTypes(module)
-  const [docs, setDocs] = useState(() => getDocuments(module, entityId))
+  const [docs, setDocs] = useState<DocumentItem[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  if (!loaded) {
+    getDocuments(module, entityId).then(d => { setDocs(d); setLoaded(true) })
+  }
 
   if (docTypes.length === 0) return null
 
   const sorted = [...docs].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
 
   function handleSave(doc: Omit<DocumentItem, 'id' | 'fecha'>) {
-    const updated = saveDocument(module, entityId, doc)
-    setDocs(updated)
+    saveDocument(module, entityId, doc).then(saved => setDocs(prev => [...prev, saved]))
   }
 
-  function handleDelete(docId: number) {
-    setDocs(removeDocument(module, entityId, docId))
+  function handleDelete(docId: string) {
+    removeDocument(module, entityId, docId).then(() => setDocs(prev => prev.filter(d => d.id !== docId)))
   }
 
   return (
@@ -52,7 +56,7 @@ function DocTypeSection({ tipoId, label, docs, onSave, onDelete }: {
   label: string
   docs: DocumentItem[]
   onSave: (doc: Omit<DocumentItem, 'id' | 'fecha'>) => void
-  onDelete: (id: number) => void
+  onDelete: (id: string) => void
 }) {
   const [showForm, setShowForm] = useState(false)
   const [nombre, setNombre] = useState('')
@@ -120,7 +124,7 @@ function DocTypeSection({ tipoId, label, docs, onSave, onDelete }: {
       {docs.length === 0 && <p className="text-xs text-gray-400">Sin {label.toLowerCase()} aún</p>}
       <div className="max-h-[200px] overflow-y-auto space-y-1">
         {docs.map(doc => (
-          <DocItem key={doc.id} doc={doc} onDelete={() => onDelete(doc.id)} />
+          <DocItem key={doc.id} doc={doc} onDelete={() => onDelete(doc.id!)} />
         ))}
       </div>
     </div>

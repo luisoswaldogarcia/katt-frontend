@@ -39,7 +39,7 @@ function NotaAccordion({ nota, onDelete }: { nota: Nota; onDelete: () => void })
   )
 }
 
-function useNotas(pacienteId: number) {
+function useNotas(pacienteId: string) {
   const key = `katt-notas-paciente-${pacienteId}`
   const [notas, setNotas] = useState<Nota[]>(() => JSON.parse(localStorage.getItem(key) || '[]'))
 
@@ -61,8 +61,8 @@ function useNotas(pacienteId: number) {
 export default function ClienteDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const paciente = pacienteStore.getById(Number(id))
-  const { notas, agregar, eliminar } = useNotas(Number(id))
+  const paciente = pacienteStore.getById(id!)
+  const { notas, agregar, eliminar } = useNotas(id!)
   const [contenido, setContenido] = useState('')
 
   if (!paciente) {
@@ -82,7 +82,7 @@ export default function ClienteDetalle() {
         module="paciente"
         basePath="/paciente"
         entityLabel={labels.paciente}
-        onDelete={() => { pacienteStore.remove(Number(id)); navigate('/paciente') }}
+        onDelete={() => { pacienteStore.remove(id!); navigate('/paciente') }}
         bare
         hideButtons
         hideCustom
@@ -114,7 +114,7 @@ export default function ClienteDetalle() {
       </div>
 
       {/* Documentos */}
-      <Documents module="paciente" entityId={Number(id)} />
+      <Documents module="paciente" entityId={id!} />
 
       {/* Campos custom */}
       {(() => {
@@ -147,7 +147,7 @@ export default function ClienteDetalle() {
           className="flex-1 px-3 py-1.5 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-xs font-medium transition-colors"
         >Editar</button>
         <button
-          onClick={() => { pacienteStore.remove(Number(id)); navigate('/paciente') }}
+          onClick={() => { pacienteStore.remove(id!); navigate('/paciente') }}
           className="flex-1 px-3 py-1.5 rounded-lg border border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs font-medium transition-colors"
         >Eliminar</button>
       </div>

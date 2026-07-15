@@ -15,7 +15,7 @@ export default function InventarioDetalle() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [, forceUpdate] = useState(0)
 
-  const item = inventarioStore.getById(Number(id))
+  const item = inventarioStore.getById(id!)
   if (!item) {
     return <div className="p-4 text-center text-gray-500">Artículo no encontrado.</div>
   }

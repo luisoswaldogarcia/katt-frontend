@@ -12,20 +12,20 @@ function getCitaFutura(nombre: string): CitaData | undefined {
 
 export default function ClienteCitas() {
   const navigate = useNavigate()
-  const { state } = useLocation() as { state: { ids: number[] } | null }
-  const ids: number[] = state?.ids || []
+  const { state } = useLocation() as { state: { ids: string[] } | null }
+  const ids: string[] = state?.ids || []
   const pacientes = ids.map(id => pacienteStore.getById(id)).filter(Boolean)
   const doctores = doctorStore.getAll()
 
   const [ver, setVer] = useState(0)
-  const [modal, setModal] = useState<number | null>(null)
+  const [modal, setModal] = useState<string | null>(null)
   const [confirmCita, setConfirmCita] = useState<CitaData | null>(null)
   const [fecha, setFecha] = useState('')
   const [hora, setHora] = useState('09:00')
   const [motivo, setMotivo] = useState('')
   const [doctor, setDoctor] = useState('')
 
-  function openModal(id: number) {
+  function openModal(id: string) {
     setModal(id)
     setFecha('')
     setHora('09:00')
@@ -77,7 +77,7 @@ export default function ClienteCitas() {
                 Cancelar
               </button>
             ) : (
-              <button type="button" onClick={() => openModal(pac.id)} className="shrink-0 p-2 rounded-lg hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
+              <button type="button" onClick={() => openModal(pac.id!)} className="shrink-0 p-2 rounded-lg hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-katt-500"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
               </button>
             )}
@@ -108,7 +108,7 @@ export default function ClienteCitas() {
       {modal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setModal(null)}>
           <div className="w-full max-w-sm rounded-xl bg-white dark:bg-katt-900 border border-katt-200 dark:border-katt-800 p-5 space-y-4" onClick={e => e.stopPropagation()}>
-            <p className="text-sm font-bold">Agendar cita — {pacienteStore.getById(modal)?.nombre}</p>
+            <p className="text-sm font-bold">Agendar cita — {pacienteStore.getById(modal!)?.nombre}</p>
             <div className="space-y-3">
               <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} required className={inputClass} />
               <input type="time" value={hora} onChange={e => setHora(e.target.value)} required className={inputClass} />

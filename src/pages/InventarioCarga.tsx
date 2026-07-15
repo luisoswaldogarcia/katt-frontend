@@ -22,7 +22,7 @@ export default function InventarioCarga() {
   const [pendingCode, setPendingCode] = useState<string | null>(null)
   const [nombre, setNombre] = useState('')
   const [listening, setListening] = useState(false)
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const recognitionRef = useRef<any>(null)
 
   function handleDetected(code: string) {
     beep()
@@ -32,9 +32,9 @@ export default function InventarioCarga() {
   }
 
   function startListening() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognition) return
-    const recognition = new SpeechRecognition()
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SR) return
+    const recognition = new SR()
     recognition.lang = 'es-MX'
     recognition.continuous = false
     recognition.interimResults = false

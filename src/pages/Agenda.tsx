@@ -117,7 +117,7 @@ export default function Agenda() {
     forceUpdate(n => n + 1)
   }
 
-  function handleCancel(id: number) {
+  function handleCancel(id: string) {
     citaStore.remove(id)
     setSelected(null)
     setConfirmCancel(null)
@@ -180,7 +180,7 @@ export default function Agenda() {
       {/* Views */}
       {view === 'dia' && <DayView date={currentDate} today={today} onSelect={setSelected} />}
       {view === 'semana' && <WeekView date={currentDate} today={today} onSelect={setSelected} />}
-      {view === 'mes' && <MonthView date={currentDate} today={today} onSelect={setSelected} onDayClick={d => { setCurrentDate(d); setView('dia') }} />}
+      {view === 'mes' && <MonthView date={currentDate} today={today} onDayClick={d => { setCurrentDate(d); setView('dia') }} />}
 
       {/* FAB agregar cita */}
       <button
@@ -367,7 +367,7 @@ function WeekView({ date, today, onSelect }: { date: Date; today: string; onSele
 
 /* ─── Month View ─── */
 
-function MonthView({ date, today, onSelect, onDayClick }: { date: Date; today: string; onSelect: (c: CitaData) => void; onDayClick: (d: Date) => void }) {
+function MonthView({ date, today, onDayClick }: { date: Date; today: string; onDayClick: (d: Date) => void }) {
   const monthStart = getMonthStart(date)
   const daysInMonth = getDaysInMonth(date)
   const startDow = monthStart.getDay() === 0 ? 6 : monthStart.getDay() - 1 // monday=0

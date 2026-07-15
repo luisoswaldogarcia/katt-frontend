@@ -25,7 +25,7 @@ export default function PuntoVenta() {
   const ventasHoy = getVentasHoy()
   const totalHoy = ventasHoy.reduce((s, v) => s + v.total, 0)
 
-  function handleAgregar(itemId: number) {
+  function handleAgregar(itemId: string) {
     const prod = productos.find(p => p.id === itemId)
     if (!prod) return
     setCarrito(prev => {
@@ -39,7 +39,7 @@ export default function PuntoVenta() {
     setBusqueda('')
   }
 
-  function handleCantidad(itemId: number, delta: number) {
+  function handleCantidad(itemId: string, delta: number) {
     setCarrito(prev => prev.map(i => {
       if (i.itemId !== itemId) return i
       const nueva = i.cantidad + delta
@@ -47,16 +47,17 @@ export default function PuntoVenta() {
     }))
   }
 
-  function handleQuitar(itemId: number) {
+  function handleQuitar(itemId: string) {
     setCarrito(prev => prev.filter(i => i.itemId !== itemId))
   }
 
   function handleCobrar(metodoPago: Venta['metodoPago'], recibido?: number) {
-    const venta = registrarVenta(carrito, metodoPago, recibido)
-    setCarrito([])
-    setShowCobrar(false)
-    setVentaExitosa(venta)
-    setTimeout(() => setVentaExitosa(null), 3000)
+    registrarVenta(carrito, metodoPago, recibido).then(venta => {
+      setCarrito([])
+      setShowCobrar(false)
+      setVentaExitosa(venta)
+      setTimeout(() => setVentaExitosa(null), 3000)
+    })
   }
 
   return (
@@ -371,7 +372,7 @@ function beepError() {
 
 function AsignarCodigoModal({ code, onAsignar, onClose }: {
   code: string
-  onAsignar: (itemId: number) => void
+  onAsignar: (itemId: string) => void
   onClose: () => void
 }) {
   const [busqueda, setBusqueda] = useState('')

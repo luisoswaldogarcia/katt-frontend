@@ -36,7 +36,7 @@ export default function Compras() {
 function ComprasTab() {
   const [compras, setCompras] = useState(compraStore.getAll)
   const [showForm, setShowForm] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [filtro, setFiltro] = useState('')
 
   const filtradas = filtro
@@ -49,7 +49,7 @@ function ComprasTab() {
     setShowForm(false)
   }
 
-  function handleEstado(id: number, estado: Compra['estado']) {
+  function handleEstado(id: string, estado: Compra['estado']) {
     compraStore.update(id, { estado })
     if (estado === 'Recibida') {
       const compra = compraStore.getById(id)
@@ -61,7 +61,7 @@ function ComprasTab() {
     setCompras(compraStore.getAll())
   }
 
-  function handleDelete(id: number) {
+  function handleDelete(id: string) {
     compraStore.remove(id)
     setCompras(compraStore.getAll())
     setConfirmDelete(null)
@@ -121,7 +121,7 @@ function CompraForm({ onSave, onClose }: { onSave: (c: Omit<Compra, 'id'>) => vo
   const filtrados = busqueda.trim() ? productos.filter(p => p.nombre.toLowerCase().includes(busqueda.toLowerCase())).slice(0, 6) : []
   const total = items.reduce((s, i) => s + i.cantidad * i.precioUnitario, 0)
 
-  function handleAgregar(id: number) {
+  function handleAgregar(id: string) {
     const prod = productos.find(p => p.id === id)
     if (!prod) return
     setItems(prev => {
@@ -192,7 +192,7 @@ function ProveedoresTab() {
   const [proveedores, setProveedores] = useState(proveedorStore.getAll)
   const [showForm, setShowForm] = useState(false)
   const [editando, setEditando] = useState<Proveedor | null>(null)
-  const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [filtro, setFiltro] = useState('')
 
   const filtrados = filtro
@@ -210,7 +210,7 @@ function ProveedoresTab() {
     setEditando(null)
   }
 
-  function handleDelete(id: number) {
+  function handleDelete(id: string) {
     proveedorStore.remove(id)
     setProveedores(proveedorStore.getAll())
     setConfirmDelete(null)

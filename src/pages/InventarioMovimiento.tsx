@@ -8,19 +8,19 @@ const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 bor
 
 export default function InventarioMovimiento() {
   const navigate = useNavigate()
-  const { state } = useLocation() as { state: { ids: number[] } | null }
-  const ids: number[] = state?.ids || []
+  const { state } = useLocation() as { state: { ids: string[] } | null }
+  const ids: string[] = state?.ids || []
   const items = ids.map(id => inventarioStore.getById(id)).filter(Boolean)
 
   const [motivo, setMotivo] = useState('')
-  const [cantidades, setCantidades] = useState<Record<number, number>>(
+  const [cantidades, setCantidades] = useState<Record<string, number>>(
     Object.fromEntries(ids.map(id => [id, 0]))
   )
-  const [rawInputs, setRawInputs] = useState<Record<number, string>>(
+  const [rawInputs, setRawInputs] = useState<Record<string, string>>(
     Object.fromEntries(ids.map(id => [id, '0']))
   )
 
-  function updateCantidad(id: number, delta: number) {
+  function updateCantidad(id: string, delta: number) {
     const next = (cantidades[id] || 0) + delta
     setCantidades(prev => ({ ...prev, [id]: next }))
     setRawInputs(prev => ({ ...prev, [id]: String(next) }))

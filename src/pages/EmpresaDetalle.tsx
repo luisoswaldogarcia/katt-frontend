@@ -12,7 +12,7 @@ const listItem = "flex items-center justify-between px-3 py-2 rounded-lg bg-gray
 export default function EmpresaDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const empresa = empresaStore.getById(Number(id))
+  const empresa = empresaStore.getById(id!)
   const [, forceUpdate] = useState(0)
 
   if (!empresa) {
@@ -54,7 +54,7 @@ export default function EmpresaDetalle() {
         module="empresa"
         basePath="/empresa"
         entityLabel={labels.empresa}
-        onDelete={() => { empresaStore.remove(Number(id)); navigate('/empresa') }}
+        onDelete={() => { empresaStore.remove(id!); navigate('/empresa') }}
         bare
       />
 

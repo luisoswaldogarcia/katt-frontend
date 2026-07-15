@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { inventarioStore } from '../lib/demoStore'
 
 const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
@@ -6,14 +6,14 @@ const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 bor
 export default function InventarioImagenes() {
   const [items, setItems] = useState(() => inventarioStore.getAll().filter(i => !i.foto))
   const [busqueda, setBusqueda] = useState('')
-  const [capturando, setCapturando] = useState<number | null>(null)
+  const [capturando, setCapturando] = useState<string | null>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
 
   const filtrados = busqueda.trim()
     ? items.filter(i => i.nombre.toLowerCase().includes(busqueda.toLowerCase()))
     : items
 
-  function handleClick(id: number) {
+  function handleClick(id: string) {
     setCapturando(id)
     setTimeout(() => cameraRef.current?.click(), 50)
   }
@@ -23,7 +23,7 @@ export default function InventarioImagenes() {
     if (!file || !capturando) { setCapturando(null); return }
     const reader = new FileReader()
     reader.onload = () => {
-      inventarioStore.update(capturando, { foto: reader.result as string })
+      inventarioStore.update(capturando!, { foto: reader.result as string })
       setItems(prev => prev.filter(i => i.id !== capturando))
       setCapturando(null)
     }

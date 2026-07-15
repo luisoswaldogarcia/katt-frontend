@@ -11,7 +11,7 @@ const listItem = "flex items-center justify-between px-3 py-2 rounded-lg bg-gray
 export default function UsuarioDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const doctor = doctorStore.getById(Number(id))
+  const doctor = doctorStore.getById(id!)
   const [, forceUpdate] = useState(0)
 
   if (!doctor) {
@@ -29,7 +29,7 @@ export default function UsuarioDetalle() {
 
   function toggleModule(key: string) {
     const updated = { ...userModules, [key]: !userModules[key] }
-    doctorStore.update(Number(id), { modules: updated })
+    doctorStore.update(id!, { modules: updated })
     forceUpdate(n => n + 1)
   }
 
@@ -46,7 +46,7 @@ export default function UsuarioDetalle() {
         module="doctor"
         basePath="/doctor"
         entityLabel={labels.doctor}
-        onDelete={() => { doctorStore.remove(Number(id)); navigate('/doctor') }}
+        onDelete={() => { doctorStore.remove(id!); navigate('/doctor') }}
         bare
       />
 
