@@ -158,12 +158,12 @@ export default function App() {
   useEffect(() => {
     getSession().then(async s => {
       if (s) {
-        await loadAllConfig()
+        await loadAllConfig().catch(() => {})
         await preloadStores()
       }
       setAuthenticated(!!s)
       setLoading(false)
-    })
+    }).catch(() => setLoading(false))
   }, [])
 
   if (loading) return <div className="h-dvh flex items-center justify-center bg-katt-50 dark:bg-katt-950"><span className="text-katt-500">Cargando...</span></div>
