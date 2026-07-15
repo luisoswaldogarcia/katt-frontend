@@ -1,0 +1,17 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "katt-frontend-dev"
+resolve_s3 = true
+capabilities = "CAPABILITY_IAM"
+region = "us-east-1"
+profile = "katt-deploy"
+parameter_overrides = "Stage=dev"
+
+[prod.deploy.parameters]
+stack_name = "katt-frontend-prod"
+resolve_s3 = true
+capabilities = "CAPABILITY_IAM"
+region = "us-east-1"
+profile = "katt-deploy"
+parameter_overrides = "Stage=prod"
