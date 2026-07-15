@@ -1,28 +1,44 @@
-const SESSION_KEY = 'katt-session'
+import { signIn as ampSignIn, signOut as ampSignOut, getCurrentUser, fetchAuthSession } from 'aws-amplify/auth'
 
 export interface Session {
   email: string
-  nombre: string
+  userId: string
+  groups: string[]
+  token: string
 }
 
-const MOCK_USERS = [
-  { email: 'admin@katt.com', password: '1234', nombre: 'Admin' },
-  { email: 'demo@katt.com', password: 'demo', nombre: 'Demo' },
-]
-
-export function signIn(email: string, password: string): Session | null {
-  const user = MOCK_USERS.find(u => u.email === email && u.password === password)
-  if (!user) return null
-  const session: Session = { email: user.email, nombre: user.nombre }
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session))
-  return session
+export async function signIn(email: string, password: string): Promise<Session> {
+  const { isSignedIn, nextStep } = await ampSignIn({ username: email, password })
+  if (nextStep?.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
+    throw new Error('NEW_PASSWORD_REQUIRED')
+  }
+  if (!isSignedIn) throw new Error('Login failed')
+  return getSession() as Promise<Session>
 }
 
-export function signOut() {
-  localStorage.removeItem(SESSION_KEY)
+export async function signOut() {
+  await ampSignOut()
 }
 
-export function getSession(): Session | null {
-  const stored = localStorage.getItem(SESSION_KEY)
-  return stored ? JSON.parse(stored) : null
+export async function getSession(): Promise<Session | null> {
+  try {
+    const user = await getCurrentUser()
+    const { tokens } = await fetchAuthSession()
+    const idToken = tokens?.idToken
+    if (!idToken) return null
+    const claims = idToken.payload
+    return {
+      email: claims.email as string,
+      userId: user.userId,
+      groups: (claims['cognito:groups'] as string[]) || [],
+      token: idToken.toString(),
+    }
+  } catch {
+    return null
+  }
+}
+
+export async function getToken(): Promise<string | null> {
+  const session = await getSession()
+  return session?.token || null
 }
