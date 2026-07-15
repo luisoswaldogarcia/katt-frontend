@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { compraStore } from '../lib/compras'
-import type { Compra, CompraItem } from '../lib/compras'
+import { compraStore, proveedorStore } from '../lib/compras'
+import type { Compra, CompraItem, Proveedor } from '../lib/compras'
 import { inventarioStore } from '../lib/demoStore'
 import { ConfirmModal } from '../components/ConfirmModal'
 
@@ -13,7 +13,27 @@ const estadoColor: Record<Compra['estado'], string> = {
   Cancelada: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
 }
 
+type Tab = 'compras' | 'proveedores'
+const tabClass = "px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+const tabActive = "bg-katt-500 text-white"
+const tabInactive = "text-katt-600 dark:text-katt-400 hover:bg-katt-100 dark:hover:bg-katt-800"
+
 export default function Compras() {
+  const [tab, setTab] = useState<Tab>('compras')
+
+  return (
+    <div className="h-full overflow-y-auto p-4 space-y-4">
+      <div className="flex gap-2">
+        <button onClick={() => setTab('compras')} className={`${tabClass} ${tab === 'compras' ? tabActive : tabInactive}`}>Compras</button>
+        <button onClick={() => setTab('proveedores')} className={`${tabClass} ${tab === 'proveedores' ? tabActive : tabInactive}`}>Proveedores</button>
+      </div>
+      {tab === 'compras' && <ComprasTab />}
+      {tab === 'proveedores' && <ProveedoresTab />}
+    </div>
+  )
+}
+
+function ComprasTab() {
   const [compras, setCompras] = useState(compraStore.getAll)
   const [showForm, setShowForm] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
@@ -48,7 +68,7 @@ export default function Compras() {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-4 space-y-4">
+    <>
       <input value={filtro} onChange={e => setFiltro(e.target.value)} placeholder="Buscar por proveedor o estado..." className={inputClass} />
 
       {filtradas.length === 0 && <p className="text-sm text-gray-400 text-center py-8">No hay compras registradas</p>}
@@ -88,7 +108,7 @@ export default function Compras() {
       {confirmDelete !== null && (
         <ConfirmModal message="¿Eliminar esta orden de compra?" onConfirm={() => handleDelete(confirmDelete)} onCancel={() => setConfirmDelete(null)} />
       )}
-    </div>
+    </>
   )
 }
 
@@ -162,6 +182,106 @@ function CompraForm({ onSave, onClose }: { onSave: (c: Omit<Compra, 'id'>) => vo
 
         <button onClick={handleSubmit} disabled={!proveedor.trim() || items.length === 0} className={`w-full py-2.5 rounded-lg font-medium text-sm transition-colors ${!proveedor.trim() || items.length === 0 ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-katt-500 hover:bg-katt-600 text-white'}`}>
           Crear orden
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function ProveedoresTab() {
+  const [proveedores, setProveedores] = useState(proveedorStore.getAll)
+  const [showForm, setShowForm] = useState(false)
+  const [editando, setEditando] = useState<Proveedor | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
+  const [filtro, setFiltro] = useState('')
+
+  const filtrados = filtro
+    ? proveedores.filter(p => p.nombre.toLowerCase().includes(filtro.toLowerCase()) || p.contacto.toLowerCase().includes(filtro.toLowerCase()))
+    : proveedores
+
+  function handleSave(data: Omit<Proveedor, 'id'>) {
+    if (editando) {
+      proveedorStore.update(editando.id, data)
+    } else {
+      proveedorStore.create(data)
+    }
+    setProveedores(proveedorStore.getAll())
+    setShowForm(false)
+    setEditando(null)
+  }
+
+  function handleDelete(id: number) {
+    proveedorStore.remove(id)
+    setProveedores(proveedorStore.getAll())
+    setConfirmDelete(null)
+  }
+
+  return (
+    <>
+      <input value={filtro} onChange={e => setFiltro(e.target.value)} placeholder="Buscar proveedor..." className={inputClass} />
+
+      {filtrados.length === 0 && <p className="text-sm text-gray-400 text-center py-8">No hay proveedores registrados</p>}
+
+      <div className="space-y-3">
+        {filtrados.map(p => (
+          <div key={p.id} className={cardClass}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-sm">{p.nombre}</p>
+                <p className="text-xs text-gray-500">{p.contacto} · {p.telefono}</p>
+                {p.email && <p className="text-xs text-gray-400">{p.email}</p>}
+              </div>
+              <div className="flex gap-1">
+                <button onClick={() => { setEditando(p); setShowForm(true) }} className="px-2 py-1 rounded text-xs bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700 transition-colors">Editar</button>
+                <button onClick={() => setConfirmDelete(p.id)} className="px-2 py-1 rounded text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors">Eliminar</button>
+              </div>
+            </div>
+            {p.notas && <p className="text-xs text-gray-500 dark:text-gray-400">{p.notas}</p>}
+          </div>
+        ))}
+      </div>
+
+      <button onClick={() => { setEditando(null); setShowForm(true) }} className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-katt-500 hover:bg-katt-600 text-white shadow-lg flex items-center justify-center transition-colors z-40" aria-label="Nuevo proveedor">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M12 5v14M5 12h14" /></svg>
+      </button>
+
+      {showForm && <ProveedorForm initial={editando} onSave={handleSave} onClose={() => { setShowForm(false); setEditando(null) }} />}
+
+      {confirmDelete !== null && (
+        <ConfirmModal message="¿Eliminar este proveedor?" onConfirm={() => handleDelete(confirmDelete)} onCancel={() => setConfirmDelete(null)} />
+      )}
+    </>
+  )
+}
+
+function ProveedorForm({ initial, onSave, onClose }: { initial: Proveedor | null; onSave: (d: Omit<Proveedor, 'id'>) => void; onClose: () => void }) {
+  const [nombre, setNombre] = useState(initial?.nombre ?? '')
+  const [contacto, setContacto] = useState(initial?.contacto ?? '')
+  const [telefono, setTelefono] = useState(initial?.telefono ?? '')
+  const [email, setEmail] = useState(initial?.email ?? '')
+  const [notas, setNotas] = useState(initial?.notas ?? '')
+
+  function handleSubmit() {
+    if (!nombre.trim()) return
+    onSave({ nombre: nombre.trim(), contacto: contacto.trim(), telefono: telefono.trim(), email: email.trim(), notas: notas.trim() })
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className={cardClass + " w-full max-w-sm"} onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-sm">{initial ? 'Editar proveedor' : 'Nuevo proveedor'}</h3>
+          <button onClick={onClose} className="p-1 rounded hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Nombre *" className={inputClass} autoFocus />
+        <input value={contacto} onChange={e => setContacto(e.target.value)} placeholder="Persona de contacto" className={inputClass} />
+        <input value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="Teléfono" className={inputClass} />
+        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className={inputClass} />
+        <textarea value={notas} onChange={e => setNotas(e.target.value)} placeholder="Notas" className={inputClass + " resize-none h-20"} />
+        <button onClick={handleSubmit} disabled={!nombre.trim()} className={`w-full py-2.5 rounded-lg font-medium text-sm transition-colors ${!nombre.trim() ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-katt-500 hover:bg-katt-600 text-white'}`}>
+          {initial ? 'Guardar cambios' : 'Crear proveedor'}
         </button>
       </div>
     </div>

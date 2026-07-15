@@ -1,0 +1,9 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "references": {
+    "second-brain": {
+      "path": "~/second-brain",
+      "description": "Documentación del proyecto en formato grafo para contexto rápido de IA. Usar para entender la arquitectura y dependencias entre módulos."
+    }
+  }
+}

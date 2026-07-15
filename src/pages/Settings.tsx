@@ -9,8 +9,12 @@ import { getActiveEmpresaId, setActiveEmpresaId } from '../lib/modules'
 import { empresaStore } from '../lib/demoStore'
 import { getKanbanColumns, saveKanbanColumns, getTaskTypes, saveTaskTypes, getAllTableColumns, getVisibleTableColumns, saveVisibleTableColumns } from '../lib/kanban'
 import type { TaskType, TaskTypeField } from '../lib/kanban'
+import { getDocTypeCatalog, saveDocTypeCatalog, getModuleDocTypeIds, saveModuleDocTypeIds } from '../lib/documents'
+import type { DocType } from '../lib/documents'
+import { getModuleCatalog, updateModuleInfo } from '../lib/moduleCatalog'
+import type { ModuleCatalogItem } from '../lib/moduleCatalog'
 
-type Tab = 'usuario' | 'sistema' | 'operativo'
+type Tab = 'usuario' | 'sistema' | 'operativo' | 'documentos' | 'modulos'
 
 const tabClass = (active: boolean) =>
   `px-4 py-2 text-sm font-medium rounded-lg transition-colors text-left ${active ? 'bg-katt-500 text-white' : 'hover:bg-katt-100 dark:hover:bg-katt-800 text-gray-600 dark:text-gray-400'}`
@@ -99,6 +103,8 @@ export default function Settings() {
           <button onClick={() => setTab('usuario')} className={tabClass(tab === 'usuario')}>Usuario</button>
           <button onClick={() => setTab('sistema')} className={tabClass(tab === 'sistema')}>Sistema</button>
           <button onClick={() => setTab('operativo')} className={tabClass(tab === 'operativo')}>Operativo</button>
+          <button onClick={() => setTab('documentos')} className={tabClass(tab === 'documentos')}>Documentos</button>
+          <button onClick={() => setTab('modulos')} className={tabClass(tab === 'modulos')}>Módulos</button>
         </div>
 
         {/* Content */}
@@ -369,6 +375,12 @@ export default function Settings() {
         </div>
       )}
 
+      {/* Tab: Documentos */}
+      {tab === 'documentos' && <TiposDocumentoTab />}
+
+      {/* Tab: Módulos */}
+      {tab === 'modulos' && <ModulosTab />}
+
         </div>{/* end flex-1 content */}
       </div>{/* end md:flex */}
 
@@ -476,6 +488,7 @@ export default function Settings() {
 
       {/* Modal tipo de tarea */}
       {showTypeForm && (
+
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowTypeForm(false)}>
           <div onClick={e => e.stopPropagation()} className="w-full max-w-sm bg-white dark:bg-katt-900 rounded-xl p-5 space-y-4 border border-katt-200 dark:border-katt-800 max-h-[90vh] overflow-y-auto">
             <h3 className="font-bold text-sm">{editingType ? 'Editar tipo de tarea' : 'Nuevo tipo de tarea'}</h3>
@@ -552,6 +565,162 @@ export default function Settings() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+const docModules: { key: Module; label: string }[] = [
+  { key: 'paciente', label: labels.paciente },
+  { key: 'doctor', label: labels.doctor },
+  { key: 'inventario', label: labels.inventario },
+  { key: 'empresa', label: labels.empresa },
+]
+
+function TiposDocumentoTab() {
+  const [catalog, setCatalog] = useState<DocType[]>(getDocTypeCatalog)
+  const [nombre, setNombre] = useState('')
+  const [activeModule, setActiveModule] = useState<Module>('paciente')
+  const [assigned, setAssigned] = useState<string[]>(() => getModuleDocTypeIds('paciente'))
+
+  function handleAdd() {
+    if (!nombre.trim()) return
+    const newType: DocType = { id: Date.now().toString(), label: nombre.trim() }
+    const updated = [...catalog, newType]
+    setCatalog(updated)
+    saveDocTypeCatalog(updated)
+    setNombre('')
+  }
+
+  function handleDelete(id: string) {
+    const updated = catalog.filter(t => t.id !== id)
+    setCatalog(updated)
+    saveDocTypeCatalog(updated)
+    for (const m of docModules) {
+      const ids = getModuleDocTypeIds(m.key).filter(i => i !== id)
+      saveModuleDocTypeIds(m.key, ids)
+    }
+    if (assigned.includes(id)) setAssigned(assigned.filter(i => i !== id))
+  }
+
+  function handleToggleAssign(id: string) {
+    const updated = assigned.includes(id) ? assigned.filter(i => i !== id) : [...assigned, id]
+    setAssigned(updated)
+    saveModuleDocTypeIds(activeModule, updated)
+  }
+
+  function handleModuleChange(mod: Module) {
+    setActiveModule(mod)
+    setAssigned(getModuleDocTypeIds(mod))
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className={cardClass}>
+        <p className={cardTitle}>Catálogo de tipos</p>
+        <div className="flex gap-2">
+          <input
+            placeholder="Nuevo tipo de documento"
+            value={nombre}
+            onChange={e => setNombre(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleAdd() }}
+            className={`flex-1 ${inputClass}`}
+          />
+          <button onClick={handleAdd} className={btnPrimary}>+</button>
+        </div>
+        {catalog.length === 0 && <p className="text-xs text-gray-400">Sin tipos de documento</p>}
+        <div className="space-y-1">
+          {catalog.map(t => (
+            <div key={t.id} className={listItem}>
+              <span className="text-sm">{t.label}</span>
+              <DeleteBtn onClick={() => handleDelete(t.id)} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={cardClass}>
+        <p className={cardTitle}>Asignar a módulo</p>
+        <div className="flex gap-2 flex-wrap">
+          {docModules.map(m => (
+            <button
+              key={m.key}
+              onClick={() => handleModuleChange(m.key)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${activeModule === m.key ? 'bg-katt-500 text-white' : 'bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700'}`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+        {catalog.length === 0 && <p className="text-xs text-gray-400">Crea tipos de documento primero</p>}
+        <div className="space-y-1">
+          {catalog.map(t => (
+            <label key={t.id} className={`${listItem} cursor-pointer`}>
+              <span className="text-sm">{t.label}</span>
+              <input
+                type="checkbox"
+                checked={assigned.includes(t.id)}
+                onChange={() => handleToggleAssign(t.id)}
+                className="w-4 h-4 rounded border-katt-300 text-katt-500 focus:ring-katt-500"
+              />
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ModulosTab() {
+  const [catalog, setCatalog] = useState(getModuleCatalog)
+  const [editing, setEditing] = useState<string | null>(null)
+  const [form, setForm] = useState<Partial<ModuleCatalogItem>>({})
+
+  function startEdit(item: ModuleCatalogItem) {
+    setEditing(item.key)
+    setForm({ nombre: item.nombre, descripcion: item.descripcion, costo: item.costo })
+  }
+
+  function saveEdit() {
+    if (!editing) return
+    const updated = updateModuleInfo(editing, form)
+    setCatalog(updated)
+    setEditing(null)
+  }
+
+  return (
+    <div className="max-w-2xl space-y-4">
+      <p className="text-sm text-gray-500">Configura los módulos disponibles en la plataforma y su costo mensual.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {catalog.map(mod => (
+          <div key={mod.key} className={cardClass}>
+            {editing === mod.key ? (
+              <div className="space-y-2">
+                <input value={form.nombre || ''} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Nombre" className={inputClass} />
+                <input value={form.descripcion || ''} onChange={e => setForm({ ...form, descripcion: e.target.value })} placeholder="Descripción" className={inputClass} />
+                <input type="number" value={form.costo ?? 0} onChange={e => setForm({ ...form, costo: Number(e.target.value) })} placeholder="Costo" className={inputClass} />
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => setEditing(null)} className="px-3 py-1 rounded-lg text-xs hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">Cancelar</button>
+                  <button onClick={saveEdit} className={btnSmall}>Guardar</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-katt-600 dark:text-katt-300">{mod.nombre}</span>
+                  <button onClick={() => startEdit(mod)} className="p-1 rounded hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500">{mod.descripcion}</p>
+                <p className="text-sm font-medium text-katt-500">{mod.costo === 0 ? 'Incluido' : `$${mod.costo}/mes`}</p>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

@@ -27,9 +27,7 @@ import TareasLista from './pages/TareasLista'
 import Empresa from './pages/Empresa'
 import EmpresaAlta from './pages/EmpresaAlta'
 import EmpresaDetalle from './pages/EmpresaDetalle'
-import Modulos from './pages/Modulos'
 import Settings from './pages/Settings'
-import TiposDocumento from './pages/TiposDocumento'
 import PuntoVenta from './pages/PuntoVenta'
 import Compras from './pages/Compras'
 
@@ -50,13 +48,11 @@ const titles: Record<string, string> = {
   '/paciente/citas': 'Agendar citas',
   '/empresa': labels.empresa,
   '/empresa/alta': 'Alta ' + labels.empresa,
-  '/modulos': 'Módulos',
   '/tablero': labels.tablero,
   '/tareas': labels.tareas,
   '/pos': labels.pos,
   '/compras': labels.compras,
   '/settings': 'Configuración',
-  '/tipos-documento': 'Tipos de Documento',
 }
 
 function Layout({ onLogout }: { onLogout: () => void }) {
@@ -143,10 +139,8 @@ function Layout({ onLogout }: { onLogout: () => void }) {
             <Route path="/empresa/alta" element={<EmpresaAlta />} />
             <Route path="/empresa/editar/:id" element={<EmpresaAlta />} />
             <Route path="/empresa/:id" element={<EmpresaDetalle />} />
-            <Route path="/modulos" element={<Modulos />} />
             <Route path="/tablero" element={<Tablero />} />
             <Route path="/tareas" element={<TareasLista />} />
-            <Route path="/tipos-documento" element={<TiposDocumento />} />
             <Route path="/pos" element={<PuntoVenta />} />
             <Route path="/compras" element={<Compras />} />
             <Route path="/settings" element={<Settings />} />
