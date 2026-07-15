@@ -17,6 +17,13 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
     setLoading(true)
     try {
       await signIn(email, password)
+      // Descubrir empresa
+      const { api } = await import('../lib/api')
+      const { setActiveEmpresaId } = await import('../lib/modules')
+      try {
+        const me = await api.get<{ empresaId: string }>('me', '')
+        if (me.empresaId) setActiveEmpresaId(me.empresaId)
+      } catch {}
       await preloadStores()
       onLogin()
     } catch (err: any) {

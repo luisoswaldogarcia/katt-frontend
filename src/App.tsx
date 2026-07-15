@@ -158,6 +158,13 @@ export default function App() {
   useEffect(() => {
     getSession().then(async s => {
       if (s) {
+        // Descubrir empresa del usuario
+        const { setActiveEmpresaId } = await import('./lib/modules')
+        const { api } = await import('./lib/api')
+        try {
+          const me = await api.get<{ empresaId: string }>('me', '')
+          if (me.empresaId) setActiveEmpresaId(me.empresaId)
+        } catch {}
         await loadAllConfig().catch(() => {})
         await preloadStores()
       }
