@@ -49,12 +49,12 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
         <form onSubmit={handleSubmit} className="space-y-4 bg-white dark:bg-katt-900 rounded-xl p-5 border border-katt-200 dark:border-katt-800">
           <div className="space-y-1">
             <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Email</label>
-            <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@katt.app" className={inputClass} autoFocus />
+            <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className={inputClass} autoFocus />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Contraseña</label>
             <div className="relative">
-              <input type={showPass ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••" className={inputClass + ' pr-9'} />
+              <input type={showPass ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)} className={inputClass + ' pr-9'} />
               <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   {showPass

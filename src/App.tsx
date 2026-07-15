@@ -165,8 +165,12 @@ export default function App() {
           if (me.empresaId) {
             setActiveEmpresaId(me.empresaId)
           } else if (me.empresas?.length && !getActiveEmpresaId()) {
-            // Owner sin empresa fija: usar la primera por defecto
             setActiveEmpresaId(me.empresas[0].id)
+          }
+          // Seed empresa cache from /me for owners who see all empresas
+          if (me.empresas?.length) {
+            const { seedEmpresas } = await import('./lib/demoStore')
+            seedEmpresas(me.empresas)
           }
         } catch {}
         await loadAllConfig().catch(() => {})

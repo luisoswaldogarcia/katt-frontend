@@ -64,7 +64,10 @@ export default function Settings() {
     const id = getActiveEmpresaId()
     return id ? String(id) : ''
   })
-  const empresas = empresaStore.getAll()
+  const [empresas, setEmpresas] = useState(empresaStore.getAll())
+  useEffect(() => {
+    empresaStore.fetch().then(setEmpresas).catch(() => {})
+  }, [])
   const [kanbanCols, setKanbanCols] = useState(getKanbanColumns)
   const [newCol, setNewCol] = useState('')
   const [taskTypes, setTaskTypes] = useState(getTaskTypes)

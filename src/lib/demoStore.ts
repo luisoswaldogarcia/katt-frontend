@@ -91,6 +91,9 @@ function createStore<T extends { id: string }>(entity: string) {
     getAll: () => cache,
     getById: (id: string) => cache.find(i => i.id === id),
 
+    // Seed cache externally (e.g. from /me)
+    _seed: (items: T[]) => { cache = items; loaded = true },
+
     // Async - fetches from API and updates cache
     fetch: async (): Promise<T[]> => {
       const res = await api.list<T>(entity)
@@ -128,6 +131,18 @@ function createStore<T extends { id: string }>(entity: string) {
 export const pacienteStore = createStore<PacienteData>('clientes')
 export const doctorStore = createStore<DoctorData>('usuarios')
 export const empresaStore = createStore<EmpresaData>('empresas')
+
+// Seed empresas cache from /me response (for owners who see all empresas)
+export function seedEmpresas(empresas: { id: string; nombre: string }[]) {
+  const current = empresaStore.getAll()
+  if (current.length >= empresas.length) return
+  const seeded = empresas.map(e => {
+    const existing = current.find(c => c.id === e.id)
+    return existing || { id: e.id, nombre: e.nombre, telefono: '', email: '' } as EmpresaData
+  })
+  empresaStore._seed(seeded)
+}
+
 export const inventarioStore = createStore<InventarioData>('inventario')
 export const tareaStore = createStore<TareaData>('tareas')
 
