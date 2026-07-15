@@ -4,13 +4,11 @@ import { empresaStore } from '../lib/demoStore'
 import { EntityAlta } from '../components/EntityAlta'
 import type { FormField } from '../components/DataForm'
 
-const empresas = empresaStore.getAll()
-
 export default function UsuarioAlta() {
   const [fields, setFields] = useState<FormField[]>([])
 
   useEffect(() => {
-    getSession().then(s => {
+    Promise.all([getSession(), empresaStore.fetch()]).then(([s, empresas]) => {
       const isOwner = s?.groups.includes('owner')
       const roles = isOwner ? ['Owner', 'Administrador', 'Usuario'] : ['Administrador', 'Usuario']
       setFields([

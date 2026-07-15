@@ -158,12 +158,16 @@ export default function App() {
   useEffect(() => {
     getSession().then(async s => {
       if (s) {
-        // Descubrir empresa del usuario
-        const { setActiveEmpresaId } = await import('./lib/modules')
+        const { setActiveEmpresaId, getActiveEmpresaId } = await import('./lib/modules')
         const { api } = await import('./lib/api')
         try {
-          const me = await api.get<{ empresaId: string }>('me', '')
-          if (me.empresaId) setActiveEmpresaId(me.empresaId)
+          const me = await api.get<{ empresaId: string | null; empresas?: { id: string; nombre: string }[] }>('me', '')
+          if (me.empresaId) {
+            setActiveEmpresaId(me.empresaId)
+          } else if (me.empresas?.length && !getActiveEmpresaId()) {
+            // Owner sin empresa fija: usar la primera por defecto
+            setActiveEmpresaId(me.empresas[0].id)
+          }
         } catch {}
         await loadAllConfig().catch(() => {})
         await preloadStores()
