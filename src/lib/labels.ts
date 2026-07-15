@@ -24,9 +24,7 @@ const defaults: Labels = {
   compras: 'Compras',
 }
 
-const demoOverrides: Partial<Labels> = {
-  pos: 'Mirada Gatuna',
-}
+const demoOverrides: Partial<Labels> = {}
 
 function load(): Labels {
   const stored = localStorage.getItem('katt-labels')
