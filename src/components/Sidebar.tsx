@@ -11,7 +11,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
-  const modules = getModules()
+  const [modules, setModules] = useState(getModules)
   const [canManageUsers, setCanManageUsers] = useState(false)
 
   useEffect(() => {
@@ -19,6 +19,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       const g = s?.groups || []
       setCanManageUsers(g.includes('owner') || g.includes('admin') || g.includes('administrador'))
     })
+    const refresh = () => setModules(getModules())
+    window.addEventListener('katt:modules', refresh)
+    return () => window.removeEventListener('katt:modules', refresh)
   }, [])
 
   return (
@@ -99,7 +102,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </svg>
             Chat
           </NavLink>}
-          <NavLink
+          {modules.clientes && <NavLink
             to="/paciente"
             onClick={onClose}
             className={({ isActive }) =>
@@ -115,8 +118,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               <circle cx="12" cy="7" r="4" />
             </svg>
             {labels.paciente}
-          </NavLink>
-          {canManageUsers && <NavLink
+          </NavLink>}
+          {modules.usuarios && canManageUsers && <NavLink
             to="/doctor"
             onClick={onClose}
             className={({ isActive }) =>

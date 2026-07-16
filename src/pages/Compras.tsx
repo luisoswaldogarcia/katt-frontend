@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { compraStore, proveedorStore } from '../lib/compras'
 import type { Compra, CompraItem, Proveedor } from '../lib/compras'
 import { inventarioStore } from '../lib/demoStore'
@@ -34,10 +34,14 @@ export default function Compras() {
 }
 
 function ComprasTab() {
-  const [compras, setCompras] = useState(compraStore.getAll)
+  const [compras, setCompras] = useState<Compra[]>([])
   const [showForm, setShowForm] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [filtro, setFiltro] = useState('')
+
+  useEffect(() => {
+    compraStore.fetch().then(() => setCompras(compraStore.getAll()))
+  }, [])
 
   const filtradas = filtro
     ? compras.filter(c => c.proveedor.toLowerCase().includes(filtro.toLowerCase()) || c.estado.toLowerCase().includes(filtro.toLowerCase()))
@@ -189,11 +193,15 @@ function CompraForm({ onSave, onClose }: { onSave: (c: Omit<Compra, 'id'>) => vo
 }
 
 function ProveedoresTab() {
-  const [proveedores, setProveedores] = useState(proveedorStore.getAll)
+  const [proveedores, setProveedores] = useState<Proveedor[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editando, setEditando] = useState<Proveedor | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [filtro, setFiltro] = useState('')
+
+  useEffect(() => {
+    proveedorStore.fetch().then(() => setProveedores(proveedorStore.getAll()))
+  }, [])
 
   const filtrados = filtro
     ? proveedores.filter(p => p.nombre.toLowerCase().includes(filtro.toLowerCase()) || p.contacto.toLowerCase().includes(filtro.toLowerCase()))

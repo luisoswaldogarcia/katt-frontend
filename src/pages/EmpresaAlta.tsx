@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { entityConfigs } from '../lib/entityConfig'
 import { DataForm } from '../components/DataForm'
 import { api } from '../lib/api'
+import { setActiveEmpresaId } from '../lib/modules'
 import type { Module } from '../lib/customFields'
 
 export default function EmpresaAlta() {
@@ -15,7 +16,8 @@ export default function EmpresaAlta() {
     if (isEdit) {
       await config.store.update(id, { ...data, custom, foto })
     } else {
-      await api.onboard({ nombre: data.nombre, email: data.email })
+      const res = await api.onboard(data)
+      setActiveEmpresaId(res.empresaId)
     }
     navigate(config.basePath)
   }

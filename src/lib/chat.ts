@@ -2,8 +2,8 @@ import { getToken } from './auth'
 import { getEmpresaId } from './api'
 import { getSession } from './auth'
 
-const WS_URL = 'wss://b76owlak02.execute-api.us-east-1.amazonaws.com/dev'
-const API_URL = 'https://b76owlak02.execute-api.us-east-1.amazonaws.com/dev/api/v1/chat'
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3000/ws'
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'}/chat`
 
 export interface ChatRoom {
   id: string

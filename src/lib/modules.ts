@@ -3,9 +3,8 @@ import { getConfig, saveConfig, getCached } from './configApi'
 const ACTIVE_EMPRESA_KEY = 'katt-active-empresa'
 
 export interface ModuleConfig {
-  paciente: boolean
-  doctor: boolean
-  empresa: boolean
+  clientes: boolean
+  usuarios: boolean
   inventario: boolean
   agenda: boolean
   chat: boolean
@@ -16,9 +15,8 @@ export interface ModuleConfig {
 }
 
 export const moduleLabels: Record<keyof ModuleConfig, string> = {
-  paciente: 'Pacientes',
-  doctor: 'Usuarios',
-  empresa: 'Empresas',
+  clientes: 'Clientes',
+  usuarios: 'Usuarios',
   inventario: 'Inventario',
   agenda: 'Agenda',
   chat: 'Chat',
@@ -29,9 +27,8 @@ export const moduleLabels: Record<keyof ModuleConfig, string> = {
 }
 
 const allEnabled: ModuleConfig = {
-  paciente: true,
-  doctor: true,
-  empresa: true,
+  clientes: true,
+  usuarios: true,
   inventario: true,
   agenda: true,
   chat: true,
@@ -61,6 +58,7 @@ export function getModules(): ModuleConfig {
 
 export async function saveModules(modules: Partial<ModuleConfig>) {
   await saveConfig('modules', { ...allEnabled, ...modules })
+  window.dispatchEvent(new Event('katt:modules'))
 }
 
 export async function saveEmpresaModules(_empresaId: string, modules: Partial<Record<string, boolean>>) {

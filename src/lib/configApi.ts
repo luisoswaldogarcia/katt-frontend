@@ -36,7 +36,7 @@ export async function saveConfigBulk(data: Record<string, unknown>): Promise<voi
   // PUT /config (no id) — need raw request
   const { getToken } = await import('./auth')
   const { getEmpresaId } = await import('./api')
-  const BASE_URL = 'https://b76owlak02.execute-api.us-east-1.amazonaws.com/dev/api/v1'
+  const { BASE_URL } = await import('./api')
   const token = await getToken()
   await fetch(`${BASE_URL}/config`, {
     method: 'PUT',

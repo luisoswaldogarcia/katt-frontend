@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { labels } from '../lib/labels'
 import { empresaStore, doctorStore } from '../lib/demoStore'
-import { saveEmpresaModules, moduleLabels } from '../lib/modules'
+import { saveEmpresaModules, moduleLabels, getModules } from '../lib/modules'
 import type { ModuleConfig } from '../lib/modules'
 import { getModuleCatalog } from '../lib/moduleCatalog'
 import { DataDetail } from '../components/DataDetail'
@@ -20,11 +20,11 @@ export default function EmpresaDetalle() {
   }
 
   const usuarios = doctorStore.getAll().filter(u => u.empresaId === empresa.id)
-  const empresaModules = empresa.modules || {}
+  const currentModules = getModules()
   const catalog = getModuleCatalog()
 
   function isModuleActive(key: string): boolean {
-    return empresaModules[key] !== false
+    return currentModules[key as keyof ModuleConfig] !== false
   }
 
   function getCosto(key: string): number {
@@ -36,7 +36,7 @@ export default function EmpresaDetalle() {
     .reduce((sum, k) => sum + getCosto(k), 0)
 
   function toggleModule(key: string) {
-    const updated = { ...empresaModules, [key]: !isModuleActive(key) }
+    const updated = { ...currentModules, [key]: !isModuleActive(key) }
     saveEmpresaModules(empresa!.id, updated)
     forceUpdate(n => n + 1)
   }
