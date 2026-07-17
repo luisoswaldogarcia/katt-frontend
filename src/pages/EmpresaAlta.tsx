@@ -17,7 +17,7 @@ export default function EmpresaAlta() {
 
   useEffect(() => {
     getSession().then(s => {
-      if (!s?.groups.includes('owner') && !s?.groups.includes('superadmin')) setUnauthorized(true)
+      if (!s?.groups.includes('owner')) setUnauthorized(true)
     })
   }, [])
 
@@ -34,7 +34,7 @@ export default function EmpresaAlta() {
   if (unauthorized) {
     return (
       <div className="p-8 text-center">
-        <p className="text-red-500 font-medium">Solo el usuario owner o super admin puede crear empresas.</p>
+        <p className="text-red-500 font-medium">Solo el usuario owner puede crear empresas.</p>
       </div>
     )
   }
