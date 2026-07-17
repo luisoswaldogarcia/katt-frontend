@@ -166,7 +166,7 @@ export default function InventarioDetalle() {
       {showConfirm && (
         <ConfirmModal
           message={`¿Eliminar "${item.nombre}"? Esta acción no se puede deshacer.`}
-          onConfirm={() => { inventarioStore.remove(item.id); navigate('/inventario') }}
+          onConfirm={async () => { await inventarioStore.remove(item.id); navigate('/inventario') }}
           onCancel={() => setShowConfirm(false)}
         />
       )}

@@ -82,7 +82,7 @@ export default function ClienteDetalle() {
         module="paciente"
         basePath="/paciente"
         entityLabel={labels.paciente}
-        onDelete={() => { pacienteStore.remove(id!); navigate('/paciente') }}
+        onDelete={async () => { await pacienteStore.remove(id!); navigate('/paciente') }}
         bare
         hideButtons
         hideCustom
@@ -147,7 +147,7 @@ export default function ClienteDetalle() {
           className="flex-1 px-3 py-1.5 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-xs font-medium transition-colors"
         >Editar</button>
         <button
-          onClick={() => { pacienteStore.remove(id!); navigate('/paciente') }}
+          onClick={async () => { await pacienteStore.remove(id!); navigate('/paciente') }}
           className="flex-1 px-3 py-1.5 rounded-lg border border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs font-medium transition-colors"
         >Eliminar</button>
       </div>

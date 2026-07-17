@@ -46,7 +46,7 @@ export default function UsuarioDetalle() {
         module="doctor"
         basePath="/doctor"
         entityLabel={labels.doctor}
-        onDelete={() => { doctorStore.remove(id!); navigate('/doctor') }}
+        onDelete={async () => { await doctorStore.remove(id!); navigate('/doctor') }}
         bare
       />
 

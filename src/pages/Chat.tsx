@@ -3,6 +3,7 @@ import { getSession } from '../lib/auth'
 import { connectWs, disconnectWs, onWsEvent, wsSend, fetchChats, fetchMessages, createChat } from '../lib/chat'
 import type { ChatRoom, ChatMessage } from '../lib/chat'
 import { doctorStore } from '../lib/demoStore'
+import { useKeyboardOffset } from '../hooks/useKeyboardOffset'
 
 const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-900 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
 
@@ -17,6 +18,7 @@ export default function Chat() {
   const [showNuevo, setShowNuevo] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const typingTimeout = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const keyboardOffset = useKeyboardOffset()
 
   useEffect(() => {
     getSession().then(s => { if (s) setUserId(s.userId) })
@@ -44,13 +46,26 @@ export default function Chat() {
 
   useEffect(() => {
     if (!activeChat) return
-    fetchMessages(activeChat.id).then(setMessages).catch(() => {})
+    const cacheKey = `katt-chat-${activeChat.id}`
+    const cached = localStorage.getItem(cacheKey)
+    if (cached) {
+      try { setMessages(JSON.parse(cached)) } catch {}
+    }
+    fetchMessages(activeChat.id).then(msgs => {
+      setMessages(msgs)
+      localStorage.setItem(cacheKey, JSON.stringify(msgs))
+    }).catch(err => console.error('[Chat] Error al cargar mensajes:', err))
     wsSend({ action: 'chat.read', chatId: activeChat.id, userId })
   }, [activeChat?.id, userId])
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight)
   }, [messages])
+
+  useEffect(() => {
+    if (!activeChat) return
+    localStorage.setItem(`katt-chat-${activeChat.id}`, JSON.stringify(messages))
+  }, [messages, activeChat?.id])
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
@@ -143,7 +158,7 @@ export default function Chat() {
             ))}
           </div>
 
-          <footer className="p-4 border-t border-katt-200 dark:border-katt-800">
+          <footer className="p-4 border-t border-katt-200 dark:border-katt-800" style={{ paddingBottom: keyboardOffset > 0 ? keyboardOffset + 16 : undefined }}>
             <form onSubmit={handleSend} className="flex gap-2">
               <input type="text" value={texto} onChange={e => setTexto(e.target.value)} onKeyDown={handleTyping} placeholder="Escribe un mensaje..." className="flex-1 px-4 py-2 rounded-full bg-gray-100 dark:bg-katt-900 border border-katt-200 dark:border-katt-700 focus:outline-none focus:ring-2 focus:ring-katt-500 text-sm" />
               <button type="submit" className="px-4 py-2 rounded-full bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors">Enviar</button>

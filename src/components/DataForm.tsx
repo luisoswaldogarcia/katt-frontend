@@ -63,9 +63,13 @@ export function DataForm({ fields, module, basePath, initialData, onSubmit, isEd
 
   const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
 
+  const scrollIntoView = (e: React.FocusEvent<HTMLElement>) => {
+    setTimeout(() => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)
+  }
+
   return (
     <div className="p-4 h-full overflow-y-auto">
-      <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-4">
+      <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-4 pb-24">
         {/* Foto */}
         <div className="flex flex-col items-center gap-2">
           <div
@@ -110,6 +114,7 @@ export function DataForm({ fields, module, basePath, initialData, onSubmit, isEd
                   required={isRequired}
                   value={form[f.key] || ''}
                   onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                  onFocus={scrollIntoView}
                   className={inputClass}
                 >
                   <option value="">Seleccionar...</option>
@@ -126,6 +131,7 @@ export function DataForm({ fields, module, basePath, initialData, onSubmit, isEd
                   placeholder={f.label}
                   value={form[f.key] || ''}
                   onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                  onFocus={scrollIntoView}
                   className={inputClass}
                 />
               )}

@@ -87,9 +87,18 @@ export async function fetchChats(): Promise<ChatRoom[]> {
 }
 
 export async function fetchMessages(chatId: string): Promise<ChatMessage[]> {
-  const res = await fetch(`${API_URL}/${chatId}/messages`, { headers: await chatHeaders() })
-  const { items } = await res.json()
-  return items
+  const url = `${API_URL}/${chatId}/messages`
+  const headers = await chatHeaders()
+  console.log('[Chat] GET', url)
+  const res = await fetch(url, { headers })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    console.error(`[Chat] fetchMessages ${res.status}: ${body}`)
+    return []
+  }
+  const data = await res.json()
+  console.log('[Chat] Mensajes recibidos:', data.items?.length ?? 0)
+  return data.items || []
 }
 
 export async function createChat(data: { name?: string; type?: string; members: string[] }): Promise<ChatRoom> {

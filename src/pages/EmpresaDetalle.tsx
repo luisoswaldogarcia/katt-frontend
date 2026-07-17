@@ -54,7 +54,7 @@ export default function EmpresaDetalle() {
         module="empresa"
         basePath="/empresa"
         entityLabel={labels.empresa}
-        onDelete={() => { empresaStore.remove(id!); navigate('/empresa') }}
+        onDelete={async () => { await empresaStore.remove(id!); navigate('/empresa') }}
         bare
       />
 

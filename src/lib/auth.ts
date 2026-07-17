@@ -1,4 +1,4 @@
-import { signIn as ampSignIn, signOut as ampSignOut, getCurrentUser, fetchAuthSession } from 'aws-amplify/auth'
+import { signIn as ampSignIn, signOut as ampSignOut, getCurrentUser, fetchAuthSession, confirmSignIn } from 'aws-amplify/auth'
 
 export interface Session {
   email: string
@@ -13,6 +13,11 @@ export async function signIn(email: string, password: string): Promise<Session> 
     throw new Error('NEW_PASSWORD_REQUIRED')
   }
   if (!isSignedIn) throw new Error('Login failed')
+  return getSession() as Promise<Session>
+}
+
+export async function confirmNewPassword(newPassword: string): Promise<Session> {
+  await confirmSignIn({ challengeResponse: newPassword })
   return getSession() as Promise<Session>
 }
 

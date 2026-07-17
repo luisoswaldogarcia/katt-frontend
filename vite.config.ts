@@ -10,6 +10,9 @@ export default defineConfig({
     tailwindcss(),
     basicSsl(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'public',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
       manifest: {
         name: 'Katt - Asistente Virtual',
@@ -25,4 +28,13 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    allowedHosts: ['192.168.1.26'],
+    proxy: {
+      '/dev': {
+        target: 'https://b76owlak02.execute-api.us-east-1.amazonaws.com',
+        changeOrigin: true,
+      },
+    },
+  },
 })

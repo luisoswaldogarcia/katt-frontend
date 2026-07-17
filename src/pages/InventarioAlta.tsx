@@ -19,12 +19,12 @@ export default function InventarioAlta() {
     { key: 'precioUnitario', label: 'Precio unitario' },
   ], [])
 
-  const handleSubmit = (data: Record<string, string>, custom: Record<string, unknown>, foto?: string) => {
+  const handleSubmit = async (data: Record<string, string>, custom: Record<string, unknown>, foto?: string) => {
     const parsed = { ...data, cantidad: Number(data.cantidad), precioUnitario: Number(data.precioUnitario), custom, foto }
     if (isEdit) {
-      inventarioStore.update(id, parsed)
+      await inventarioStore.update(id, parsed)
     } else {
-      inventarioStore.create(parsed as never)
+      await inventarioStore.create(parsed as never)
     }
     navigate('/inventario')
   }

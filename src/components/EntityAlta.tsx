@@ -17,11 +17,11 @@ export function EntityAlta({ entity, extraFields }: Props) {
   const initialData = isEdit ? config.store.getById(id) : undefined
   const fields = extraFields || config.fields
 
-  const handleSubmit = (data: Record<string, string>, custom: Record<string, unknown>, foto?: string) => {
+  const handleSubmit = async (data: Record<string, string>, custom: Record<string, unknown>, foto?: string) => {
     if (isEdit) {
-      config.store.update(id, { ...data, custom, foto })
+      await config.store.update(id, { ...data, custom, foto })
     } else {
-      config.store.create({ ...data, custom, foto } as never)
+      await config.store.create({ ...data, custom, foto } as never)
     }
     navigate(config.basePath)
   }

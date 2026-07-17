@@ -6,7 +6,7 @@ import { preloadStores } from './lib/demoStore'
 import { loadAllConfig } from './lib/configApi'
 import './lib/amplify'
 import { Sidebar } from './components/Sidebar'
-import { labels } from './lib/labels'
+import { getLabels } from './lib/labels'
 import Login from './pages/Login'
 import Home from './pages/Home'
 import Agente from './pages/Agente'
@@ -33,43 +33,43 @@ import Settings from './pages/Settings'
 import PuntoVenta from './pages/PuntoVenta'
 import Compras from './pages/Compras'
 
-const titles: Record<string, string> = {
-  '/': 'Inicio',
-  '/agente': 'Agente',
-  '/chat': 'Chat',
-  '/paciente': labels.paciente + 's',
-  '/paciente/alta': 'Alta ' + labels.paciente,
-  '/agenda': 'Agenda',
-  '/doctor': labels.doctor,
-  '/doctor/alta': 'Alta ' + labels.doctor,
-  '/inventario': labels.inventario,
-  '/inventario/alta': 'Alta ' + labels.inventario,
-  '/inventario/carga': 'Alta masiva',
-  '/inventario/imagenes': 'Cargar imágenes',
-  '/inventario/movimiento': 'Movimiento de inventario',
-  '/paciente/citas': 'Agendar citas',
-  '/empresa': labels.empresa,
-  '/empresa/alta': 'Alta ' + labels.empresa,
-  '/tareas': labels.tareas,
-  '/pos': labels.pos,
-  '/compras': labels.compras,
-  '/settings': 'Configuración',
-}
-
 function Layout({ onLogout }: { onLogout: () => void }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unread, setUnread] = useState(getUnreadCount)
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const lbl = getLabels()
+  const titles: Record<string, string> = {
+    '/': 'Inicio',
+    '/agente': 'Agente',
+    '/chat': 'Chat',
+    '/paciente': lbl.paciente + 's',
+    '/paciente/alta': 'Alta ' + lbl.paciente,
+    '/agenda': 'Agenda',
+    '/doctor': lbl.doctor,
+    '/doctor/alta': 'Alta ' + lbl.doctor,
+    '/inventario': lbl.inventario,
+    '/inventario/alta': 'Alta ' + lbl.inventario,
+    '/inventario/carga': 'Alta masiva',
+    '/inventario/imagenes': 'Cargar imágenes',
+    '/inventario/movimiento': 'Movimiento de inventario',
+    '/paciente/citas': 'Agendar citas',
+    '/empresa': lbl.empresa,
+    '/empresa/alta': 'Alta ' + lbl.empresa,
+    '/tareas': lbl.tareas,
+    '/pos': lbl.pos,
+    '/compras': lbl.compras,
+    '/settings': 'Configuración',
+  }
   const title = titles[pathname]
-    || (pathname.startsWith('/paciente/editar') ? 'Editar ' + labels.paciente
-    : pathname.startsWith('/paciente/') ? labels.paciente
-    : pathname.startsWith('/doctor/editar') ? 'Editar ' + labels.doctor
-    : pathname.startsWith('/doctor/') ? labels.doctor
-    : pathname.startsWith('/inventario/editar') ? 'Editar ' + labels.inventario
-    : pathname.startsWith('/inventario/') ? labels.inventario
-    : pathname.startsWith('/empresa/editar') ? 'Editar ' + labels.empresa
-    : pathname.startsWith('/empresa/') ? labels.empresa
+    || (pathname.startsWith('/paciente/editar') ? 'Editar ' + lbl.paciente
+    : pathname.startsWith('/paciente/') ? lbl.paciente
+    : pathname.startsWith('/doctor/editar') ? 'Editar ' + lbl.doctor
+    : pathname.startsWith('/doctor/') ? lbl.doctor
+    : pathname.startsWith('/inventario/editar') ? 'Editar ' + lbl.inventario
+    : pathname.startsWith('/inventario/') ? lbl.inventario
+    : pathname.startsWith('/empresa/editar') ? 'Editar ' + lbl.empresa
+    : pathname.startsWith('/empresa/') ? lbl.empresa
     : 'Katt')
 
   return (
