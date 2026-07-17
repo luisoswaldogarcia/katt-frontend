@@ -17,7 +17,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   useEffect(() => {
     getSession().then(s => {
       const g = s?.groups || []
-      setCanManageUsers(g.includes('owner'))
+      setCanManageUsers(g.includes('owner') || g.includes('superadmin'))
     })
     const refresh = () => setModules(getModules())
     window.addEventListener('katt:modules', refresh)

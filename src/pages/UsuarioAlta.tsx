@@ -12,7 +12,7 @@ export default function UsuarioAlta() {
 
   useEffect(() => {
     Promise.all([getSession(), empresaStore.fetch()]).then(([s]) => {
-      if (!s?.groups.includes('owner')) {
+      if (!s?.groups.includes('owner') && !s?.groups.includes('superadmin')) {
         setUnauthorized(true)
         return
       }
@@ -36,7 +36,7 @@ export default function UsuarioAlta() {
   if (unauthorized) {
     return (
       <div className="p-8 text-center">
-        <p className="text-red-500 font-medium">Solo el usuario owner puede crear usuarios.</p>
+        <p className="text-red-500 font-medium">Solo el usuario owner o super admin puede crear usuarios.</p>
       </div>
     )
   }

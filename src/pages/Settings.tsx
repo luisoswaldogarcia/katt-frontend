@@ -45,7 +45,7 @@ export default function Settings() {
   const [role, setRole] = useState<'owner'|'admin'|'other'>('other')
   useEffect(() => {
     getSession().then(s => {
-      if (s?.groups.includes('owner')) setRole('owner')
+      if (s?.groups.includes('owner') || s?.groups.includes('superadmin')) setRole('owner')
       else if (s?.groups.includes('admin') || s?.groups.includes('administrador')) setRole('admin')
     })
   }, [])
