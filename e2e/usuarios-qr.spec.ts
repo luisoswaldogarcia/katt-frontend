@@ -43,6 +43,12 @@ test.describe('Usuarios — QR de activación', () => {
     await setInputValue(page, 'Teléfono', '5552000003')
     await setInputValue(page, 'Email', usrEmail)
 
+    // Llenar nombre de usuario (se muestra solo cuando QR está activo)
+    const usernameInput = page.locator('input[placeholder="Usuario"]')
+    if (await usernameInput.isVisible()) {
+      await usernameInput.fill(`usr_${ts}`)
+    }
+
     await page.locator('button').filter({ hasText: 'Guardar' }).click()
     await page.waitForTimeout(2000)
 

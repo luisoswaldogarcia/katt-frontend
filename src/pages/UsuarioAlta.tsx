@@ -42,7 +42,7 @@ export default function UsuarioAlta() {
       (f.key === 'email' || f.key === 'telefono') && generateQr ? { ...f, required: false } : f
     )
     if (generateQr) {
-      base.push({ key: 'nombreUsuario', label: 'Nombre de usuario' })
+      base.push({ key: 'usuario', label: 'Usuario' })
     }
     return base
   }, [fields, generateQr])
