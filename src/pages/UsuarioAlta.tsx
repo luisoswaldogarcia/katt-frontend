@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getSession } from '../lib/auth'
 import { empresaStore } from '../lib/demoStore'
@@ -37,6 +37,33 @@ export default function UsuarioAlta() {
     })
   }, [])
 
+  const displayFields = useMemo(() => {
+    const base = fields.map(f =>
+      (f.key === 'email' || f.key === 'telefono') && generateQr ? { ...f, required: false } : f
+    )
+    if (generateQr) {
+      base.push({ key: 'nombreUsuario', label: 'Nombre de usuario' })
+    }
+    return base
+  }, [fields, generateQr])
+
+  const extraData = useMemo(() => ({ generateQr }), [generateQr])
+
+  // Poll signup token status; cerrar QR cuando el usuario lo use
+  useEffect(() => {
+    if (!qrUrl) return
+    const token = new URL(qrUrl).searchParams.get('token')
+    if (!token) return
+    const id = setInterval(async () => {
+      try {
+        const { api } = await import('../lib/api')
+        const res = await api.get<{ active: boolean }>('signup', `${token}/status`)
+        if (!res.active) { setQrData(null); setQrUrl(null) }
+      } catch {}
+    }, 3000)
+    return () => clearInterval(id)
+  }, [qrUrl])
+
   if (unauthorized) {
     return (
       <div className="p-8 text-center">
@@ -48,7 +75,7 @@ export default function UsuarioAlta() {
   if (!fields.length) return null
 
   const onBeforeSubmit = (data: Record<string, string>) => {
-    if (data.rol !== 'Owner' && data.rol !== 'Superadmin' && !data.empresaId) {
+    if (data.rol !== 'Owner' && data.rol !== 'Superadmin' && !data.empresaId && !generateQr) {
       return 'Debes seleccionar una empresa para este rol'
     }
     return null
@@ -60,6 +87,8 @@ export default function UsuarioAlta() {
       const url = `${base}/setup?token=${result.signupToken}`
       setQrUrl(url)
       QRCode.toDataURL(url, { width: 300, margin: 2 }).then(setQrData)
+    } else {
+      navigate('/doctor')
     }
   }
 
@@ -71,7 +100,7 @@ export default function UsuarioAlta() {
           Generar código QR (no enviar email de activación)
         </label>
       </div>
-      <EntityAlta entity="doctor" extraFields={fields} onBeforeSubmit={onBeforeSubmit} extraData={{ generateQr }} onAfterCreate={onAfterCreate} />
+      <EntityAlta entity="doctor" extraFields={displayFields} onBeforeSubmit={onBeforeSubmit} extraData={extraData} onAfterCreate={onAfterCreate} />
 
       {qrData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setQrData(null); setQrUrl(null); navigate('/doctor') }}>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { signIn, confirmNewPassword } from '../lib/auth'
+import { signIn, confirmNewPassword, signInWithFingerprint } from '../lib/auth'
 import { preloadStores } from '../lib/demoStore'
 
 const inputClass = 'w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500'
@@ -30,6 +30,23 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
         await finishLogin()
       } else {
         setError(err.message || 'Credenciales incorrectas')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleFingerprintLogin() {
+    setError('')
+    setLoading(true)
+    try {
+      await signInWithFingerprint()
+      await finishLogin()
+    } catch (err: any) {
+      if (err.name === 'NotAllowedError') {
+        setError('Autenticación biométrica cancelada')
+      } else {
+        setError(err.message || 'Error al iniciar sesión con huella')
       }
     } finally {
       setLoading(false)
@@ -104,6 +121,16 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
             {error && <p className="text-xs text-red-500">{error}</p>}
             <button type="submit" disabled={loading} className="w-full px-3 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 disabled:opacity-50 text-white text-sm font-medium transition-colors">
               {loading ? 'Ingresando...' : 'Iniciar sesión'}
+            </button>
+            <button type="button" onClick={handleFingerprintLogin} disabled={loading} className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-katt-200 dark:border-katt-700 hover:bg-gray-50 dark:hover:bg-katt-800 disabled:opacity-50 text-sm transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-katt-500">
+                <path d="M12 2a6 6 0 0 0-6 6v3" />
+                <path d="M18 11V8a6 6 0 0 0-1.5-4" />
+                <path d="M4 13a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+                <path d="M9 16v1" />
+                <path d="M15 16v1" />
+              </svg>
+              {loading ? 'Verificando...' : 'Entrar con huella digital'}
             </button>
           </form>
         ) : (

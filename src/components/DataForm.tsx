@@ -7,9 +7,10 @@ import type { Module } from '../lib/customFields'
 export interface FormField {
   key: string
   label: string
-  type?: 'text' | 'email' | 'tel' | 'date' | 'select'
+  type?: 'text' | 'email' | 'tel' | 'date' | 'select' | 'checkbox'
   options?: (string | { value: string; label: string })[]
   required?: boolean
+  hidden?: boolean | ((form: Record<string, string>) => boolean)
 }
 
 interface Props {
@@ -42,9 +43,11 @@ export function DataForm({ fields, module, basePath, initialData, onSubmit, isEd
       if (initialData.custom) setCustomValues(initialData.custom as Record<string, unknown>)
       if (initialData.foto) setFoto(initialData.foto as string)
     } else {
-      const formData: Record<string, string> = {}
-      fields.forEach(f => { formData[f.key] = '' })
-      setForm(formData)
+      setForm(prev => {
+        const next = { ...prev }
+        fields.forEach(f => { if (!(f.key in next)) next[f.key] = '' })
+        return next
+      })
     }
   }, [initialData, fields])
 
@@ -102,7 +105,10 @@ export function DataForm({ fields, module, basePath, initialData, onSubmit, isEd
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" />
         </div>
 
-        {fields.map(f => {
+        {fields.filter(f => {
+          if (typeof f.hidden === 'function') return !f.hidden(form)
+          return !f.hidden
+        }).map(f => {
           const isRequired = f.required !== false
           return (
             <div key={f.key} className="space-y-1">
@@ -124,6 +130,16 @@ export function DataForm({ fields, module, basePath, initialData, onSubmit, isEd
                     return <option key={val} value={val}>{lbl}</option>
                   })}
                 </select>
+              ) : f.type === 'checkbox' ? (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form[f.key] === 'true'}
+                    onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.checked ? 'true' : '' }))}
+                    className="w-4 h-4 rounded border-katt-300 text-katt-500 focus:ring-katt-500"
+                  />
+                  <span className="text-sm">{f.label}</span>
+                </label>
               ) : (
                 <input
                   required={isRequired}

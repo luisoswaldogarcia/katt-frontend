@@ -13,6 +13,8 @@ export default function SetupPassword() {
   const [step, setStep] = useState<Step>('password')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [showPass, setShowPass] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
@@ -111,11 +113,31 @@ export default function SetupPassword() {
           <form onSubmit={handleSetPassword} className="space-y-4 bg-white dark:bg-katt-900 rounded-xl p-5 border border-katt-200 dark:border-katt-800">
             <div className="space-y-1">
               <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Nueva contraseña</label>
-              <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className={inputClass} autoFocus />
+              <div className="relative">
+                <input type={showPass ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)} className={inputClass + ' pr-9'} autoFocus />
+                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                    {showPass
+                      ? <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></>
+                      : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>
+                    }
+                  </svg>
+                </button>
+              </div>
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Confirmar contraseña</label>
-              <input type="password" required value={confirm} onChange={e => setConfirm(e.target.value)} className={inputClass} />
+              <div className="relative">
+                <input type={showConfirm ? 'text' : 'password'} required value={confirm} onChange={e => setConfirm(e.target.value)} className={inputClass + ' pr-9'} />
+                <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                    {showConfirm
+                      ? <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></>
+                      : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>
+                    }
+                  </svg>
+                </button>
+              </div>
             </div>
             {error && <p className="text-xs text-red-500">{error}</p>}
             <button type="submit" disabled={loading} className="w-full px-3 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 disabled:opacity-50 text-white text-sm font-medium transition-colors">
