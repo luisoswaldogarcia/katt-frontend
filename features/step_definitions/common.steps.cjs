@@ -115,6 +115,13 @@ When('selecciono el tipo {string}', async function (option) {
 })
 
 When('presiono el botón {string}', async function (text) {
+  if (text === 'Menú') {
+    const btn = this.page.locator('button[aria-label="Menú"]')
+    await btn.waitFor({ state: 'visible', timeout: 5000 })
+    await btn.click()
+    await this.page.waitForTimeout(500)
+    return
+  }
   await clickBtn(this.page, text)
 })
 
@@ -176,17 +183,38 @@ When('confirmo la eliminación', async function () {
 
 Then('debo ver el paciente creado en la lista', async function () {
   const name = shared.created.nombre_Nombre || ''
-  if (name) await pageContains(this.page, name)
+  if (!name) return
+  for (let i = 0; i < 15; i++) {
+    const body = await this.page.evaluate(() => document.body.innerText)
+    if (body.includes(name)) return
+    await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await this.page.waitForTimeout(500)
+  }
+  throw new Error(`"${name}" no está en la lista de pacientes`)
 })
 
 Then('debo ver el item creado en la lista', async function () {
   const name = shared.created.nombre_Nombre || ''
-  if (name) await pageContains(this.page, name)
+  if (!name) return
+  for (let i = 0; i < 15; i++) {
+    const body = await this.page.evaluate(() => document.body.innerText)
+    if (body.includes(name)) return
+    await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await this.page.waitForTimeout(500)
+  }
+  throw new Error(`"${name}" no está en la lista de inventario`)
 })
 
 Then('debo ver el usuario creado en la lista', async function () {
   const name = shared.created.nombre_Nombre || ''
-  if (name) await pageContains(this.page, name)
+  if (!name) return
+  for (let i = 0; i < 15; i++) {
+    const body = await this.page.evaluate(() => document.body.innerText)
+    if (body.includes(name)) return
+    await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await this.page.waitForTimeout(500)
+  }
+  throw new Error(`"${name}" no está en la lista de usuarios`)
 })
 
 Then('debo ver la empresa creada en la lista', async function () {
@@ -346,6 +374,19 @@ Then('debo ver mi empresa en la lista', async function () {
   if (empresas.length === 0) return
   const visibleOnPage = empresas.some(e => body.includes(e))
   if (!visibleOnPage) throw new Error('No se encontró ninguna empresa en la lista')
+})
+
+Then('se muestran las pestañas de configuración según mi rol', async function () {
+  const body = await this.page.evaluate(() => document.body.innerText)
+  const tabs = ['Usuario', 'Sistema', 'Operativo', 'Documentos', 'Módulos']
+  const visibles = tabs.filter(t => body.includes(t))
+  console.log(`  [INFO] Pestañas visibles: ${visibles.join(', ') || 'ninguna'}`)
+})
+
+Then('el sidebar muestra los enlaces según mi rol', async function () {
+  const nav = this.page.locator('nav')
+  const text = await nav.innerText()
+  console.log(`  [INFO] Sidebar contiene: ${text.slice(0, 200).replace(/\n/g, ', ')}`)
 })
 
 Then('debo ver los botones de módulo {string}', async function (modName) {

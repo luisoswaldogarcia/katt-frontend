@@ -4,10 +4,12 @@ import { getUnreadCount, clearUnread } from './lib/unreadMessages'
 import { getSession, signOut } from './lib/auth'
 import { preloadStores } from './lib/demoStore'
 import { loadAllConfig } from './lib/configApi'
+import { api } from './lib/api'
 import './lib/amplify'
 import { Sidebar } from './components/Sidebar'
 import { getLabels } from './lib/labels'
 import Login from './pages/Login'
+import SetupPassword from './pages/SetupPassword'
 import Home from './pages/Home'
 import Agente from './pages/Agente'
 import Chat from './pages/Chat'
@@ -159,7 +161,6 @@ export default function App() {
     getSession().then(async s => {
       if (s) {
         const { setActiveEmpresaId, getActiveEmpresaId } = await import('./lib/modules')
-        const { api } = await import('./lib/api')
         try {
           const me = await api.get<{ empresaId: string | null; empresas?: { id: string; nombre: string }[] }>('me', '')
           if (me.empresaId) {
@@ -167,7 +168,6 @@ export default function App() {
           } else if (me.empresas?.length && !getActiveEmpresaId()) {
             setActiveEmpresaId(me.empresas[0].id)
           }
-          // Seed empresa cache from /me for owners who see all empresas
           if (me.empresas?.length) {
             const { seedEmpresas } = await import('./lib/demoStore')
             seedEmpresas(me.empresas)
@@ -185,10 +185,13 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      {authenticated
-        ? <Layout onLogout={() => { signOut(); setAuthenticated(false) }} />
-        : <Login onLogin={() => setAuthenticated(true)} />
-      }
+      <Routes>
+        <Route path="/setup" element={<SetupPassword />} />
+        <Route path="*" element={authenticated
+          ? <Layout onLogout={() => { signOut(); setAuthenticated(false) }} />
+          : <Login onLogin={() => setAuthenticated(true)} />
+        } />
+      </Routes>
     </BrowserRouter>
   )
 }

@@ -15,8 +15,10 @@
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
+    "@simplewebauthn/browser": "^13.3.0",
     "aws-amplify": "^6.18.0",
     "barcode-detector": "^3.2.1",
+    "qrcode": "^1.5.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",
