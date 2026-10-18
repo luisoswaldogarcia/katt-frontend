@@ -87,6 +87,84 @@ export default function Agenda() {
   const [, forceUpdate] = useState(0)
   const today = formatDate(new Date())
 
+  // ── Agente de citas (IA) ──
+  const [agenteMsg, setAgenteMsg] = useState('')
+  const [agenteBusy, setAgenteBusy] = useState(false)
+  const [agenteCard, setAgenteCard] = useState<AgenteCitaCard | null>(null)
+  const [contexto, setContexto] = useState<Record<string, unknown>>({})
+  const [lastMsg, setLastMsg] = useState('')
+
+  async function callAgente(msg: string, ctx: Record<string, unknown>) {
+    setAgenteBusy(true)
+    try {
+      const { api } = await import('../lib/api')
+      const res = await api.create<AgenteCitaCard>('agente/cita', { message: msg, contexto: ctx, hoy: formatDate(new Date()) })
+      setAgenteCard(res)
+      if (res.contexto) setContexto(res.contexto)
+    } catch {
+      setAgenteCard({ response: 'No pude contactar al agente. Intenta de nuevo.' })
+    } finally {
+      setAgenteBusy(false)
+    }
+  }
+
+  function handleAgenteSend(e: React.FormEvent) {
+    e.preventDefault()
+    const msg = agenteMsg.trim()
+    if (!msg || agenteBusy) return
+    setAgenteMsg('')
+    setLastMsg(msg)
+    callAgente(msg, contexto)
+  }
+
+  async function elegirDelAgente(kind: 'paciente' | 'doctor', item: { id: string; nombre: string }) {
+    const ctx = { ...contexto, [kind]: item }
+    setContexto(ctx)
+    await callAgente(lastMsg || 'continuar con la cita', ctx)
+  }
+
+  async function darDeAlta(kind: 'paciente' | 'doctor', nombre: string) {
+    setAgenteBusy(true)
+    try {
+      const { api } = await import('../lib/api')
+      if (kind === 'paciente') {
+        const nuevo = await api.create<{ id: string; nombre: string }>('clientes', { nombre, pendienteCompletar: true })
+        const ctx = { ...contexto, paciente: { id: nuevo.id, nombre: nuevo.nombre } }
+        setContexto(ctx)
+        await callAgente(lastMsg || 'continuar con la cita', ctx)
+      } else {
+        const nuevo = await api.create<{ id: string; nombre: string }>('usuarios', { nombre, rol: 'user', generateQr: true })
+        const ctx = { ...contexto, doctor: { id: nuevo.id, nombre: nuevo.nombre } }
+        setContexto(ctx)
+        await callAgente(lastMsg || 'continuar con la cita', ctx)
+      }
+    } catch {
+      setAgenteBusy(false)
+      setAgenteCard({ response: 'No pude crear el registro. Revisa los permisos e intenta de nuevo.' })
+    }
+  }
+
+  async function crearCitaDelAgente(cita: NonNullable<AgenteCitaCard['cita']>) {
+    setAgenteBusy(true)
+    try {
+      await citaStore.create({
+        paciente: cita.paciente.nombre,
+        doctor: cita.doctor.nombre,
+        fecha: cita.fecha,
+        hora: cita.hora,
+        motivo: cita.motivo || 'Consulta',
+      })
+      setAgenteCard({ action: 'cita_creada', response: `¡Cita creada! ${cita.paciente.nombre} con ${cita.doctor.nombre} el ${cita.fecha} a las ${cita.hora}.` })
+      setContexto({})
+      setLastMsg('')
+      forceUpdate(n => n + 1)
+    } catch {
+      setAgenteCard({ response: 'No pude crear la cita. Intenta de nuevo.' })
+    } finally {
+      setAgenteBusy(false)
+    }
+  }
+
   function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
@@ -184,10 +262,102 @@ export default function Agenda() {
         {view === 'mes' && <div className="h-full overflow-y-auto px-4 pb-4"><MonthView date={currentDate} today={today} onDayClick={d => { setCurrentDate(d); setView('dia') }} /></div>}
       </div>
 
+      {/* Agente de citas (IA) */}
+      <div className="shrink-0 border-t border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-950 px-4 py-3 space-y-2">
+        {agenteCard && (
+          <div data-testid="agente-cita-respuesta" className="rounded-xl border border-katt-200 dark:border-katt-800 bg-katt-50 dark:bg-katt-900/50 p-3 space-y-2 max-h-64 overflow-y-auto text-sm">
+            <div className="flex items-start gap-2">
+              <span className="text-lg leading-none">🐱</span>
+              <p className="min-w-0">{agenteCard.response}</p>
+            </div>
+
+            {agenteCard.action === 'elegir_paciente' && agenteCard.pacientes && (
+              <div className="flex flex-wrap gap-2 pl-7">
+                {agenteCard.pacientes.map(p => (
+                  <button
+                    key={p.id}
+                    data-testid="agente-cita-opcion"
+                    disabled={agenteBusy}
+                    onClick={() => elegirDelAgente('paciente', p)}
+                    className="px-3 py-1.5 rounded-lg bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700 text-xs font-medium transition-colors"
+                  >
+                    {p.nombre}{p.telefono ? ` · ${p.telefono}` : ''}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {agenteCard.action === 'elegir_doctor' && agenteCard.doctores && (
+              <div className="flex flex-wrap gap-2 pl-7">
+                {agenteCard.doctores.map(d => (
+                  <button
+                    key={d.id}
+                    data-testid="agente-cita-opcion"
+                    disabled={agenteBusy}
+                    onClick={() => elegirDelAgente('doctor', d)}
+                    className="px-3 py-1.5 rounded-lg bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700 text-xs font-medium transition-colors"
+                  >
+                    {d.nombre}{d.rol ? ` · ${d.rol}` : ''}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {(agenteCard.action === 'alta_paciente' || agenteCard.action === 'alta_doctor') && agenteCard.sugerencia && (
+              <div className="pl-7">
+                <button
+                  data-testid="agente-cita-alta"
+                  disabled={agenteBusy}
+                  onClick={() => darDeAlta(agenteCard.action === 'alta_paciente' ? 'paciente' : 'doctor', agenteCard.sugerencia!.nombre)}
+                  className="px-3 py-1.5 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-xs font-medium transition-colors"
+                >
+                  Dar de alta a {agenteCard.sugerencia.nombre}
+                </button>
+              </div>
+            )}
+
+            {agenteCard.action === 'confirmar_cita' && agenteCard.cita && (
+              <div className="space-y-2 pl-7">
+                <div className="text-xs text-katt-500 dark:text-katt-400">
+                  {agenteCard.cita.paciente.nombre} · {agenteCard.cita.doctor.nombre} · {agenteCard.cita.fecha} {agenteCard.cita.hora}{agenteCard.cita.motivo ? ` · ${agenteCard.cita.motivo}` : ''}
+                </div>
+                <button
+                  data-testid="agente-cita-crear"
+                  disabled={agenteBusy}
+                  onClick={() => crearCitaDelAgente(agenteCard.cita!)}
+                  className="px-3 py-1.5 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-xs font-medium transition-colors"
+                >
+                  Crear cita
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        <form onSubmit={handleAgenteSend} className="flex items-center gap-2">
+          <input
+            data-testid="agente-cita-input"
+            value={agenteMsg}
+            onChange={e => setAgenteMsg(e.target.value)}
+            placeholder="Agenda una cita con el agente: “cita con la señora Rosa Robles y el doctor Pacheco el jueves a las 11”"
+            className={inputClass}
+            disabled={agenteBusy}
+            autoComplete="off"
+          />
+          <button
+            type="submit"
+            disabled={agenteBusy || !agenteMsg.trim()}
+            className="px-4 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 disabled:opacity-50 text-white text-sm font-medium transition-colors shrink-0"
+          >
+            {agenteBusy ? 'Pensando…' : 'Enviar'}
+          </button>
+        </form>
+      </div>
+
       {/* FAB agregar cita */}
       <button
         onClick={() => setShowForm(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-katt-500 hover:bg-katt-600 text-white shadow-lg flex items-center justify-center transition-colors z-40"
+        className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-katt-500 hover:bg-katt-600 text-white shadow-lg flex items-center justify-center transition-colors z-40"
         aria-label="Nueva cita"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M12 5v14M5 12h14" /></svg>
@@ -483,4 +653,23 @@ function MonthView({ date, today, onDayClick }: { date: Date; today: string; onD
       </div>
     </div>
   )
+}
+
+/* ─── Agente de citas: contrato con POST /agente/cita ─── */
+
+interface AgenteCitaCard {
+  response: string
+  action?: string
+  pacientes?: { id: string; nombre: string; telefono?: string; email?: string }[]
+  doctores?: { id: string; nombre: string; rol?: string }[]
+  sugerencia?: { nombre: string }
+  faltan?: string[]
+  cita?: {
+    paciente: { id?: string; nombre: string }
+    doctor: { id?: string; nombre: string }
+    fecha: string
+    hora: string
+    motivo?: string
+  }
+  contexto?: Record<string, unknown>
 }
