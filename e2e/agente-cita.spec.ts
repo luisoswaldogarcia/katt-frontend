@@ -45,10 +45,12 @@ test.describe('Agente de citas', () => {
 
       if (await clickIfReady(crear)) {
         await expect(page.locator('[data-testid="agente-cita-respuesta"]')).toContainText('Cita creada', { timeout: 60_000 })
+        // La cita nueva debe quedar visible en el calendario (salta a su fecha)
+        await expect(page.locator('[data-testid="agenda-week"]')).toContainText(`Paciente E2E ${ts}`, { timeout: 10_000 })
         return
       }
-      if (await clickIfReady(opcion)) continue
       if (await clickIfReady(alta)) continue
+      if (await clickIfReady(opcion)) continue
       throw new Error(`Paso ${step}: el agente no ofreció acciones. Card: ${await card.innerText()}`)
     }
     throw new Error('El flujo no llegó a la confirmación de la cita')

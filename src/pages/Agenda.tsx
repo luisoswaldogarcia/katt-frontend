@@ -84,8 +84,24 @@ export default function Agenda() {
   const [editing, setEditing] = useState<CitaData | null>(null)
   const [confirmCancel, setConfirmCancel] = useState<CitaData | null>(null)
 
-  const [, forceUpdate] = useState(0)
+  const [refreshKey, forceUpdate] = useState(0)
+  const [filtroDoctor, setFiltroDoctor] = useState('')
   const today = formatDate(new Date())
+
+  // Llevar el calendario a la fecha de una cita para que sea visible
+  function irAFecha(fecha: string) {
+    const [y, m, d] = (fecha || '').split('-').map(Number)
+    if (y && m && d) setCurrentDate(new Date(y, m - 1, d))
+  }
+
+  // Opciones del filtro: doctores del módulo + los nombres que ya aparecen en citas
+  const doctoresFiltro = useMemo(() => {
+    void refreshKey // invalida la caché cuando cambian los datos
+    const nombres = new Set<string>()
+    for (const d of doctorStore.getAll()) if (d.nombre) nombres.add(d.nombre)
+    for (const c of citaStore.getAll()) if (c.doctor) nombres.add(c.doctor)
+    return [...nombres].sort((a, b) => a.localeCompare(b))
+  }, [refreshKey])
 
   // ── Agente de citas (IA) ──
   const [agenteMsg, setAgenteMsg] = useState('')
@@ -158,6 +174,7 @@ export default function Agenda() {
       setContexto({})
       setLastMsg('')
       forceUpdate(n => n + 1)
+      irAFecha(cita.fecha)
     } catch {
       setAgenteCard({ response: 'No pude crear la cita. Intenta de nuevo.' })
     } finally {
@@ -165,10 +182,10 @@ export default function Agenda() {
     }
   }
 
-  function handleCreate(e: React.FormEvent<HTMLFormElement>) {
+  async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
-    citaStore.create({
+    await citaStore.create({
       paciente: fd.get('paciente') as string,
       doctor: fd.get('doctor') as string,
       fecha: fd.get('fecha') as string,
@@ -177,13 +194,14 @@ export default function Agenda() {
     })
     setShowForm(false)
     forceUpdate(n => n + 1)
+    irAFecha(fd.get('fecha') as string)
   }
 
-  function handleEdit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!editing) return
     const fd = new FormData(e.currentTarget)
-    citaStore.update(editing.id, {
+    await citaStore.update(editing.id, {
       paciente: fd.get('paciente') as string,
       doctor: fd.get('doctor') as string,
       fecha: fd.get('fecha') as string,
@@ -193,10 +211,11 @@ export default function Agenda() {
     setEditing(null)
     setSelected(null)
     forceUpdate(n => n + 1)
+    irAFecha(fd.get('fecha') as string)
   }
 
-  function handleCancel(id: string) {
-    citaStore.remove(id)
+  async function handleCancel(id: string) {
+    await citaStore.remove(id)
     setSelected(null)
     setConfirmCancel(null)
     forceUpdate(n => n + 1)
@@ -238,6 +257,15 @@ export default function Agenda() {
           <span className="text-sm font-medium capitalize">{headerLabel}</span>
         </div>
         <div className="flex items-center gap-2">
+          <select
+            data-testid="agenda-filtro-doctor"
+            value={filtroDoctor}
+            onChange={e => setFiltroDoctor(e.target.value)}
+            className="px-2 py-1.5 text-xs rounded-lg border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-900 focus:outline-none focus:ring-2 focus:ring-katt-500"
+          >
+            <option value="">Todos los doctores</option>
+            {doctoresFiltro.map(nombre => <option key={nombre} value={nombre}>{nombre}</option>)}
+          </select>
           <button onClick={goToday} className="px-3 py-1.5 text-xs rounded-lg bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors">
             Hoy
           </button>
@@ -257,9 +285,9 @@ export default function Agenda() {
 
       {/* Views */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        {view === 'dia' && <div className="h-full overflow-y-auto px-4 pb-4"><DayView date={currentDate} today={today} onSelect={setSelected} /></div>}
-        {view === 'semana' && <WeekView date={currentDate} today={today} onSelect={setSelected} />}
-        {view === 'mes' && <div className="h-full overflow-y-auto px-4 pb-4"><MonthView date={currentDate} today={today} onDayClick={d => { setCurrentDate(d); setView('dia') }} /></div>}
+        {view === 'dia' && <div className="h-full overflow-y-auto px-4 pb-4"><DayView date={currentDate} today={today} onSelect={setSelected} filtroDoctor={filtroDoctor} refreshKey={refreshKey} /></div>}
+        {view === 'semana' && <WeekView date={currentDate} today={today} onSelect={setSelected} filtroDoctor={filtroDoctor} refreshKey={refreshKey} />}
+        {view === 'mes' && <div className="h-full overflow-y-auto px-4 pb-4"><MonthView date={currentDate} today={today} onDayClick={d => { setCurrentDate(d); setView('dia') }} filtroDoctor={filtroDoctor} refreshKey={refreshKey} /></div>}
       </div>
 
       {/* Agente de citas (IA) */}
@@ -303,12 +331,12 @@ export default function Agenda() {
               </div>
             )}
 
-            {(agenteCard.action === 'alta_paciente' || agenteCard.action === 'alta_doctor') && agenteCard.sugerencia && (
+            {agenteCard.sugerencia && (
               <div className="pl-7">
                 <button
                   data-testid="agente-cita-alta"
                   disabled={agenteBusy}
-                  onClick={() => darDeAlta(agenteCard.action === 'alta_paciente' ? 'paciente' : 'doctor', agenteCard.sugerencia!.nombre)}
+                  onClick={() => darDeAlta(agenteCard.action === 'alta_doctor' || agenteCard.action === 'elegir_doctor' ? 'doctor' : 'paciente', agenteCard.sugerencia!.nombre)}
                   className="px-3 py-1.5 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-xs font-medium transition-colors"
                 >
                   Dar de alta a {agenteCard.sugerencia.nombre}
@@ -459,9 +487,12 @@ export default function Agenda() {
 
 /* ─── Day View ─── */
 
-function DayView({ date, today, onSelect }: { date: Date; today: string; onSelect: (c: CitaData) => void }) {
+function DayView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: Date; today: string; onSelect: (c: CitaData) => void; filtroDoctor?: string; refreshKey?: number }) {
   const key = formatDate(date)
-  const citas = useMemo(() => citaStore.getByDateRange(key, key), [key])
+  const citas = useMemo(
+    () => { void refreshKey; return citaStore.getByDateRange(key, key).filter(c => !filtroDoctor || c.doctor === filtroDoctor) },
+    [key, filtroDoctor, refreshKey]
+  )
   const isToday = key === today
 
   return (
@@ -493,7 +524,7 @@ function DayView({ date, today, onSelect }: { date: Date; today: string; onSelec
 // Agenda vertical tipo Outlook: Lunes arriba con sus citas, luego Martes, etc.
 // Scroll infinito en ambos sentidos: al acercarse a los extremos carga más semanas.
 
-function WeekView({ date, today, onSelect }: { date: Date; today: string; onSelect: (c: CitaData) => void }) {
+function WeekView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: Date; today: string; onSelect: (c: CitaData) => void; filtroDoctor?: string; refreshKey?: number }) {
   const anchorMonday = useMemo(() => getMonday(date), [date])
   const scrollRef = useRef<HTMLDivElement>(null)
   const [pastWeeks, setPastWeeks] = useState(0)
@@ -527,15 +558,17 @@ function WeekView({ date, today, onSelect }: { date: Date; today: string; onSele
   }, [anchorMonday, pastWeeks, futureWeeks])
 
   const citasByDay = useMemo(() => {
+    void refreshKey // invalida la caché cuando cambian los datos
     const map: Record<string, CitaData[]> = {}
     if (days.length) {
       for (const c of citaStore.getByDateRange(formatDate(days[0]), formatDate(days[days.length - 1]))) {
+        if (filtroDoctor && c.doctor !== filtroDoctor) continue
         if (!map[c.fecha]) map[c.fecha] = []
         map[c.fecha].push(c)
       }
     }
     return map
-  }, [days])
+  }, [days, filtroDoctor, refreshKey])
 
   function onScroll() {
     const el = scrollRef.current
@@ -601,14 +634,17 @@ function WeekView({ date, today, onSelect }: { date: Date; today: string; onSele
 
 /* ─── Month View ─── */
 
-function MonthView({ date, today, onDayClick }: { date: Date; today: string; onDayClick: (d: Date) => void }) {
+function MonthView({ date, today, onDayClick, filtroDoctor, refreshKey }: { date: Date; today: string; onDayClick: (d: Date) => void; filtroDoctor?: string; refreshKey?: number }) {
   const monthStart = getMonthStart(date)
   const daysInMonth = getDaysInMonth(date)
   const startDow = monthStart.getDay() === 0 ? 6 : monthStart.getDay() - 1 // monday=0
 
   const from = formatDate(monthStart)
   const to = formatDate(new Date(date.getFullYear(), date.getMonth(), daysInMonth))
-  const citas = useMemo(() => citaStore.getByDateRange(from, to), [from, to])
+  const citas = useMemo(
+    () => { void refreshKey; return citaStore.getByDateRange(from, to).filter(c => !filtroDoctor || c.doctor === filtroDoctor) },
+    [from, to, filtroDoctor, refreshKey]
+  )
 
   const citasMap = useMemo(() => {
     const map: Record<string, CitaData[]> = {}

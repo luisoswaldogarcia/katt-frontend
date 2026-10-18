@@ -1,8 +1,10 @@
 import { test, expect } from 'playwright/test'
-import { DEMO_EMAIL, DEMO_PASSWORD, uniq, login, navigateTo, setInputByName, clickFab } from './helpers'
+import { DEMO_EMAIL, DEMO_PASSWORD, ts, uniq, login, navigateTo, setInputByName, clickFab } from './helpers'
 
 test.describe('Agenda', () => {
   let page: import('playwright').Page
+  const doctorUnico = `Doctor E2E ${ts}`
+  const motivoCita = `Cita E2E ${uniq('cita')}`
 
   test.beforeAll(async ({ browser }) => {
     page = await browser.newPage({ ignoreHTTPSErrors: true })
@@ -13,7 +15,7 @@ test.describe('Agenda', () => {
     await page?.close()
   })
 
-  test('CREATE — debe crear una cita', async () => {
+  test('CREATE — debe crear una cita y mostrarla en el calendario', async () => {
     await navigateTo(page, '/agenda')
     await page.waitForTimeout(1000)
     const fab = page.locator('button[aria-label="Nueva cita"]')
@@ -23,16 +25,51 @@ test.describe('Agenda', () => {
       await clickFab(page)
     }
     await page.waitForTimeout(800)
+    await setInputByName(page, 'paciente', `Paciente E2E ${ts}`)
+    await setInputByName(page, 'doctor', doctorUnico)
     await setInputByName(page, 'fecha', '2026-12-25')
     await setInputByName(page, 'hora', '10:00')
-    await setInputByName(page, 'motivo', `Cita E2E ${uniq('cita')}`)
+    await setInputByName(page, 'motivo', motivoCita)
     const guardarBtn = page.locator('button[type="submit"]').filter({ hasText: 'Guardar' })
     if (await guardarBtn.count() > 0) {
       await guardarBtn.click()
     } else {
       await page.locator('button').filter({ hasText: 'Guardar' }).first().click()
     }
-    await page.waitForTimeout(2000)
+    // El calendario debe saltar a la fecha y mostrar la nueva cita
+    await expect(page.locator('[data-testid="agenda-week"]')).toContainText(motivoCita, { timeout: 10_000 })
+  })
+
+  test('filtro por doctor muestra solo las citas de ese doctor', async () => {
+    await navigateTo(page, '/agenda')
+    await page.waitForTimeout(1000)
+
+    // Cita de HOY con un doctor único (para que quede en la semana visible)
+    const motivoFiltro = `Cita Filtro ${uniq('f')}`
+    const doctorFiltro = `Doctor Filtro ${ts}`
+    const fab = page.locator('button[aria-label="Nueva cita"]')
+    await fab.click()
+    await page.waitForTimeout(800)
+    await setInputByName(page, 'paciente', `Paciente Filtro ${ts}`)
+    await setInputByName(page, 'doctor', doctorFiltro)
+    await setInputByName(page, 'hora', '09:00')
+    await setInputByName(page, 'motivo', motivoFiltro)
+    await page.locator('button[type="submit"]').filter({ hasText: 'Guardar' }).click()
+    await expect(page.locator('[data-testid="agenda-week"]')).toContainText(motivoFiltro, { timeout: 10_000 })
+
+    // Filtrar por ese doctor: su cita sigue visible
+    const filtro = page.locator('[data-testid="agenda-filtro-doctor"]')
+    await expect(filtro).toBeVisible()
+    await filtro.selectOption(doctorFiltro)
+    await expect(page.locator('[data-testid="agenda-week"]')).toContainText(motivoFiltro)
+
+    // Filtrar por un doctor sin citas esta semana: la cita del otro doctor desaparece
+    await filtro.selectOption(doctorUnico)
+    await expect(page.locator('[data-testid="agenda-week"]')).not.toContainText(motivoFiltro)
+
+    // "Todos los doctores" vuelve a mostrar todo
+    await filtro.selectOption('')
+    await expect(page.locator('[data-testid="agenda-week"]')).toContainText(motivoFiltro)
   })
 
   test('vista semanal vertical — Lunes arriba y scroll infinito', async () => {
