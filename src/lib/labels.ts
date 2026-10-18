@@ -5,7 +5,6 @@ export interface Labels {
   doctor: string
   empresa: string
   agenda: string
-  chat: string
   agente: string
   tareas: string
 }
@@ -15,7 +14,6 @@ const defaults: Labels = {
   doctor: 'Usuario',
   empresa: 'Empresa',
   agenda: 'Agenda',
-  chat: 'Chat',
   agente: 'Agente',
   tareas: 'Tareas',
 }

@@ -48,7 +48,7 @@ test.describe('Conexión lenta', () => {
     await page.context().setOffline(true)
     await page.waitForTimeout(500)
 
-    await page.goto('/chat', { waitUntil: 'domcontentloaded', timeout: 10_000 }).catch(() => {})
+    await page.goto('/tareas', { waitUntil: 'domcontentloaded', timeout: 10_000 }).catch(() => {})
     await page.waitForTimeout(2000)
 
     await expect(page.locator('body')).toBeAttached()

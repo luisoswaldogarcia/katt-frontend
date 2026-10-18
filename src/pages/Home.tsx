@@ -18,8 +18,6 @@ const actividadReciente = [
   { id: 4, texto: 'Laura Mendoza canceló cita', tiempo: 'Hace 2 horas' },
 ]
 
-const mensajesSinLeer = 3
-
 function toLocalDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
@@ -68,10 +66,6 @@ export default function Home() {
         {modules.agenda && <div onClick={() => navigate('/agenda')} className="cursor-pointer p-4 rounded-xl bg-katt-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800 hover:border-katt-500 transition-colors">
           <p className="text-2xl font-bold text-katt-600 dark:text-katt-300">{citasHoy.length}</p>
           <p className="text-xs text-gray-500">Citas hoy</p>
-        </div>}
-        {modules.chat && <div onClick={() => navigate('/chat')} className="cursor-pointer p-4 rounded-xl bg-katt-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800 hover:border-katt-500 transition-colors">
-          <p className="text-2xl font-bold text-katt-600 dark:text-katt-300">{mensajesSinLeer}</p>
-          <p className="text-xs text-gray-500">Mensajes sin leer</p>
         </div>}
         {modules.tareas && <div onClick={() => navigate('/tareas')} className="cursor-pointer p-4 rounded-xl bg-katt-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800 hover:border-katt-500 transition-colors">
           <p className="text-2xl font-bold text-katt-600 dark:text-katt-300">{tareasPendientes}</p>

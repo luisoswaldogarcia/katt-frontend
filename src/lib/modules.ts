@@ -6,7 +6,6 @@ export interface ModuleConfig {
   clientes: boolean
   usuarios: boolean
   agenda: boolean
-  chat: boolean
   agente: boolean
   tareas: boolean
 }
@@ -15,7 +14,6 @@ export const moduleLabels: Record<keyof ModuleConfig, string> = {
   clientes: 'Clientes',
   usuarios: 'Usuarios',
   agenda: 'Agenda',
-  chat: 'Chat',
   agente: 'Agente',
   tareas: 'Tareas',
 }
@@ -24,7 +22,6 @@ const allEnabled: ModuleConfig = {
   clientes: true,
   usuarios: true,
   agenda: true,
-  chat: true,
   agente: true,
   tareas: true,
 }
