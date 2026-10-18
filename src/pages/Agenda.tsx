@@ -382,6 +382,7 @@ export default function Agenda() {
                 enviarAgente()
               }
             }}
+            onFocus={e => setTimeout(() => e.target.scrollIntoView({ block: 'center' }), 300)}
             rows={2}
             placeholder="Agenda una cita con el agente: “cita con la señora Rosa Robles y el doctor Pacheco el jueves a las 11”"
             className={`${inputClass} resize-none`}
