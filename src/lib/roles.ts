@@ -58,12 +58,23 @@ const defaults: Rol[] = [
   },
 ]
 
+// El config puede traer el catálogo como string JSON o corrupto: nunca debe romper la UI
+function coerce(value: unknown): Rol[] {
+  let v: unknown = value
+  if (typeof v === 'string') {
+    try { v = JSON.parse(v) } catch { return defaults }
+  }
+  if (!Array.isArray(v)) return defaults
+  const roles = (v as any[]).filter(r => r && typeof r.id === 'string' && typeof r.nombre === 'string')
+  return roles.length ? (roles as Rol[]) : defaults
+}
+
 export async function fetchRoles(): Promise<Rol[]> {
-  return getConfig<Rol[]>('roles', defaults)
+  return coerce(await getConfig<unknown>('roles', defaults))
 }
 
 export function getRoles(): Rol[] {
-  return getCached<Rol[]>('roles', defaults)
+  return coerce(getCached<unknown>('roles', defaults))
 }
 
 export async function saveRoles(roles: Rol[]) {

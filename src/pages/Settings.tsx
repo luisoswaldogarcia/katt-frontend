@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getSession } from '../lib/auth'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { ConfirmModal } from '../components/ConfirmModal'
 import { labels, getLabels, saveLabels } from '../lib/labels'
 import type { Labels } from '../lib/labels'
 import { getBranding, saveBranding } from '../lib/branding'
@@ -16,7 +17,7 @@ import type { TaskType, TaskTypeField } from '../lib/kanban'
 import { getDocTypeCatalog, saveDocTypeCatalog, getModuleDocTypeIds, saveModuleDocTypeIds } from '../lib/documents'
 import type { DocType } from '../lib/documents'
 
-type Tab = 'usuario' | 'sistema' | 'operativo' | 'documentos' | 'roles'
+type Tab = 'usuario' | 'sistema' | 'operativo' | 'documentos' | 'roles' | 'empresas'
 
 const tabClass = (active: boolean) =>
   `px-4 py-2 text-sm font-medium rounded-lg transition-colors text-left ${active ? 'bg-katt-500 text-white' : 'hover:bg-katt-100 dark:hover:bg-katt-800 text-gray-600 dark:text-gray-400'}`
@@ -115,6 +116,7 @@ export default function Settings() {
           {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('operativo')} className={tabClass(tab === 'operativo')}>Operativo</button>}
           {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('documentos')} className={tabClass(tab === 'documentos')}>Documentos</button>}
           {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('roles')} className={tabClass(tab === 'roles')}>Roles</button>}
+          {role === 'owner' && <button onClick={() => setTab('empresas')} className={tabClass(tab === 'empresas')}>Empresas</button>}
         </div>
 
         {/* Content */}
@@ -400,6 +402,9 @@ export default function Settings() {
 
       {/* Tab: Roles */}
       {tab === 'roles' && <RolesTab />}
+
+      {/* Tab: Empresas */}
+      {tab === 'empresas' && <EmpresasTab />}
 
       {/* Tab: Módulos */}
 
@@ -871,6 +876,119 @@ function RolesTab() {
             </table>
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+/* ─── Administrador de empresas ─── */
+
+function EmpresasTab() {
+  const [empresas, setEmpresas] = useState(empresaStore.getAll())
+  const [edit, setEdit] = useState<Record<string, string> | null>(null)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [estado, setEstado] = useState('')
+  const [confirmDel, setConfirmDel] = useState<{ id: string; nombre: string } | null>(null)
+  const activaId = getActiveEmpresaId()
+
+  function cargar() {
+    empresaStore.fetch().then(setEmpresas).catch(() => setEmpresas(empresaStore.getAll()))
+  }
+  useEffect(() => { cargar() }, [])
+
+  async function guardar() {
+    if (!edit) return
+    if (!edit.nombre?.trim()) { setEstado('El nombre es obligatorio.'); return }
+    try {
+      if (editId) await empresaStore.update(editId, edit)
+      else await empresaStore.create(edit as never)
+      setEdit(null); setEditId(null); setEstado('✅ Empresa guardada.')
+      cargar()
+    } catch {
+      setEstado('No se pudo guardar la empresa.')
+    }
+  }
+
+  async function eliminar() {
+    if (!confirmDel) return
+    try {
+      await empresaStore.remove(confirmDel.id)
+      setEstado('Empresa eliminada.')
+      cargar()
+    } catch {
+      setEstado('No se pudo eliminar la empresa.')
+    }
+    setConfirmDel(null)
+  }
+
+  const campos: { key: string; label: string }[] = [
+    { key: 'nombre', label: 'Nombre' },
+    { key: 'rfc', label: 'RFC' },
+    { key: 'telefono', label: 'Teléfono' },
+    { key: 'email', label: 'Email' },
+    { key: 'direccion', label: 'Dirección' },
+  ]
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-sm text-gray-500">
+          Administra las empresas de la plataforma. La empresa activa es la que estás viendo/editando en la app.
+        </p>
+        <button onClick={() => { setEdit({}); setEditId(null); setEstado('') }} className={btnPrimary}>+ Nueva empresa</button>
+      </div>
+      {estado && <p className="text-xs text-katt-500 dark:text-katt-400">{estado}</p>}
+
+      <div className="max-w-2xl space-y-2">
+        {empresas.map(e => (
+          <div key={String(e.id)} className={listItem}>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium truncate">{e.nombre}</span>
+                {String(e.id) === String(activaId) && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-katt-500 text-white">Activa</span>
+                )}
+              </div>
+              <div className="text-xs text-gray-500 truncate">{[e.rfc, e.telefono, e.email].filter(Boolean).join(' · ') || 'Sin datos de contacto'}</div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              {String(e.id) !== String(activaId) && (
+                <button onClick={() => { setActiveEmpresaId(String(e.id)); setEstado(`Empresa activa: ${e.nombre}`) }} className="px-2 py-1 rounded-lg text-xs text-katt-500 hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">Activar</button>
+              )}
+              <button onClick={() => { setEditId(String(e.id)); setEdit({ nombre: e.nombre || '', rfc: e.rfc || '', telefono: e.telefono || '', email: e.email || '', direccion: e.direccion || '' }); setEstado('') }} className="px-2 py-1 rounded-lg text-xs text-katt-500 hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">Editar</button>
+              <button onClick={() => setConfirmDel({ id: String(e.id), nombre: e.nombre || '' })} className="px-2 py-1 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">Eliminar</button>
+            </div>
+          </div>
+        ))}
+        {empresas.length === 0 && <p className="text-xs text-gray-500">No hay empresas registradas.</p>}
+      </div>
+
+      {edit && (
+        <div className={`max-w-md ${cardClass}`}>
+          <p className={cardTitle}>{editId ? 'Editar empresa' : 'Nueva empresa'}</p>
+          {campos.map(c => (
+            <input
+              key={c.key}
+              value={edit[c.key] || ''}
+              onChange={e => setEdit({ ...edit, [c.key]: e.target.value })}
+              placeholder={c.label}
+              className={inputClass}
+              type={c.key === 'email' ? 'email' : 'text'}
+            />
+          ))}
+          <div className="flex gap-2">
+            <button onClick={guardar} className={btnPrimary}>Guardar</button>
+            <button onClick={() => { setEdit(null); setEditId(null) }} className="px-4 py-2 rounded-lg border border-katt-200 dark:border-katt-700 text-sm font-medium transition-colors">Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {confirmDel && (
+        <ConfirmModal
+          message={`¿Eliminar la empresa "${confirmDel.nombre}"? Esta acción no se puede deshacer.`}
+          onConfirm={eliminar}
+          onCancel={() => setConfirmDel(null)}
+        />
       )}
     </div>
   )
