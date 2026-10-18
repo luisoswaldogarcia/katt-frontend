@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
 import { labels } from '../lib/labels'
 import { getModules } from '../lib/modules'
+import { puede } from '../lib/roles'
 import { branding } from '../lib/branding'
 import { getSession } from '../lib/auth'
 
@@ -12,12 +13,11 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const [modules, setModules] = useState(getModules)
-  const [canManageUsers, setCanManageUsers] = useState(false)
+  const [groups, setGroups] = useState<string[]>([])
 
   useEffect(() => {
     getSession().then(s => {
-      const g = s?.groups || []
-      setCanManageUsers(g.includes('owner') || g.includes('superadmin'))
+      setGroups(s?.groups || [])
     })
     const refresh = () => setModules(getModules())
     window.addEventListener('katt:modules', refresh)
@@ -70,7 +70,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </svg>
             Inicio
           </NavLink>
-          {modules.agente && <NavLink
+          {modules.agente && puede(groups, 'agente', 'ver') && <NavLink
             to="/agente"
             onClick={onClose}
             className={({ isActive }) =>
@@ -86,7 +86,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </svg>
             Agente
           </NavLink>}
-          {modules.clientes && <NavLink
+          {modules.clientes && puede(groups, 'clientes', 'ver') && <NavLink
             to="/paciente"
             onClick={onClose}
             className={({ isActive }) =>
@@ -103,7 +103,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </svg>
             {labels.paciente}
           </NavLink>}
-          {modules.usuarios && canManageUsers && <NavLink
+          {modules.usuarios && puede(groups, 'usuarios', 'ver') && <NavLink
             to="/doctor"
             onClick={onClose}
             className={({ isActive }) =>
@@ -122,7 +122,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             {labels.doctor}
           </NavLink>}
 
-          {modules.agenda && <NavLink
+          {modules.agenda && puede(groups, 'agenda', 'ver') && <NavLink
             to="/agenda"
             onClick={onClose}
             className={({ isActive }) =>
@@ -139,7 +139,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </svg>
             Agenda
           </NavLink>}
-          {modules.tareas && <NavLink
+          {modules.tareas && puede(groups, 'tareas', 'ver') && <NavLink
             to="/tareas"
             onClick={onClose}
             className={({ isActive }) =>

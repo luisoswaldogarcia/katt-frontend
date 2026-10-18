@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getSession } from '../lib/auth'
 import { empresaStore } from '../lib/demoStore'
 import { EntityAlta } from '../components/EntityAlta'
+import { getRoles } from '../lib/roles'
 import type { FormField } from '../components/DataForm'
 import QRCode from 'qrcode'
 
@@ -22,7 +23,7 @@ export default function UsuarioAlta() {
       }
       setFields([
         { key: 'nombre', label: 'Nombre' },
-        { key: 'rol', label: 'Rol', type: 'select', options: ['Owner', 'Superadmin', 'Administrador', 'Usuario'] },
+        { key: 'rol', label: 'Rol', type: 'select', options: getRoles().map(r => r.nombre) },
         { key: 'empresaId', label: 'Empresa', type: 'select', options: [], required: false },
         { key: 'telefono', label: 'Teléfono', type: 'tel' },
         { key: 'email', label: 'Email', type: 'email' },

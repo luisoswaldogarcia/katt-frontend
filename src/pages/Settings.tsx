@@ -8,13 +8,15 @@ import type { Branding } from '../lib/branding'
 import type { CustomField, FieldType, Module } from '../lib/customFields'
 import { fieldTypeLabels, getCustomFields, saveCustomFields } from '../lib/customFields'
 import { getActiveEmpresaId, setActiveEmpresaId } from '../lib/modules'
+import { getRoles, saveRoles, MODULOS_PERMISOS, ACCIONES } from '../lib/roles'
+import type { Rol, Accion } from '../lib/roles'
 import { empresaStore } from '../lib/demoStore'
 import { getKanbanColumns, saveKanbanColumns, getTaskTypes, saveTaskTypes, getAllTableColumns, getVisibleTableColumns, saveVisibleTableColumns } from '../lib/kanban'
 import type { TaskType, TaskTypeField } from '../lib/kanban'
 import { getDocTypeCatalog, saveDocTypeCatalog, getModuleDocTypeIds, saveModuleDocTypeIds } from '../lib/documents'
 import type { DocType } from '../lib/documents'
 
-type Tab = 'usuario' | 'sistema' | 'operativo' | 'documentos'
+type Tab = 'usuario' | 'sistema' | 'operativo' | 'documentos' | 'roles'
 
 const tabClass = (active: boolean) =>
   `px-4 py-2 text-sm font-medium rounded-lg transition-colors text-left ${active ? 'bg-katt-500 text-white' : 'hover:bg-katt-100 dark:hover:bg-katt-800 text-gray-600 dark:text-gray-400'}`
@@ -112,6 +114,7 @@ export default function Settings() {
           {role === 'owner' && <button onClick={() => setTab('sistema')} className={tabClass(tab === 'sistema')}>Sistema</button>}
           {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('operativo')} className={tabClass(tab === 'operativo')}>Operativo</button>}
           {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('documentos')} className={tabClass(tab === 'documentos')}>Documentos</button>}
+          {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('roles')} className={tabClass(tab === 'roles')}>Roles</button>}
         </div>
 
         {/* Content */}
@@ -394,6 +397,9 @@ export default function Settings() {
 
       {/* Tab: Documentos */}
       {tab === 'documentos' && <TiposDocumentoTab />}
+
+      {/* Tab: Roles */}
+      {tab === 'roles' && <RolesTab />}
 
       {/* Tab: Módulos */}
 
@@ -739,6 +745,133 @@ function HuellaCard() {
         </button>
       </div>
       {estado && <p className="text-xs text-katt-500 dark:text-katt-400">{estado}</p>}
+    </div>
+  )
+}
+
+/* ─── Catálogo de roles y permisos ─── */
+
+const MODULOS_LABELS: Record<string, string> = {
+  clientes: 'Clientes',
+  usuarios: 'Usuarios',
+  agenda: 'Agenda',
+  tareas: 'Tareas',
+  documentos: 'Documentos',
+  agente: 'Agente',
+}
+
+function RolesTab() {
+  const [roles, setRoles] = useState<Rol[]>(getRoles())
+  const [sel, setSel] = useState<string>(getRoles()[0]?.id || '')
+  const [estado, setEstado] = useState('')
+  const rol = roles.find(r => r.id === sel) || null
+
+  function update(patch: Partial<Rol>) {
+    setRoles(prev => prev.map(r => (r.id === sel ? { ...r, ...patch } : r)))
+    setEstado('')
+  }
+
+  function toggleAccion(mod: string, accion: Accion) {
+    if (!rol) return
+    const actuales = rol.permisos[mod] || []
+    const nuevos = actuales.includes(accion) ? actuales.filter(a => a !== accion) : [...actuales, accion]
+    update({ permisos: { ...rol.permisos, [mod]: nuevos } })
+  }
+
+  function agregar() {
+    const id = `rol_${Date.now().toString(36)}`
+    setRoles(prev => [...prev, { id, nombre: 'Nuevo rol', grupo: 'user', permisos: {} }])
+    setSel(id)
+  }
+
+  function eliminar() {
+    if (!rol) return
+    setRoles(prev => prev.filter(r => r.id !== rol.id))
+    setSel('')
+    setEstado('')
+  }
+
+  async function guardar() {
+    await saveRoles(roles)
+    setEstado('✅ Roles guardados.')
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-sm text-gray-500">
+          Los roles definen qué puede hacer cada usuario. Se usan al crear usuarios y para mostrar u ocultar módulos.
+        </p>
+        <div className="flex gap-2">
+          <button onClick={agregar} className={btnSmall}>+ Nuevo rol</button>
+          <button onClick={guardar} className={btnPrimary}>Guardar cambios</button>
+        </div>
+      </div>
+      {estado && <p className="text-xs text-katt-500 dark:text-katt-400">{estado}</p>}
+
+      <div className="flex flex-wrap gap-2">
+        {roles.map(r => (
+          <button
+            key={r.id}
+            onClick={() => { setSel(r.id); setEstado('') }}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${sel === r.id ? 'bg-katt-500 text-white' : 'bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700'}`}
+          >
+            {r.nombre}
+          </button>
+        ))}
+      </div>
+
+      {rol && (
+        <div className={`max-w-2xl ${cardClass}`}>
+          <div className="flex items-center gap-2 flex-wrap">
+            <input
+              value={rol.nombre}
+              onChange={e => update({ nombre: e.target.value })}
+              placeholder="Nombre del rol"
+              className={`flex-1 min-w-40 ${inputClass}`}
+            />
+            <select value={rol.grupo} onChange={e => update({ grupo: e.target.value as Rol['grupo'] })} className={inputClass}>
+              <option value="owner">Grupo: owner</option>
+              <option value="admin">Grupo: admin</option>
+              <option value="user">Grupo: user</option>
+            </select>
+            <button onClick={eliminar} className="px-3 py-2 rounded-lg border border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium transition-colors shrink-0">
+              Eliminar
+            </button>
+          </div>
+          <p className="text-xs text-gray-500">
+            El grupo define cómo autentica en Cognito (owner, admin o user). Los permisos controlan lo que ve y hace en la app.
+          </p>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-gray-500">
+                  <th className="py-2 pr-3">Módulo</th>
+                  {ACCIONES.map(a => <th key={a} className="py-2 px-2 capitalize text-center">{a}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {MODULOS_PERMISOS.map(mod => (
+                  <tr key={mod} className="border-t border-katt-100 dark:border-katt-800">
+                    <td className="py-2 pr-3">{MODULOS_LABELS[mod]}</td>
+                    {ACCIONES.map(a => (
+                      <td key={a} className="py-2 px-2 text-center">
+                        <input
+                          type="checkbox"
+                          checked={(rol.permisos[mod] || []).includes(a)}
+                          onChange={() => toggleAccion(mod, a)}
+                          className="rounded"
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
