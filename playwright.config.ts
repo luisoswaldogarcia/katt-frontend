@@ -9,7 +9,7 @@ export default defineConfig({
   workers: 1,
   reporter: [['list'], ['html', { outputFolder: 'e2e-report' }]],
   use: {
-    baseURL: 'https://d1fn2u7xetgmq1.cloudfront.net',
+    baseURL: process.env.E2E_BASE_URL || 'https://d1fn2u7xetgmq1.cloudfront.net',
     headless: true,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

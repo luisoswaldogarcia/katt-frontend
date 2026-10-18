@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react'
 import { citaStore, pacienteStore, doctorStore } from '../lib/demoStore'
 import type { CitaData } from '../lib/demoStore'
 import { labels } from '../lib/labels'
@@ -147,9 +147,9 @@ export default function Agenda() {
   }, [view, currentDate])
 
   return (
-    <div className="p-4 h-full overflow-y-auto space-y-4">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Controls */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="px-4 pt-4 pb-2 shrink-0 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M15 18l-6-6 6-6" /></svg>
@@ -178,9 +178,11 @@ export default function Agenda() {
       </div>
 
       {/* Views */}
-      {view === 'dia' && <DayView date={currentDate} today={today} onSelect={setSelected} />}
-      {view === 'semana' && <WeekView date={currentDate} today={today} onSelect={setSelected} />}
-      {view === 'mes' && <MonthView date={currentDate} today={today} onDayClick={d => { setCurrentDate(d); setView('dia') }} />}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {view === 'dia' && <div className="h-full overflow-y-auto px-4 pb-4"><DayView date={currentDate} today={today} onSelect={setSelected} /></div>}
+        {view === 'semana' && <WeekView date={currentDate} today={today} onSelect={setSelected} />}
+        {view === 'mes' && <div className="h-full overflow-y-auto px-4 pb-4"><MonthView date={currentDate} today={today} onDayClick={d => { setCurrentDate(d); setView('dia') }} /></div>}
+      </div>
 
       {/* FAB agregar cita */}
       <button
@@ -318,46 +320,108 @@ function DayView({ date, today, onSelect }: { date: Date; today: string; onSelec
 }
 
 /* ─── Week View ─── */
+// Agenda vertical tipo Outlook: Lunes arriba con sus citas, luego Martes, etc.
+// Scroll infinito en ambos sentidos: al acercarse a los extremos carga más semanas.
 
 function WeekView({ date, today, onSelect }: { date: Date; today: string; onSelect: (c: CitaData) => void }) {
-  const weekStart = getMonday(date)
-  const weekEnd = addDays(weekStart, 5)
+  const anchorMonday = useMemo(() => getMonday(date), [date])
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [pastWeeks, setPastWeeks] = useState(0)
+  const [futureWeeks, setFutureWeeks] = useState(1)
+  const heightRef = useRef<number | null>(null)
+  const busyRef = useRef(false)
 
-  const citas = useMemo(
-    () => citaStore.getByDateRange(formatDate(weekStart), formatDate(weekEnd)),
-    [weekStart]
-  )
+  // Reiniciar la ventana al cambiar de semana (flechas / Hoy)
+  useEffect(() => {
+    setPastWeeks(0)
+    setFutureWeeks(1)
+    if (scrollRef.current) scrollRef.current.scrollTop = 0
+  }, [anchorMonday])
+
+  // Compensar la posición del scroll al insertar días arriba
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (el && heightRef.current !== null) {
+      el.scrollTop += el.scrollHeight - heightRef.current
+      heightRef.current = null
+      busyRef.current = false
+    }
+  })
+
+  const days = useMemo(() => {
+    const list: Date[] = []
+    const start = addDays(anchorMonday, -pastWeeks * 7)
+    const total = (pastWeeks + futureWeeks) * 7
+    for (let i = 0; i < total; i++) list.push(addDays(start, i))
+    return list
+  }, [anchorMonday, pastWeeks, futureWeeks])
 
   const citasByDay = useMemo(() => {
     const map: Record<string, CitaData[]> = {}
-    for (let i = 0; i < 6; i++) map[formatDate(addDays(weekStart, i))] = []
-    for (const c of citas) if (map[c.fecha]) map[c.fecha].push(c)
+    if (days.length) {
+      for (const c of citaStore.getByDateRange(formatDate(days[0]), formatDate(days[days.length - 1]))) {
+        if (!map[c.fecha]) map[c.fecha] = []
+        map[c.fecha].push(c)
+      }
+    }
     return map
-  }, [citas, weekStart])
+  }, [days])
+
+  function onScroll() {
+    const el = scrollRef.current
+    if (!el || busyRef.current) return
+    if (el.scrollTop < 300) {
+      busyRef.current = true
+      heightRef.current = el.scrollHeight
+      setPastWeeks(w => w + 1)
+    } else if (el.scrollHeight - el.scrollTop - el.clientHeight < 300) {
+      setFutureWeeks(w => w + 1)
+    }
+  }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-      {DAY_NAMES.slice(0, 6).map((dayName, i) => {
-        const d = addDays(weekStart, i)
+    <div ref={scrollRef} onScroll={onScroll} data-testid="agenda-week" className="h-full overflow-y-auto px-4 pb-6">
+      {days.map(d => {
         const key = formatDate(d)
         const isToday = key === today
         const dayCitas = citasByDay[key] || []
-
         return (
-          <div key={key} className={`rounded-xl border p-3 space-y-2 ${isToday ? 'border-katt-500 bg-katt-50 dark:bg-katt-900/50' : 'border-katt-200 dark:border-katt-800'}`}>
-            <div className="text-center">
-              <div className="text-xs text-katt-500 dark:text-katt-400 font-medium">{dayName}</div>
-              <div className={`text-lg font-bold ${isToday ? 'text-katt-600 dark:text-katt-300' : ''}`}>{d.getDate()}</div>
+          <div key={key} data-testid="agenda-day" className="pt-2 first:pt-0">
+            {/* Encabezado del día (sticky) */}
+            <div className="sticky top-0 z-10 flex items-center gap-3 py-2 bg-white dark:bg-katt-950">
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center text-base font-bold shrink-0 ${isToday ? 'bg-katt-500 text-white' : 'bg-katt-100 dark:bg-katt-800 text-katt-600 dark:text-katt-300'}`}>
+                {d.getDate()}
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold capitalize">
+                  {d.toLocaleDateString('es', { weekday: 'long' })}
+                  <span className="ml-2 text-xs font-normal text-katt-500 dark:text-katt-400">{d.toLocaleDateString('es', { month: 'long' })}</span>
+                </div>
+                <div className="text-xs text-katt-500 dark:text-katt-400">
+                  {isToday ? 'Hoy · ' : ''}{dayCitas.length} cita{dayCitas.length !== 1 && 's'}
+                </div>
+              </div>
             </div>
-            <div className="space-y-1.5 min-h-[60px]">
-              {dayCitas.map(c => (
-                <button key={c.id} onClick={() => onSelect(c)} className="w-full text-left p-2 rounded-lg bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700 transition-colors">
-                  <div className="text-[10px] text-katt-500 dark:text-katt-400 font-medium">{c.hora}</div>
-                  <div className="text-xs font-medium truncate">{c.paciente}</div>
-                </button>
-              ))}
-              {dayCitas.length === 0 && <div className="text-xs text-katt-400 dark:text-katt-600 text-center pt-4">Sin citas</div>}
-            </div>
+            {/* Citas del día */}
+            {dayCitas.length === 0 ? (
+              <div className="text-xs text-katt-400 dark:text-katt-600 py-2 pl-14">Sin citas</div>
+            ) : (
+              <div className="space-y-2 py-1 pl-14">
+                {dayCitas.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => onSelect(c)}
+                    className="w-full text-left p-3 rounded-lg bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700 transition-colors flex items-center gap-3"
+                  >
+                    <div className="text-xs font-bold text-katt-500 dark:text-katt-400 w-12 shrink-0">{c.hora}</div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{c.paciente}</div>
+                      <div className="text-xs text-katt-500 dark:text-katt-400 truncate">{c.doctor} · {c.motivo}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )
       })}
