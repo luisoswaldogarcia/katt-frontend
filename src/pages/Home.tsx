@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { labels } from '../lib/labels'
-import { pacienteStore, doctorStore, citaStore, inventarioStore, tareaStore } from '../lib/demoStore'
+import { pacienteStore, doctorStore, citaStore, tareaStore } from '../lib/demoStore'
 import { getModules } from '../lib/modules'
 import { getKanbanColumns } from '../lib/kanban'
 
@@ -49,7 +49,6 @@ export default function Home() {
   const modules = getModules()
   const totalPacientes = pacienteStore.getAll().length
   const totalDoctores = doctorStore.getAll().length
-  const totalInventario = inventarioStore.getAll().length
   const tareasPendientes = tareaStore.getAll().filter(t => t.estado !== getKanbanColumns().slice(-1)[0]).length
   const citasPorSemana = getCitasPorSemana()
   const maxCitas = Math.max(...citasPorSemana.map(d => d.count), 1)
@@ -73,10 +72,6 @@ export default function Home() {
         {modules.chat && <div onClick={() => navigate('/chat')} className="cursor-pointer p-4 rounded-xl bg-katt-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800 hover:border-katt-500 transition-colors">
           <p className="text-2xl font-bold text-katt-600 dark:text-katt-300">{mensajesSinLeer}</p>
           <p className="text-xs text-gray-500">Mensajes sin leer</p>
-        </div>}
-        {modules.inventario && <div onClick={() => navigate('/inventario')} className="cursor-pointer p-4 rounded-xl bg-katt-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800 hover:border-katt-500 transition-colors">
-          <p className="text-2xl font-bold text-katt-600 dark:text-katt-300">{totalInventario}</p>
-          <p className="text-xs text-gray-500">{labels.inventario}</p>
         </div>}
         {modules.tareas && <div onClick={() => navigate('/tareas')} className="cursor-pointer p-4 rounded-xl bg-katt-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800 hover:border-katt-500 transition-colors">
           <p className="text-2xl font-bold text-katt-600 dark:text-katt-300">{tareasPendientes}</p>

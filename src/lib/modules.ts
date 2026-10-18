@@ -5,37 +5,28 @@ const ACTIVE_EMPRESA_KEY = 'katt-active-empresa'
 export interface ModuleConfig {
   clientes: boolean
   usuarios: boolean
-  inventario: boolean
   agenda: boolean
   chat: boolean
   agente: boolean
   tareas: boolean
-  pos: boolean
-  compras: boolean
 }
 
 export const moduleLabels: Record<keyof ModuleConfig, string> = {
   clientes: 'Clientes',
   usuarios: 'Usuarios',
-  inventario: 'Inventario',
   agenda: 'Agenda',
   chat: 'Chat',
   agente: 'Agente',
   tareas: 'Tareas',
-  pos: 'Punto de Venta',
-  compras: 'Compras',
 }
 
 const allEnabled: ModuleConfig = {
   clientes: true,
   usuarios: true,
-  inventario: true,
   agenda: true,
   chat: true,
   agente: true,
   tareas: true,
-  pos: true,
-  compras: true,
 }
 
 // empresaId is local-only (which empresa the user is viewing)

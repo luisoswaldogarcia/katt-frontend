@@ -7,7 +7,6 @@ import { getBranding, saveBranding } from '../lib/branding'
 import type { Branding } from '../lib/branding'
 import type { CustomField, FieldType, Module } from '../lib/customFields'
 import { fieldTypeLabels, getCustomFields, saveCustomFields } from '../lib/customFields'
-import { getCategorias, saveCategorias } from '../lib/categorias'
 import { getActiveEmpresaId, setActiveEmpresaId } from '../lib/modules'
 import { empresaStore } from '../lib/demoStore'
 import { getKanbanColumns, saveKanbanColumns, getTaskTypes, saveTaskTypes, getAllTableColumns, getVisibleTableColumns, saveVisibleTableColumns } from '../lib/kanban'
@@ -55,11 +54,8 @@ export default function Settings() {
   const [fields, setFields] = useState<Record<Module, CustomField[]>>({
     paciente: getCustomFields('paciente'),
     doctor: getCustomFields('doctor'),
-    inventario: getCustomFields('inventario'),
     empresa: getCustomFields('empresa'),
   })
-  const [categorias, setCategorias] = useState(getCategorias)
-  const [newCategoria, setNewCategoria] = useState('')
   const [activeEmpresa, setActiveEmpresa] = useState<string>(() => {
     const id = getActiveEmpresaId()
     return id ? String(id) : ''
@@ -252,7 +248,7 @@ export default function Settings() {
               <button onClick={() => setShowFieldForm(true)} className={btnSmall}>+ Campo</button>
             </div>
             <div className="flex gap-2">
-              {([['paciente', labels.paciente], ['doctor', labels.doctor], ['inventario', labels.inventario]] as [Module, string][]).map(([mod, label]) => (
+              {([['paciente', labels.paciente], ['doctor', labels.doctor]] as [Module, string][]).map(([mod, label]) => (
                 <button
                   key={mod}
                   onClick={() => setActiveModule(mod)}
@@ -274,55 +270,6 @@ export default function Settings() {
                       {f.required && <span className="ml-1 text-xs text-red-500">*</span>}
                     </div>
                     <DeleteBtn onClick={() => removeField(f.id)} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Categorías de inventario */}
-          <div className={cardClass}>
-            <p className={cardTitle}>Categorías de inventario</p>
-            <div className="flex gap-2">
-              <input
-                placeholder="Nueva categoría"
-                value={newCategoria}
-                onChange={e => setNewCategoria(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && newCategoria.trim()) {
-                    e.preventDefault()
-                    const updated = [...categorias, newCategoria.trim()]
-                    setCategorias(updated)
-                    saveCategorias(updated)
-                    setNewCategoria('')
-                  }
-                }}
-                className={`flex-1 ${inputClass}`}
-              />
-              <button
-                onClick={() => {
-                  if (newCategoria.trim()) {
-                    const updated = [...categorias, newCategoria.trim()]
-                    setCategorias(updated)
-                    saveCategorias(updated)
-                    setNewCategoria('')
-                  }
-                }}
-                className={btnPrimary}
-              >
-                +
-              </button>
-            </div>
-            {categorias.length > 0 && (
-              <div className="space-y-1">
-                {categorias.map((cat, i) => (
-                  <div key={i} className={listItem}>
-                    <span className="text-sm">{cat}</span>
-                    <DeleteBtn onClick={() => {
-                      const updated = categorias.filter((_, idx) => idx !== i)
-                      setCategorias(updated)
-                      saveCategorias(updated)
-                    }} />
                   </div>
                 ))}
               </div>
@@ -460,7 +407,7 @@ export default function Settings() {
       {showFieldForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowFieldForm(false)}>
           <div onClick={e => e.stopPropagation()} className="w-full max-w-sm bg-white dark:bg-katt-900 rounded-xl p-5 space-y-4 border border-katt-200 dark:border-katt-800">
-            <h3 className="font-bold text-sm">Nuevo campo para {activeModule === 'paciente' ? labels.paciente : activeModule === 'doctor' ? labels.doctor : labels.inventario}</h3>
+            <h3 className="font-bold text-sm">Nuevo campo para {activeModule === 'paciente' ? labels.paciente : activeModule === 'doctor' ? labels.doctor : labels.empresa}</h3>
             <input
               placeholder="Nombre del campo"
               value={newField.label || ''}
@@ -644,7 +591,6 @@ export default function Settings() {
 const docModules: { key: Module; label: string }[] = [
   { key: 'paciente', label: labels.paciente },
   { key: 'doctor', label: labels.doctor },
-  { key: 'inventario', label: labels.inventario },
   { key: 'empresa', label: labels.empresa },
 ]
 

@@ -30,7 +30,7 @@ test.describe('Conexión lenta', () => {
       await route.abort('connectionrefused')
     })
 
-    await page.goto('/inventario', { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {})
+    await page.goto('/paciente', { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {})
     await page.waitForTimeout(2000)
 
     const body = page.locator('body')

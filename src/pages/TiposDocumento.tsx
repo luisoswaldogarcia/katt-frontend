@@ -12,7 +12,6 @@ const listItem = "flex items-center justify-between px-3 py-2 rounded-lg bg-gray
 const modules: { key: Module; label: string }[] = [
   { key: 'paciente', label: labels.paciente },
   { key: 'doctor', label: labels.doctor },
-  { key: 'inventario', label: labels.inventario },
   { key: 'empresa', label: labels.empresa },
 ]
 

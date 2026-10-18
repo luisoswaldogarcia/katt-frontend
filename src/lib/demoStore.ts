@@ -45,27 +45,6 @@ export interface CitaData {
   motivo: string
 }
 
-export interface InventarioData {
-  id: string
-  nombre: string
-  categoria: string
-  cantidad: number
-  unidad: string
-  precioUnitario: number
-  codigoBarras?: string
-  foto?: string
-  custom?: Record<string, unknown>
-}
-
-export interface MovimientoData {
-  id: string
-  itemId: string
-  tipo: 'entrada' | 'salida'
-  cantidad: number
-  motivo: string
-  fecha: string
-}
-
 export interface TareaData {
   id: string
   titulo: string
@@ -143,7 +122,6 @@ export function seedEmpresas(empresas: { id: string; nombre: string }[]) {
   empresaStore._seed(seeded)
 }
 
-export const inventarioStore = createStore<InventarioData>('inventario')
 export const tareaStore = createStore<TareaData>('tareas')
 
 export const citaStore = {
@@ -154,20 +132,12 @@ export const citaStore = {
   },
 }
 
-export const movimientoStore = {
-  getByItem: (_itemId: string): MovimientoData[] => [],
-  create: async (data: Omit<MovimientoData, 'id'>): Promise<MovimientoData> => {
-    return api.create<MovimientoData>('inventario', { ...data, tipo: data.tipo })
-  },
-}
-
 // Preload all stores
 export async function preloadStores() {
   await Promise.allSettled([
     pacienteStore.fetch(),
     doctorStore.fetch(),
     empresaStore.fetch(),
-    inventarioStore.fetch(),
     tareaStore.fetch(),
     citaStore.fetch(),
   ])

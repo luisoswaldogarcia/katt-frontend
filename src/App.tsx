@@ -20,20 +20,12 @@ import Agenda from './pages/Agenda'
 import Usuario from './pages/Usuario'
 import UsuarioAlta from './pages/UsuarioAlta'
 import UsuarioDetalle from './pages/UsuarioDetalle'
-import Inventario from './pages/Inventario'
-import InventarioAlta from './pages/InventarioAlta'
-import InventarioDetalle from './pages/InventarioDetalle'
-import InventarioMovimiento from './pages/InventarioMovimiento'
-import InventarioCarga from './pages/InventarioCarga'
-import InventarioImagenes from './pages/InventarioImagenes'
 import ClienteCitas from './pages/ClienteCitas'
 import TareasLista from './pages/TareasLista'
 import Empresa from './pages/Empresa'
 import EmpresaAlta from './pages/EmpresaAlta'
 import EmpresaDetalle from './pages/EmpresaDetalle'
 import Settings from './pages/Settings'
-import PuntoVenta from './pages/PuntoVenta'
-import Compras from './pages/Compras'
 
 function Layout({ onLogout }: { onLogout: () => void }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -50,17 +42,10 @@ function Layout({ onLogout }: { onLogout: () => void }) {
     '/agenda': 'Agenda',
     '/doctor': lbl.doctor,
     '/doctor/alta': 'Alta ' + lbl.doctor,
-    '/inventario': lbl.inventario,
-    '/inventario/alta': 'Alta ' + lbl.inventario,
-    '/inventario/carga': 'Alta masiva',
-    '/inventario/imagenes': 'Cargar imágenes',
-    '/inventario/movimiento': 'Movimiento de inventario',
     '/paciente/citas': 'Agendar citas',
     '/empresa': lbl.empresa,
     '/empresa/alta': 'Alta ' + lbl.empresa,
     '/tareas': lbl.tareas,
-    '/pos': lbl.pos,
-    '/compras': lbl.compras,
     '/settings': 'Configuración',
   }
   const title = titles[pathname]
@@ -68,8 +53,6 @@ function Layout({ onLogout }: { onLogout: () => void }) {
     : pathname.startsWith('/paciente/') ? lbl.paciente
     : pathname.startsWith('/doctor/editar') ? 'Editar ' + lbl.doctor
     : pathname.startsWith('/doctor/') ? lbl.doctor
-    : pathname.startsWith('/inventario/editar') ? 'Editar ' + lbl.inventario
-    : pathname.startsWith('/inventario/') ? lbl.inventario
     : pathname.startsWith('/empresa/editar') ? 'Editar ' + lbl.empresa
     : pathname.startsWith('/empresa/') ? lbl.empresa
     : 'Katt')
@@ -131,20 +114,11 @@ function Layout({ onLogout }: { onLogout: () => void }) {
             <Route path="/doctor/alta" element={<UsuarioAlta />} />
             <Route path="/doctor/editar/:id" element={<UsuarioAlta />} />
             <Route path="/doctor/:id" element={<UsuarioDetalle />} />
-            <Route path="/inventario" element={<Inventario />} />
-            <Route path="/inventario/alta" element={<InventarioAlta />} />
-            <Route path="/inventario/carga" element={<InventarioCarga />} />
-            <Route path="/inventario/imagenes" element={<InventarioImagenes />} />
-            <Route path="/inventario/editar/:id" element={<InventarioAlta />} />
-            <Route path="/inventario/movimiento" element={<InventarioMovimiento />} />
-            <Route path="/inventario/:id" element={<InventarioDetalle />} />
             <Route path="/empresa" element={<Empresa />} />
             <Route path="/empresa/alta" element={<EmpresaAlta />} />
             <Route path="/empresa/editar/:id" element={<EmpresaAlta />} />
             <Route path="/empresa/:id" element={<EmpresaDetalle />} />
             <Route path="/tareas" element={<TareasLista />} />
-            <Route path="/pos" element={<PuntoVenta />} />
-            <Route path="/compras" element={<Compras />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>

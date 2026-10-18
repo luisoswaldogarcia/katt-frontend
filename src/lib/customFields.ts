@@ -27,7 +27,7 @@ export interface CustomField {
   max?: number
 }
 
-export type Module = 'paciente' | 'doctor' | 'inventario' | 'empresa'
+export type Module = 'paciente' | 'doctor' | 'empresa'
 
 const pacienteDefaults: CustomField[] = [
   { id: 'sexo', label: 'Sexo', type: 'select', required: false, options: ['Masculino', 'Femenino', 'Otro'] },

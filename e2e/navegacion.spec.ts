@@ -28,11 +28,6 @@ test.describe('Navegación', () => {
     await expect(page.locator('body')).toContainText('Nombre', { timeout: 5_000 })
   })
 
-  test('debe navegar a módulo Inventario', async () => {
-    await navigateTo(page, '/inventario')
-    await expect(page.locator('body')).toContainText('Categoría', { timeout: 5_000 })
-  })
-
   test('debe navegar a Inicio', async () => {
     await navigateTo(page, '/')
     await expect(page.locator('body')).toContainText('Citas de hoy', { timeout: 5_000 })
