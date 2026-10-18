@@ -8,7 +8,73 @@ export interface Session {
   token: string
 }
 
-const FINGERPRINT_TOKEN_KEY = 'katt_webauthn_token'
+const FINGERPRINT_TOKEN_KEY = 'katt_webauthn_token' // legacy: solo idToken
+const FINGERPRINT_SESSION_KEY = 'katt_webauthn_session'
+
+interface FingerprintSession {
+  idToken: string
+  accessToken: string
+  refreshToken: string
+  exp: number // epoch ms del idToken
+}
+
+function apiUrl(path: string) {
+  return `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'}${path}`
+}
+
+function saveFingerprintSession(tokens: { idToken?: string; accessToken?: string; refreshToken?: string }) {
+  if (!tokens.idToken) return
+  const claims = decodeJwt(tokens.idToken)
+  const expSec = typeof claims?.exp === 'number' ? claims.exp : Math.floor(Date.now() / 1000) + 3300
+  const session: FingerprintSession = {
+    idToken: tokens.idToken,
+    accessToken: tokens.accessToken || '',
+    refreshToken: tokens.refreshToken || '',
+    exp: expSec * 1000,
+  }
+  localStorage.setItem(FINGERPRINT_SESSION_KEY, JSON.stringify(session))
+  localStorage.removeItem(FINGERPRINT_TOKEN_KEY)
+}
+
+function loadFingerprintSession(): FingerprintSession | null {
+  const raw = localStorage.getItem(FINGERPRINT_SESSION_KEY)
+  if (raw) {
+    try { return JSON.parse(raw) as FingerprintSession } catch {}
+  }
+  // Migración de la sesión antigua (solo idToken, sin refresh)
+  const legacy = localStorage.getItem(FINGERPRINT_TOKEN_KEY)
+  if (legacy) {
+    const claims = decodeJwt(legacy)
+    if (claims?.email) {
+      return {
+        idToken: legacy,
+        accessToken: '',
+        refreshToken: '',
+        exp: (typeof claims.exp === 'number' ? claims.exp : 0) * 1000,
+      }
+    }
+  }
+  return null
+}
+
+async function refreshFingerprintSession(): Promise<FingerprintSession | null> {
+  const current = loadFingerprintSession()
+  if (!current?.refreshToken) return null
+  try {
+    const res = await fetch(apiUrl('/webauthn/login/refresh'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: current.refreshToken }),
+    })
+    if (!res.ok) return null
+    const tokens = await res.json()
+    if (!tokens.idToken) return null
+    saveFingerprintSession(tokens)
+    return loadFingerprintSession()
+  } catch {
+    return null
+  }
+}
 
 function decodeJwt(token: string): Record<string, unknown> | null {
   try {
@@ -51,13 +117,13 @@ export async function signInWithFingerprint(): Promise<Session> {
     throw new Error(err.error || 'Error al verificar huella digital')
   }
   const tokens = await completeRes.json()
-
-  localStorage.setItem(FINGERPRINT_TOKEN_KEY, tokens.idToken)
+  saveFingerprintSession(tokens)
   return getSession() as Promise<Session>
 }
 
 export async function signOut() {
   localStorage.removeItem(FINGERPRINT_TOKEN_KEY)
+  localStorage.removeItem(FINGERPRINT_SESSION_KEY)
   await ampSignOut()
 }
 
@@ -78,16 +144,21 @@ export async function getSession(): Promise<Session | null> {
     }
   } catch {}
 
-  // Fallback: fingerprint token
-  const stored = localStorage.getItem(FINGERPRINT_TOKEN_KEY)
-  if (stored) {
-    const claims = decodeJwt(stored)
-    if (claims && claims.email) {
-      return {
-        email: claims.email as string,
-        userId: claims.sub as string || claims.email as string,
-        groups: (claims['cognito:groups'] as string[]) || [],
-        token: stored,
+  // Fallback: sesión de huella (se refresca sola cuando el token está por expirar)
+  let fp = loadFingerprintSession()
+  if (fp) {
+    if (fp.exp - Date.now() < 60_000) {
+      fp = await refreshFingerprintSession()
+    }
+    if (fp) {
+      const claims = decodeJwt(fp.idToken)
+      if (claims && claims.email) {
+        return {
+          email: claims.email as string,
+          userId: (claims.sub as string) || (claims.email as string),
+          groups: (claims['cognito:groups'] as string[]) || [],
+          token: fp.idToken,
+        }
       }
     }
   }

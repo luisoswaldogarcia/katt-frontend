@@ -18,6 +18,7 @@ export default function SetupPassword() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
+  const [registerToken, setRegisterToken] = useState('')
 
   useEffect(() => {
     if (!token) {
@@ -40,6 +41,7 @@ export default function SetupPassword() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al establecer contraseña')
       setEmail(data.email)
+      setRegisterToken(data.registerToken || '')
       setStep('fingerprint')
     } catch (err: any) {
       setError(err.message)
@@ -55,7 +57,7 @@ export default function SetupPassword() {
       const beginRes = await fetch(`${BASE_URL}/webauthn/register/begin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, registerToken }),
       })
       if (!beginRes.ok) throw new Error('Error al iniciar registro biométrico')
       const options = await beginRes.json()
@@ -65,7 +67,7 @@ export default function SetupPassword() {
       const completeRes = await fetch(`${BASE_URL}/webauthn/register/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, credential: cred }),
+        body: JSON.stringify({ email, credential: cred, registerToken }),
       })
       if (!completeRes.ok) throw new Error('Error al registrar huella digital')
       setStep('done')

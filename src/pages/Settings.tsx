@@ -13,10 +13,8 @@ import { getKanbanColumns, saveKanbanColumns, getTaskTypes, saveTaskTypes, getAl
 import type { TaskType, TaskTypeField } from '../lib/kanban'
 import { getDocTypeCatalog, saveDocTypeCatalog, getModuleDocTypeIds, saveModuleDocTypeIds } from '../lib/documents'
 import type { DocType } from '../lib/documents'
-import { getModuleCatalog, updateModuleInfo } from '../lib/moduleCatalog'
-import type { ModuleCatalogItem } from '../lib/moduleCatalog'
 
-type Tab = 'usuario' | 'sistema' | 'operativo' | 'documentos' | 'modulos'
+type Tab = 'usuario' | 'sistema' | 'operativo' | 'documentos'
 
 const tabClass = (active: boolean) =>
   `px-4 py-2 text-sm font-medium rounded-lg transition-colors text-left ${active ? 'bg-katt-500 text-white' : 'hover:bg-katt-100 dark:hover:bg-katt-800 text-gray-600 dark:text-gray-400'}`
@@ -114,7 +112,6 @@ export default function Settings() {
           {role === 'owner' && <button onClick={() => setTab('sistema')} className={tabClass(tab === 'sistema')}>Sistema</button>}
           {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('operativo')} className={tabClass(tab === 'operativo')}>Operativo</button>}
           {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('documentos')} className={tabClass(tab === 'documentos')}>Documentos</button>}
-          {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('modulos')} className={tabClass(tab === 'modulos')}>Módulos</button>}
         </div>
 
         {/* Content */}
@@ -130,6 +127,7 @@ export default function Settings() {
               <ThemeToggle />
             </div>
           </div>
+          <HuellaCard />
         </div>
       )}
 
@@ -398,7 +396,6 @@ export default function Settings() {
       {tab === 'documentos' && <TiposDocumentoTab />}
 
       {/* Tab: Módulos */}
-      {tab === 'modulos' && <ModulosTab />}
 
         </div>{/* end flex-1 content */}
       </div>{/* end md:flex */}
@@ -688,64 +685,60 @@ function TiposDocumentoTab() {
   )
 }
 
-function ModulosTab() {
-  const [catalog, setCatalog] = useState(getModuleCatalog)
-  const [editing, setEditing] = useState<string | null>(null)
-  const [form, setForm] = useState<Partial<ModuleCatalogItem>>({})
+/* ─── Huella digital (WebAuthn en este dispositivo) ─── */
 
-  function startEdit(item: ModuleCatalogItem) {
-    setEditing(item.key)
-    setForm({ nombre: item.nombre, descripcion: item.descripcion, costo: item.costo })
+function HuellaCard() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [estado, setEstado] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    getSession().then(s => { if (s?.email) setEmail(s.email) })
+  }, [])
+
+  async function activar() {
+    if (!email) { setEstado('No se pudo identificar tu usuario.'); return }
+    if (password.length < 6) { setEstado('Escribe tu contraseña para confirmar (mínimo 6 caracteres).'); return }
+    setBusy(true)
+    setEstado('')
+    try {
+      const { api } = await import('../lib/api')
+      const { startRegistration } = await import('@simplewebauthn/browser')
+      const { token } = await api.create<{ token: string }>('webauthn/register/token', {})
+      const options = await api.create<Record<string, unknown>>('webauthn/register/begin', { email, registerToken: token })
+      const credential = await startRegistration({ optionsJSON: options as never })
+      await api.create('webauthn/register/complete', { email, credential, registerToken: token, password })
+      setEstado('✅ Huella digital activada en este dispositivo. Ya puedes entrar con ella.')
+      setPassword('')
+    } catch (err: any) {
+      if (err?.name === 'NotAllowedError') setEstado('Registro cancelado.')
+      else setEstado(`No se pudo activar: ${err?.message || 'error desconocido'}`)
+    } finally {
+      setBusy(false)
+    }
   }
-
-  function saveEdit() {
-    if (!editing) return
-    updateModuleInfo(editing, form).then(updated => {
-      setCatalog(updated)
-      setEditing(null)
-    })
-  }
-
-
-
-
-
-
 
   return (
-    <div className="max-w-2xl space-y-4">
-      <p className="text-sm text-gray-500">Configura los módulos disponibles en la plataforma y su costo mensual.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {catalog.map(mod => (
-          <div key={mod.key} className={cardClass}>
-            {editing === mod.key ? (
-              <div className="space-y-2">
-                <input value={form.nombre || ''} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Nombre" className={inputClass} />
-                <input value={form.descripcion || ''} onChange={e => setForm({ ...form, descripcion: e.target.value })} placeholder="Descripción" className={inputClass} />
-                <input type="number" value={form.costo ?? 0} onChange={e => setForm({ ...form, costo: Number(e.target.value) })} placeholder="Costo" className={inputClass} />
-                <div className="flex gap-2 justify-end">
-                  <button onClick={() => setEditing(null)} className="px-3 py-1 rounded-lg text-xs hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">Cancelar</button>
-                  <button onClick={saveEdit} className={btnSmall}>Guardar</button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-katt-600 dark:text-katt-300">{mod.nombre}</span>
-                  <button onClick={() => startEdit(mod)} className="p-1 rounded hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500">{mod.descripcion}</p>
-                <p className="text-sm font-medium text-katt-500">{mod.costo === 0 ? 'Incluido' : `$${mod.costo}/mes`}</p>
-              </>
-            )}
-          </div>
-        ))}
+    <div className={cardClass}>
+      <p className={cardTitle}>Huella digital</p>
+      <p className="text-xs text-gray-500">
+        Activa el acceso con la huella o el PIN de este dispositivo. Confirma tu contraseña para habilitarlo.
+      </p>
+      <div className="flex items-center gap-2">
+        <input
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="Tu contraseña"
+          className={inputClass}
+          autoComplete="current-password"
+        />
+        <button onClick={activar} disabled={busy} className={`${btnPrimary} shrink-0`}>
+          {busy ? 'Activando…' : 'Activar huella'}
+        </button>
       </div>
+      {estado && <p className="text-xs text-katt-500 dark:text-katt-400">{estado}</p>}
     </div>
   )
 }
