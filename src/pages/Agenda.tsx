@@ -3,6 +3,7 @@ import { citaStore, pacienteStore, doctorStore } from '../lib/demoStore'
 import type { CitaData } from '../lib/demoStore'
 import { labels } from '../lib/labels'
 import { ConfirmModal } from '../components/ConfirmModal'
+import { useKeyboardOffset } from '../hooks/useKeyboardOffset'
 
 type View = 'dia' | 'semana' | 'mes'
 
@@ -86,6 +87,7 @@ export default function Agenda() {
 
   const [refreshKey, forceUpdate] = useState(0)
   const [filtroDoctor, setFiltroDoctor] = useState('')
+  const keyboardOffset = useKeyboardOffset()
   const today = formatDate(new Date())
 
   // Llevar el calendario a la fecha de una cita para que sea visible
@@ -124,13 +126,17 @@ export default function Agenda() {
     }
   }
 
-  function handleAgenteSend(e: React.FormEvent) {
-    e.preventDefault()
+  function enviarAgente() {
     const msg = agenteMsg.trim()
     if (!msg || agenteBusy) return
     setAgenteMsg('')
     setLastMsg(msg)
     callAgente(msg, contexto)
+  }
+
+  function handleAgenteSend(e: React.FormEvent) {
+    e.preventDefault()
+    enviarAgente()
   }
 
   async function elegirDelAgente(kind: 'paciente' | 'doctor', item: { id: string; nombre: string }) {
@@ -291,7 +297,10 @@ export default function Agenda() {
       </div>
 
       {/* Agente de citas (IA) */}
-      <div className="shrink-0 border-t border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-950 px-4 py-3 space-y-2">
+      <div
+        className="shrink-0 border-t border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-950 px-4 py-3 space-y-2"
+        style={{ paddingBottom: keyboardOffset > 0 ? keyboardOffset + 12 : undefined }}
+      >
         {agenteCard && (
           <div data-testid="agente-cita-respuesta" className="rounded-xl border border-katt-200 dark:border-katt-800 bg-katt-50 dark:bg-katt-900/50 p-3 space-y-2 max-h-64 overflow-y-auto text-sm">
             <div className="flex items-start gap-2">
@@ -363,12 +372,19 @@ export default function Agenda() {
         )}
 
         <form onSubmit={handleAgenteSend} className="flex items-center gap-2">
-          <input
+          <textarea
             data-testid="agente-cita-input"
             value={agenteMsg}
             onChange={e => setAgenteMsg(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                enviarAgente()
+              }
+            }}
+            rows={2}
             placeholder="Agenda una cita con el agente: “cita con la señora Rosa Robles y el doctor Pacheco el jueves a las 11”"
-            className={inputClass}
+            className={`${inputClass} resize-none`}
             disabled={agenteBusy}
             autoComplete="off"
           />
