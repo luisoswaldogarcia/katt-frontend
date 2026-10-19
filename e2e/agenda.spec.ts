@@ -122,7 +122,8 @@ test.describe('Agenda', () => {
   })
 
   test('ordena por doctor y luego hora (con selector para ver por hora)', async () => {
-    const fecha = '2026-11-20'
+    // fecha única por corrida (los datos de corridas previas no deben mezclarse)
+    const fecha = new Date(Date.UTC(2030, 0, 1 + (Math.floor(ts / 1000) % 900))).toISOString().split('T')[0]
     await navigateTo(page, '/agenda')
     await page.waitForTimeout(800)
 
