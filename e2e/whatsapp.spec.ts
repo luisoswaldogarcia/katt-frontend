@@ -44,6 +44,26 @@ test.describe('WhatsApp — recordatorios', () => {
     await expect(page.getByText('Configuración guardada ✓')).toBeVisible({ timeout: 10_000 })
   })
 
+  test('cada usuario conecta su propio número', async () => {
+    await page.goto('/settings')
+    await page.getByRole('button', { name: 'WhatsApp', exact: true }).click()
+    const mia = page.getByTestId('whatsapp-mi-cuenta')
+    await expect(mia).toBeVisible()
+
+    await mia.locator('input[type="checkbox"]').check()
+    await page.getByTestId('mia-phone-id').fill(`pn-mio-${ts}`)
+    await page.getByTestId('mia-token').fill('token-mio-demo')
+    await page.getByTestId('mia-guardar').click()
+    await expect(page.getByText('Tu número quedó conectado ✓')).toBeVisible({ timeout: 10_000 })
+
+    // persiste al recargar y el token queda guardado (sin reescribirlo)
+    await page.reload()
+    await page.waitForTimeout(1500)
+    await page.getByRole('button', { name: 'WhatsApp', exact: true }).click()
+    await expect(page.getByTestId('mia-phone-id')).toHaveValue(`pn-mio-${ts}`)
+    await expect(mia).toContainText('guardado')
+  })
+
   test('el botón de prueba valida el teléfono', async () => {
     await page.goto('/settings')
     await page.getByRole('button', { name: 'WhatsApp', exact: true }).click()

@@ -794,8 +794,18 @@ function renderPlantillaLocal(plantilla: string, vars: Record<string, string>) {
   return plantilla.replace(/\{(\w+)\}/g, (_, k: string) => vars[k] ?? '')
 }
 
+interface MiCuentaWA {
+  activo?: boolean
+  phoneNumberId?: string
+  accessToken?: string
+  tokenGuardado?: boolean
+}
+
 function WhatsAppTab() {
   const [cfg, setCfg] = useState<WhatsAppCfg>({})
+  const [mia, setMia] = useState<MiCuentaWA>({})
+  const [msgMia, setMsgMia] = useState('')
+  const [guardandoMia, setGuardandoMia] = useState(false)
   const [telPrueba, setTelPrueba] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [guardando, setGuardando] = useState(false)
@@ -803,6 +813,7 @@ function WhatsAppTab() {
 
   useEffect(() => {
     getConfig<WhatsAppCfg>('whatsapp', {}).then(setCfg).catch(() => {})
+    api.get<MiCuentaWA>('whatsapp', 'mi-cuenta').then(setMia).catch(() => {})
   }, [])
 
   const plantilla = cfg.plantilla ?? PLANTILLA_DEFAULT
@@ -824,6 +835,22 @@ function WhatsAppTab() {
     setGuardando(false)
   }
 
+  async function guardarMia() {
+    setGuardandoMia(true); setMsgMia('')
+    try {
+      const r = await api.create<{ tokenGuardado: boolean }>('whatsapp/mi-cuenta', {
+        activo: mia.activo === true,
+        phoneNumberId: mia.phoneNumberId ?? '',
+        accessToken: mia.accessToken ?? '',
+      })
+      setMia(prev => ({ ...prev, accessToken: '', tokenGuardado: r.tokenGuardado }))
+      setMsgMia('Tu número quedó conectado ✓')
+    } catch {
+      setMsgMia('No se pudo guardar')
+    }
+    setGuardandoMia(false)
+  }
+
   async function probar() {
     setProbando(true); setMensaje('')
     try {
@@ -840,10 +867,39 @@ function WhatsAppTab() {
 
   return (
     <div className="space-y-4">
-      {/* Conexión */}
-      <div data-testid="whatsapp-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-3">
+      {/* Mi número (este usuario) */}
+      <div data-testid="whatsapp-mi-cuenta" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <p className={cardTitle}>Conexión de WhatsApp</p>
+          <p className={cardTitle}>Mi número de WhatsApp</p>
+          <label className="flex items-center gap-2 text-sm text-katt-600 dark:text-katt-300">
+            <input type="checkbox" checked={mia.activo === true} onChange={e => setMia(prev => ({ ...prev, activo: e.target.checked }))} />
+            Usar mi número
+          </label>
+        </div>
+        <p className="text-xs text-katt-500 dark:text-katt-400">
+          Los recordatorios de tus citas salen desde TU número: al paciente le llega como si fueras tú y puede responderte en ese mismo chat.
+          También puedes contestar desde tu teléfono (WhatsApp Business). Si no conectas tu número, se usa el número de la clínica.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Phone Number ID (Meta) de tu número</p>
+            <input data-testid="mia-phone-id" value={mia.phoneNumberId ?? ''} onChange={e => setMia(prev => ({ ...prev, phoneNumberId: e.target.value }))} className={inputCls} placeholder="1234567890" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Token de acceso {mia.tokenGuardado ? '(guardado — deja en blanco para conservarlo)' : '(Meta)'}</p>
+            <input data-testid="mia-token" type="password" value={mia.accessToken ?? ''} onChange={e => setMia(prev => ({ ...prev, accessToken: e.target.value }))} className={inputCls} placeholder={mia.tokenGuardado ? '••••••••' : 'EAAG...'} />
+          </div>
+        </div>
+        <button data-testid="mia-guardar" onClick={guardarMia} disabled={guardandoMia} className="px-4 py-2 text-sm rounded-xl bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors disabled:opacity-50">
+          {guardandoMia ? 'Guardando…' : 'Conectar mi número'}
+        </button>
+        {msgMia && <p className="text-xs text-katt-500 dark:text-katt-400">{msgMia}</p>}
+      </div>
+
+      {/* Conexión */}
+      <div data-testid="whatsapp-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:katt-900 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className={cardTitle}>Número de la clínica (respaldo)</p>
           <label className="flex items-center gap-2 text-sm text-katt-600 dark:text-katt-300">
             <input type="checkbox" checked={cfg.activo === true} onChange={e => set({ activo: e.target.checked })} />
             Activar recordatorios
