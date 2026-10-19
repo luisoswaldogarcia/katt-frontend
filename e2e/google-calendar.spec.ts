@@ -3,11 +3,11 @@ import { DEMO_EMAIL, DEMO_PASSWORD, login } from './helpers'
 
 test.describe('Google Calendar', () => {
   let page: Page
-  beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser }) => {
     page = await browser.newPage({ ignoreHTTPSErrors: true })
     await login(page, DEMO_EMAIL, DEMO_PASSWORD)
   })
-  afterAll(async () => { await page?.close() })
+  test.afterAll(async () => { await page?.close() })
 
   test('genera el enlace de suscripción y el feed ICS responde', async () => {
     await page.goto('/settings')

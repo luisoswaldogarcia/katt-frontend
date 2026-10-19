@@ -32,7 +32,7 @@ npx playwright test         # E2E contra PRODUCCIÓN (baseURL por defecto del pl
 - **Playwright**: `count()` antes que `isEnabled()`/`isVisible()` en bucles de pasos (los boolean queries esperan elementos ausentes y se comen el timeout). Tras un clic, esperar a que el sistema quede en reposo antes del siguiente clic.
 - **Nada de secretos en git**: las claves llegan por entorno/parámetros de stack (ver `../backend/docs/guia.md`).
 
-- **Google Calendar** (`Settings` → pestaña "Google Calendar"): genera el enlace ICS por empresa (`GET /calendar/ics` del backend) y muestra los pasos para suscribirse "desde URL" en Google. La URL se arma con `BASE_URL.split('/api/v1')[0]` + `/ics/<empresaId>/<token>.ics`.
+- **Google Calendar** (`Settings` → pestaña "Google Calendar"): genera el enlace ICS por empresa (`GET /calendar/ics` del backend) y muestra los pasos para suscribirse "desde URL" en Google. La URL se arma con `BASE_URL` + `/ics/<empresaId>/<token>.ics` (BASE_URL ya incluye /api/v1).
 
 ## Decisiones (por qué está así)
 

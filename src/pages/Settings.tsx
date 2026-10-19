@@ -770,8 +770,7 @@ function CalendarioTab() {
     setMensaje('')
     try {
       const r = await api.get<{ token: string; empresaId: string }>('calendar', 'ics')
-      const base = BASE_URL.split('/api/v1')[0]
-      setUrl(`${base}/ics/${r.empresaId}/${r.token}.ics`)
+      setUrl(`${BASE_URL}/ics/${r.empresaId}/${r.token}.ics`)
     } catch {
       setMensaje('No se pudo generar el enlace. Intenta de nuevo.')
     }

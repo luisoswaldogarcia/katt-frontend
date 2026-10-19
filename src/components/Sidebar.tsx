@@ -69,19 +69,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
             Inicio
-          </NavLink>            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                isActive
-                  ? 'bg-katt-100 dark:bg-katt-800 text-katt-600 dark:text-katt-300 font-medium'
-                  : 'hover:bg-katt-50 dark:hover:bg-katt-800/50'
-              }`
-            }
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            Agente
-          </NavLink>}
+          </NavLink>
           {modules.clientes && puede(groups, 'clientes', 'ver') && <NavLink
             to="/paciente"
             onClick={onClose}
