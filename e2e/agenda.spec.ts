@@ -104,6 +104,21 @@ test.describe('Agenda', () => {
     await expect(page.locator('[data-testid="agenda-week"]')).toContainText(motivoFiltro)
   })
 
+  test('en móvil el selector de doctor no tapa el botón de vista mensual', async () => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/agenda')
+    await page.waitForTimeout(2000)
+    // El botón "Mes" cabe en pantalla
+    const mes = page.getByRole('button', { name: 'Mes' })
+    await expect(mes).toBeVisible()
+    const mesBox = await mes.boundingBox()
+    expect(mesBox!.x + mesBox!.width).toBeLessThanOrEqual(390)
+    // Y el selector quedó compacto
+    const selBox = await page.locator('[data-testid="agenda-filtro-doctor"]').boundingBox()
+    expect(selBox!.width).toBeLessThan(130)
+    await page.setViewportSize({ width: 1280, height: 720 })
+  })
+
   test('vista semanal vertical — Lunes arriba y scroll infinito', async () => {
     await navigateTo(page, '/agenda')
     const week = page.locator('[data-testid="agenda-week"]')

@@ -204,7 +204,7 @@ export default function Agenda() {
             data-testid="agenda-filtro-doctor"
             value={filtroDoctor}
             onChange={e => setFiltroDoctor(e.target.value)}
-            className="px-2 py-1.5 text-xs rounded-lg border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-900 focus:outline-none focus:ring-2 focus:ring-katt-500"
+            className="w-[7.5rem] truncate px-2 py-1.5 text-xs rounded-lg border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-900 focus:outline-none focus:ring-2 focus:ring-katt-500"
           >
             <option value="">Todos los doctores</option>
             {doctoresFiltro.map(nombre => <option key={nombre} value={nombre}>{nombre}</option>)}
