@@ -777,8 +777,8 @@ function UbicacionesCard() {
 /* ─── WhatsApp: recordatorios de citas ─── */
 
 interface WhatsAppCfg {
-  activo?: boolean
-  phoneNumberId?: string
+  activo?: boolean // único interruptor de la pestaña
+  phoneNumberId?: string // número de la clínica
   accessToken?: string
   templateName?: string
   plantilla?: string
@@ -791,25 +791,23 @@ interface WhatsAppCfg {
   horaHasta?: number
 }
 
+interface MiCuentaWA {
+  phoneNumberId?: string
+  accessToken?: string
+  tokenGuardado?: boolean
+}
+
 const PLANTILLA_DEFAULT = 'Hola {paciente}, te recordamos tu cita con {doctor} el {fecha} a las {hora}. ¡Te esperamos!'
+const PLANTILLA_DOCTOR_DEFAULT = 'Hola {doctor}, tienes una cita con {paciente} el {fecha} a las {hora}.'
 const VARIABLES = ['paciente', 'doctor', 'fecha', 'hora', 'motivo', 'clinica']
 
 function renderPlantillaLocal(plantilla: string, vars: Record<string, string>) {
   return plantilla.replace(/\{(\w+)\}/g, (_, k: string) => vars[k] ?? '')
 }
 
-interface MiCuentaWA {
-  activo?: boolean
-  phoneNumberId?: string
-  accessToken?: string
-  tokenGuardado?: boolean
-}
-
 function WhatsAppTab() {
   const [cfg, setCfg] = useState<WhatsAppCfg>({})
   const [mia, setMia] = useState<MiCuentaWA>({})
-  const [msgMia, setMsgMia] = useState('')
-  const [guardandoMia, setGuardandoMia] = useState(false)
   const [telPrueba, setTelPrueba] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [guardando, setGuardando] = useState(false)
@@ -820,39 +818,32 @@ function WhatsAppTab() {
     api.get<MiCuentaWA>('whatsapp', 'mi-cuenta').then(v => setMia(prev => ({ ...v, ...prev }))).catch(() => {})
   }, [])
 
+  const activo = cfg.activo === true
   const plantilla = cfg.plantilla ?? PLANTILLA_DEFAULT
-  const preview = renderPlantillaLocal(plantilla, {
+  const plantillaDoctor = cfg.plantillaDoctor ?? PLANTILLA_DOCTOR_DEFAULT
+  const previewVars = {
     paciente: 'Rosa Robles', doctor: 'Dr. Pacheco', fecha: '21 de octubre',
     hora: '10:00', motivo: 'Limpieza', clinica: 'Tu clínica',
-  })
+  }
 
   function set(patch: Partial<WhatsAppCfg>) { setCfg(prev => ({ ...prev, ...patch })) }
+  function setMio(patch: Partial<MiCuentaWA>) { setMia(prev => ({ ...prev, ...patch })) }
 
-  async function guardar() {
+  // Un solo guardado para toda la pestaña
+  async function guardarTodo() {
     setGuardando(true); setMensaje('')
     try {
-      await saveConfig('whatsapp', { ...cfg, plantilla })
+      await saveConfig('whatsapp', { ...cfg, plantilla, plantillaDoctor })
+      const r = await api.create<{ tokenGuardado: boolean }>('whatsapp/mi-cuenta', {
+        phoneNumberId: mia.phoneNumberId ?? '',
+        accessToken: mia.accessToken ?? '',
+      })
+      setMia(prev => ({ ...prev, accessToken: '', tokenGuardado: r.tokenGuardado }))
       setMensaje('Configuración guardada ✓')
     } catch {
       setMensaje('No se pudo guardar')
     }
     setGuardando(false)
-  }
-
-  async function guardarMia() {
-    setGuardandoMia(true); setMsgMia('')
-    try {
-      const r = await api.create<{ tokenGuardado: boolean }>('whatsapp/mi-cuenta', {
-        activo: mia.activo === true,
-        phoneNumberId: mia.phoneNumberId ?? '',
-        accessToken: mia.accessToken ?? '',
-      })
-      setMia(prev => ({ ...prev, accessToken: '', tokenGuardado: r.tokenGuardado }))
-      setMsgMia('Tu número quedó conectado ✓')
-    } catch {
-      setMsgMia('No se pudo guardar')
-    }
-    setGuardandoMia(false)
   }
 
   async function probar() {
@@ -871,145 +862,142 @@ function WhatsAppTab() {
 
   return (
     <div className="space-y-4">
-      {/* Mi número (este usuario) */}
-      <div data-testid="whatsapp-mi-cuenta" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className={cardTitle}>Mi número de WhatsApp</p>
-          <label className="flex items-center gap-2 text-sm text-katt-600 dark:text-katt-300">
-            <input type="checkbox" checked={mia.activo === true} onChange={e => setMia(prev => ({ ...prev, activo: e.target.checked }))} />
-            Usar mi número
-          </label>
-        </div>
-        <p className="text-xs text-katt-500 dark:text-katt-400">
-          Los recordatorios de tus citas salen desde TU número: al paciente le llega como si fueras tú y puede responderte en ese mismo chat.
-          También puedes contestar desde tu teléfono (WhatsApp Business). Si no conectas tu número, se usa el número de la clínica.
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Phone Number ID (Meta) de tu número</p>
-            <input data-testid="mia-phone-id" value={mia.phoneNumberId ?? ''} onChange={e => setMia(prev => ({ ...prev, phoneNumberId: e.target.value }))} className={inputCls} placeholder="1234567890" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Token de acceso {mia.tokenGuardado ? '(guardado — deja en blanco para conservarlo)' : '(Meta)'}</p>
-            <input data-testid="mia-token" type="password" value={mia.accessToken ?? ''} onChange={e => setMia(prev => ({ ...prev, accessToken: e.target.value }))} className={inputCls} placeholder={mia.tokenGuardado ? '••••••••' : 'EAAG...'} />
-          </div>
-        </div>
-        <button data-testid="mia-guardar" onClick={guardarMia} disabled={guardandoMia} className="px-4 py-2 text-sm rounded-xl bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors disabled:opacity-50">
-          {guardandoMia ? 'Guardando…' : 'Conectar mi número'}
-        </button>
-        {msgMia && <p className="text-xs text-katt-500 dark:text-katt-400">{msgMia}</p>}
-      </div>
-
-      {/* Conexión */}
-      <div data-testid="whatsapp-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:katt-900 p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className={cardTitle}>Número de la clínica (respaldo)</p>
-          <label className="flex items-center gap-2 text-sm text-katt-600 dark:text-katt-300">
-            <input type="checkbox" checked={cfg.activo === true} onChange={e => set({ activo: e.target.checked })} />
-            Activar recordatorios
-          </label>
-        </div>
-        <p className="text-xs text-katt-500 dark:text-katt-400">Los mensajes salen a nombre de la cuenta de WhatsApp Business que conectes aquí (Meta Cloud API).</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Phone Number ID (Meta)</p>
-            <input data-testid="whatsapp-phone-id" value={cfg.phoneNumberId ?? ''} onChange={e => set({ phoneNumberId: e.target.value })} className={inputCls} placeholder="1234567890" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Token de acceso (Meta)</p>
-            <input data-testid="whatsapp-token" type="password" value={cfg.accessToken ?? ''} onChange={e => set({ accessToken: e.target.value })} className={inputCls} placeholder="EAAG..." />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Plantilla aprobada en Meta</p>
-            <input data-testid="whatsapp-template-name" value={cfg.templateName ?? 'recordatorio_cita'} onChange={e => set({ templateName: e.target.value })} className={inputCls} />
-          </div>
-        </div>
-        <div className="flex gap-2 items-end">
-          <div className="flex-1">
-            <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Teléfono de prueba (con código de país)</p>
-            <input data-testid="whatsapp-tel-prueba" value={telPrueba} onChange={e => setTelPrueba(e.target.value)} className={inputCls} placeholder="5215512345678" />
-          </div>
-          <button data-testid="whatsapp-probar" onClick={probar} disabled={probando || !telPrueba} className="px-4 py-2 text-sm rounded-xl border border-katt-200 dark:border-katt-700 hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors disabled:opacity-50">
-            {probando ? 'Enviando…' : 'Enviar prueba'}
-          </button>
-        </div>
-      </div>
-
-      {/* Plantilla */}
-      <div data-testid="whatsapp-plantilla-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-3">
-        <p className={cardTitle}>Plantilla del mensaje</p>
-        <div className="flex flex-wrap gap-1">
-          {VARIABLES.map(v => (
-            <span key={v} className="px-2 py-0.5 text-[11px] rounded-full bg-katt-100 dark:bg-katt-800 text-katt-600 dark:text-katt-300">{`{${v}}`}</span>
-          ))}
-        </div>
-        <textarea data-testid="whatsapp-plantilla" rows={4} value={plantilla} onChange={e => set({ plantilla: e.target.value })} className={inputCls} />
+      {/* Único interruptor de la pestaña */}
+      <div data-testid="whatsapp-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Vista previa</p>
-          <p data-testid="whatsapp-preview" className="text-sm rounded-xl bg-katt-50 dark:bg-katt-800 text-katt-700 dark:text-katt-200 p-3">{preview}</p>
+          <p className={cardTitle}>Recordatorios de citas</p>
+          <p className="text-xs text-katt-500 dark:text-katt-400">Se revisa cada 15 minutos y cada cita se recuerda una sola vez.</p>
         </div>
+        <label className="relative inline-flex items-center cursor-pointer shrink-0">
+          <input data-testid="whatsapp-master" type="checkbox" checked={activo} onChange={e => set({ activo: e.target.checked })} className="sr-only peer" />
+          <div data-testid="whatsapp-master-toggle" className="w-11 h-6 bg-katt-200 dark:bg-katt-700 peer-checked:bg-katt-500 rounded-full transition-colors"></div>
+          <div className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+        </label>
       </div>
 
-      {/* Envíos */}
-      <div data-testid="whatsapp-envios-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-3">
-        <p className={cardTitle}>¿Cuándo se mandan?</p>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div>
-            <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Días antes de la cita</p>
-            <input data-testid="whatsapp-dias" type="number" min={0} max={30} value={cfg.diasAntes ?? 1} onChange={e => set({ diasAntes: Number(e.target.value) })} className={inputCls} />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Enviar desde las (hora)</p>
-            <input data-testid="whatsapp-desde" type="number" min={0} max={23} value={cfg.horaDesde ?? 9} onChange={e => set({ horaDesde: Number(e.target.value) })} className={inputCls} />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Hasta las (hora)</p>
-            <input data-testid="whatsapp-hasta" type="number" min={1} max={24} value={cfg.horaHasta ?? 19} onChange={e => set({ horaHasta: Number(e.target.value) })} className={inputCls} />
-          </div>
-        </div>
-        <p className="text-xs text-katt-500 dark:text-katt-400">Ejemplo: 1 día antes, entre las 9 y las 19 hrs. Los mensajes que no quepan en ese horario se mandan en la siguiente corrida dentro de la ventana (se revisa cada 15 minutos).</p>
-      </div>
-
-      {/* ¿A quién se le avisa? */}
-      <div data-testid="whatsapp-avisos-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-3">
-        <p className={cardTitle}>¿A quién se le avisa?</p>
-        <div className="space-y-2">
+      <div className={activo ? 'space-y-4' : 'space-y-4 opacity-50 pointer-events-none'}>
+        {/* ¿A quién se le avisa? */}
+        <div data-testid="whatsapp-avisos-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-2">
+          <p className={cardTitle}>¿A quién se le avisa?</p>
           <label className="flex items-center gap-2 text-sm text-katt-600 dark:text-katt-300">
             <input type="checkbox" checked={cfg.recordarPaciente !== false} onChange={e => set({ recordarPaciente: e.target.checked })} />
-            Recordar al paciente (WhatsApp)
+            Al paciente (WhatsApp)
           </label>
           <label className="flex items-center gap-2 text-sm text-katt-600 dark:text-katt-300">
             <input type="checkbox" checked={cfg.recordarDoctor === true} onChange={e => set({ recordarDoctor: e.target.checked })} />
-            Recordar al doctor (WhatsApp a su teléfono)
+            Al doctor (WhatsApp a su teléfono)
           </label>
           <label className="flex items-center gap-2 text-sm text-katt-600 dark:text-katt-300">
             <input type="checkbox" checked={cfg.avisarAdmin === true} onChange={e => set({ avisarAdmin: e.target.checked })} />
-            Avisar al administrador (notificación del sistema — abre la agenda en el día de la cita)
+            Al administrador (notificación del sistema — abre la agenda en el día de la cita)
           </label>
         </div>
-        {cfg.recordarDoctor && (
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-katt-500 dark:text-katt-400">Mensaje para el doctor</p>
-            <textarea
-              data-testid="whatsapp-plantilla-doctor"
-              rows={3}
-              value={cfg.plantillaDoctor ?? 'Hola {doctor}, tienes una cita con {paciente} el {fecha} a las {hora}.'}
-              onChange={e => set({ plantillaDoctor: e.target.value })}
-              className={inputCls}
-            />
-            <p data-testid="whatsapp-preview-doctor" className="text-sm rounded-xl bg-katt-50 dark:bg-katt-800 text-katt-700 dark:text-katt-200 p-3">
-              {renderPlantillaLocal(cfg.plantillaDoctor ?? 'Hola {doctor}, tienes una cita con {paciente} el {fecha} a las {hora}.', {
-                paciente: 'Rosa Robles', doctor: 'Dr. Pacheco', fecha: '21 de octubre', hora: '10:00', motivo: 'Limpieza', clinica: 'Tu clínica',
-              })}
+
+        {/* Mensajes */}
+        <div data-testid="whatsapp-plantilla-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-3">
+          <p className={cardTitle}>Mensajes</p>
+          <div className="flex flex-wrap gap-1">
+            {VARIABLES.map(v => (
+              <span key={v} className="px-2 py-0.5 text-[11px] rounded-full bg-katt-100 dark:bg-katt-800 text-katt-600 dark:text-katt-300">{`{${v}}`}</span>
+            ))}
+          </div>
+          {(cfg.recordarPaciente !== false) && (
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-katt-500 dark:text-katt-400">Mensaje al paciente</p>
+              <textarea data-testid="whatsapp-plantilla" rows={3} value={plantilla} onChange={e => set({ plantilla: e.target.value })} className={inputCls} />
+              <p data-testid="whatsapp-preview" className="text-sm rounded-xl bg-katt-50 dark:bg-katt-800 text-katt-700 dark:text-katt-200 p-3">{renderPlantillaLocal(plantilla, previewVars)}</p>
+            </div>
+          )}
+          {cfg.recordarDoctor && (
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-katt-500 dark:text-katt-400">Mensaje al doctor</p>
+              <textarea data-testid="whatsapp-plantilla-doctor" rows={3} value={plantillaDoctor} onChange={e => set({ plantillaDoctor: e.target.value })} className={inputCls} />
+              <p data-testid="whatsapp-preview-doctor" className="text-sm rounded-xl bg-katt-50 dark:bg-katt-800 text-katt-700 dark:text-katt-200 p-3">{renderPlantillaLocal(plantillaDoctor, previewVars)}</p>
+            </div>
+          )}
+        </div>
+
+        {/* ¿Cuándo? */}
+        <div data-testid="whatsapp-envios-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-3">
+          <p className={cardTitle}>¿Cuándo se mandan?</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Días antes de la cita</p>
+              <input data-testid="whatsapp-dias" type="number" min={0} max={30} value={cfg.diasAntes ?? 1} onChange={e => set({ diasAntes: Number(e.target.value) })} className={inputCls} />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Enviar desde las (hora)</p>
+              <input data-testid="whatsapp-desde" type="number" min={0} max={23} value={cfg.horaDesde ?? 9} onChange={e => set({ horaDesde: Number(e.target.value) })} className={inputCls} />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Hasta las (hora)</p>
+              <input data-testid="whatsapp-hasta" type="number" min={1} max={24} value={cfg.horaHasta ?? 19} onChange={e => set({ horaHasta: Number(e.target.value) })} className={inputCls} />
+            </div>
+          </div>
+          <p className="text-xs text-katt-500 dark:text-katt-400">Ejemplo: 1 día antes, entre las 9 y las 19 hrs. Lo que no quepa en la ventana se manda en la siguiente revisión.</p>
+        </div>
+
+        {/* Conexión de envío */}
+        <div data-testid="whatsapp-mi-cuenta" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-4">
+          <div>
+            <p className={cardTitle}>Conexión de envío</p>
+            <p className="text-xs text-katt-500 dark:text-katt-400">
+              Los recordatorios del doctor salen desde SU número (el paciente lo ve como su doctor). Los mensajes al doctor y al administrador salen del número de la clínica.
+              Un número se usa automáticamente cuando tiene sus credenciales.
             </p>
           </div>
-        )}
-      </div>
 
-      <button data-testid="whatsapp-guardar" onClick={guardar} disabled={guardando} className="px-4 py-2 text-sm rounded-xl bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors disabled:opacity-50">
-        {guardando ? 'Guardando…' : 'Guardar configuración'}
-      </button>
-      {mensaje && <p className="text-xs text-katt-500 dark:text-katt-400">{mensaje}</p>}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-katt-600 dark:text-katt-300">
+              Mi número {mia.tokenGuardado && mia.phoneNumberId ? <span className="text-emerald-500">· conectado ✓</span> : null}
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Phone Number ID (Meta) de mi número</p>
+                <input data-testid="mia-phone-id" value={mia.phoneNumberId ?? ''} onChange={e => setMio({ phoneNumberId: e.target.value })} className={inputCls} placeholder="1234567890" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Token {mia.tokenGuardado ? '(guardado — deja en blanco para conservarlo)' : '(Meta)'}</p>
+                <input data-testid="mia-token" type="password" value={mia.accessToken ?? ''} onChange={e => setMio({ accessToken: e.target.value })} className={inputCls} placeholder={mia.tokenGuardado ? '••••••••' : 'EAAG...'} />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2 border-t border-katt-100 dark:border-katt-800 pt-3">
+            <p className="text-xs font-semibold text-katt-600 dark:text-katt-300">
+              Número de la clínica {(cfg.phoneNumberId && cfg.accessToken) ? <span className="text-emerald-500">· conectado ✓</span> : null}
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Phone Number ID (Meta)</p>
+                <input data-testid="whatsapp-phone-id" value={cfg.phoneNumberId ?? ''} onChange={e => set({ phoneNumberId: e.target.value })} className={inputCls} placeholder="1234567890" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Token de acceso (Meta)</p>
+                <input data-testid="whatsapp-token" type="password" value={cfg.accessToken ?? ''} onChange={e => set({ accessToken: e.target.value })} className={inputCls} placeholder="EAAG..." />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Plantilla aprobada en Meta</p>
+                <input data-testid="whatsapp-template-name" value={cfg.templateName ?? 'recordatorio_cita'} onChange={e => set({ templateName: e.target.value })} className={inputCls} />
+              </div>
+            </div>
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Teléfono de prueba (con código de país)</p>
+                <input data-testid="whatsapp-tel-prueba" value={telPrueba} onChange={e => setTelPrueba(e.target.value)} className={inputCls} placeholder="5215512345678" />
+              </div>
+              <button data-testid="whatsapp-probar" onClick={probar} disabled={probando || !telPrueba} className="px-4 py-2 text-sm rounded-xl border border-katt-200 dark:border-katt-700 hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors disabled:opacity-50">
+                {probando ? 'Enviando…' : 'Enviar prueba'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button data-testid="whatsapp-guardar" onClick={guardarTodo} disabled={guardando} className="px-4 py-2 text-sm rounded-xl bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors disabled:opacity-50">
+          {guardando ? 'Guardando…' : 'Guardar configuración'}
+        </button>
+        {mensaje && <p className="text-xs text-katt-500 dark:text-katt-400">{mensaje}</p>}
+      </div>
     </div>
   )
 }
