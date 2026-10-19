@@ -59,7 +59,8 @@ test.describe('Agenda', () => {
 
     // El autocomplete sugiere desde la base (coincidencia difusa del paciente creado antes)
     const pacInput = page.locator('input[name="paciente"]')
-    await pacInput.fill('Paciente E2E')
+    // query única por corrida (minúsculas: valida la búsqueda difusa sin acentos/mayúsculas)
+    await pacInput.fill(`paciente e2e ${ts}`)
     await expect(page.locator('button').filter({ hasText: `Paciente E2E ${ts}` }).first()).toBeVisible({ timeout: 5_000 })
     await page.locator('div.fixed.inset-0').first().click({ position: { x: 5, y: 5 } })
     await page.waitForTimeout(500)

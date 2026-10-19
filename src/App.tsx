@@ -179,7 +179,16 @@ function UpdateBanner() {
       <p className="text-sm text-katt-600 dark:text-katt-300">El sistema se actualizó. Toca para ver los cambios.</p>
       <button
         data-testid="update-refresh"
-        onClick={() => updateSW?.(true)}
+        onClick={() => {
+          // Recarga cuando la nueva versión tome el control (o como respaldo)
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true })
+            updateSW?.(true)
+            setTimeout(() => window.location.reload(), 2500)
+          } else {
+            window.location.reload()
+          }
+        }}
         className="px-3 py-1.5 text-xs rounded-xl bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors shrink-0"
       >
         Actualizar

@@ -2,6 +2,18 @@ import { precacheAndRoute } from 'workbox-precaching'
 
 precacheAndRoute(self.__WB_MANIFEST)
 
+// Aviso de actualización: la página pide activar la versión nueva
+// (botón "Actualizar") y luego recarga.
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting()
+})
+
+// Al activar, tomar control de las páginas abiertas (si no, la página
+// vieja nunca se entera de la actualización ni recarga).
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim())
+})
+
 self.addEventListener('push', event => {
   const data = event.data?.json() ?? { title: 'Katt', body: '' }
   event.waitUntil(
