@@ -37,7 +37,7 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  list: <T>(entity: string) => request<{ items: T[]; cursor: string | null }>(`/${entity}`),
+  list: <T>(entity: string, cursor?: string) => request<{ items: T[]; cursor: string | null }>(`/${entity}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`),
   get: <T>(entity: string, id: string) => request<T>(id ? `/${entity}/${id}` : `/${entity}`),
   create: <T>(entity: string, data: unknown) => request<T>(`/${entity}`, { method: 'POST', body: JSON.stringify(data) }),
   update: (entity: string, id: string, data: unknown) => request<{ ok: boolean }>(id ? `/${entity}/${id}` : `/${entity}`, { method: 'PUT', body: JSON.stringify(data) }),

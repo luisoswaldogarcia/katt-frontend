@@ -396,6 +396,19 @@ export default function Agenda() {
               {selected.ubicacion && <div><span className="text-katt-500 dark:text-katt-400">Ubicación:</span> {selected.ubicacion}</div>}
               <div><span className="text-katt-500 dark:text-katt-400">Motivo:</span> {selected.motivo}</div>
             </div>
+            {(() => {
+              const pac = pacienteStore.getAll().find(p => normText(p.nombre || '') === normText(selected.paciente || ''))
+              const incompleto = pac && (pac.pendienteCompletar === true || !pac.telefono || !pac.email)
+              return incompleto ? (
+                <button
+                  data-testid="completar-registro"
+                  onClick={() => navigate(`/paciente/editar/${pac.id}`)}
+                  className="w-full px-4 py-2 rounded-lg border border-amber-500 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-sm font-medium transition-colors"
+                >
+                  Completar registro del paciente
+                </button>
+              ) : null
+            })()}
             <div className="flex gap-2 pt-2">
               <button
                 onClick={() => { setAviso(''); setErrorForm(''); setEditing(selected) }}

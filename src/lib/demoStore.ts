@@ -86,8 +86,17 @@ function createStore<T extends { id: string }>(entity: string) {
 
     // Async - fetches from API and updates cache
     fetch: async (): Promise<T[]> => {
-      const res = await api.list<T>(entity)
-      cache = res.items
+      // Trae todas las páginas: con solo la primera, los registros nuevos
+      // (SK aleatorio) se pierden fuera de los primeros 50 y "no existen" en la UI
+      const all: T[] = []
+      let cursor: string | undefined
+      for (let pagina = 0; pagina < 20; pagina++) {
+        const res = await api.list<T>(entity, cursor)
+        all.push(...res.items)
+        if (!res.cursor) break
+        cursor = res.cursor
+      }
+      cache = all
       loaded = true
       return cache
     },

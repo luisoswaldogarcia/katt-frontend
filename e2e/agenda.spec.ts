@@ -157,6 +157,31 @@ test.describe('Agenda', () => {
     await expect(dia.getByTestId('agenda-grupo-doctor')).toHaveCount(0)
   })
 
+  test('el paciente nuevo se crea, aparece en la lista y hay botón de completar registro', async () => {
+    const nombre = `Paciente Alta ${ts}`
+    const fecha = new Date(Date.UTC(2031, 0, 1 + (Math.floor(ts / 1000) % 900))).toISOString().split('T')[0]
+    await navigateTo(page, '/agenda')
+    await page.waitForTimeout(800)
+    await page.locator('button[aria-label="Nueva cita"]').click()
+    await page.waitForTimeout(700)
+    await setInputByName(page, 'paciente', nombre)
+    await setInputByName(page, 'doctor', `Doctor Alta ${ts}`)
+    await setInputByName(page, 'fecha', fecha)
+    await setInputByName(page, 'hora', '12:00')
+    await page.locator('button[type="submit"]').filter({ hasText: 'Guardar' }).click()
+    await expect(page.locator('[data-testid="agenda-week"]')).toContainText(nombre, { timeout: 10_000 })
+
+    // Aparece en la lista de pacientes (aunque haya más de 50)
+    await navigateTo(page, '/paciente')
+    await expect(page.locator('table tbody tr').filter({ hasText: nombre }).first()).toBeVisible({ timeout: 10_000 })
+
+    // En el detalle de la cita aparece el botón de completar registro
+    await navigateTo(page, '/agenda')
+    await page.locator('button[aria-label="Nueva cita"]').scrollIntoViewIfNeeded()
+    await page.getByTestId('agenda-cita').filter({ hasText: nombre }).first().click()
+    await expect(page.getByTestId('completar-registro')).toBeVisible({ timeout: 5_000 })
+  })
+
   test('filtro por doctor muestra solo las citas de ese doctor', async () => {
     await navigateTo(page, '/agenda')
     await page.waitForTimeout(1000)
