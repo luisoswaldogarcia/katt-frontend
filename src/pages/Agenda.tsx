@@ -610,7 +610,7 @@ function WeekView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: D
               </div>
               <div className="min-w-0">
                 {(() => {
-                  const bloqs = bloqueos.filter(b => b.fecha === key && (!filtroDoctor || !b.doctor || b.doctor === filtroDoctor))
+                  const bloqs = bloqueoStore.getAll().filter(b => b.fecha === key && (!filtroDoctor || !b.doctor || b.doctor === filtroDoctor))
                   return bloqs.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {bloqs.map(b => (
