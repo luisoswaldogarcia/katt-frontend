@@ -1,5 +1,5 @@
 import { test, expect, type Page } from 'playwright/test'
-import { DEMO_EMAIL, DEMO_PASSWORD, login } from './helpers'
+import { DEMO_EMAIL, DEMO_PASSWORD, ts, login } from './helpers'
 
 test.describe('WhatsApp — recordatorios', () => {
   let page: Page
@@ -14,13 +14,10 @@ test.describe('WhatsApp — recordatorios', () => {
     await page.getByRole('button', { name: 'WhatsApp', exact: true }).click()
     await expect(page.getByTestId('whatsapp-card')).toBeVisible()
 
-    // La vista previa renderiza las variables
-    await expect(page.getByTestId('whatsapp-preview')).toContainText('Rosa Robles')
-    await expect(page.getByTestId('whatsapp-preview')).toContainText('Dr. Pacheco')
-
-    // Editar la plantilla actualiza la vista previa
-    await page.getByTestId('whatsapp-plantilla').fill('Recordatorio para {paciente}: tu cita es el {fecha}.')
-    await expect(page.getByTestId('whatsapp-preview')).toContainText('Recordatorio para Rosa Robles: tu cita es el 21 de octubre.')
+    // Editar la plantilla actualiza la vista previa (datos únicos por corrida)
+    const plantilla = `Recordatorio ${ts} para {paciente}: tu cita es el {fecha}.`
+    await page.getByTestId('whatsapp-plantilla').fill(plantilla)
+    await expect(page.getByTestId('whatsapp-preview')).toContainText(`Recordatorio ${ts} para Rosa Robles: tu cita es el 21 de octubre.`)
 
     // Conexión + horario
     await page.getByTestId('whatsapp-card').locator('input[type="checkbox"]').check()
@@ -39,7 +36,12 @@ test.describe('WhatsApp — recordatorios', () => {
     await page.getByRole('button', { name: 'WhatsApp', exact: true }).click()
     await expect(page.getByTestId('whatsapp-phone-id')).toHaveValue('phone-id-demo')
     await expect(page.getByTestId('whatsapp-dias')).toHaveValue('2')
-    await expect(page.getByTestId('whatsapp-plantilla')).toHaveValue('Recordatorio para {paciente}: tu cita es el {fecha}.')
+    await expect(page.getByTestId('whatsapp-plantilla')).toHaveValue(plantilla)
+
+    // Limpieza: la configuración de prueba deja los recordatorios desactivados
+    await page.getByTestId('whatsapp-card').locator('input[type="checkbox"]').uncheck()
+    await page.getByTestId('whatsapp-guardar').click()
+    await expect(page.getByText('Configuración guardada ✓')).toBeVisible({ timeout: 10_000 })
   })
 
   test('el botón de prueba valida el teléfono', async () => {
