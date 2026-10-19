@@ -39,6 +39,8 @@ npx playwright test         # E2E contra PRODUCCIÓN (baseURL por defecto del pl
 
 - **Agenda**: color sutil y estable por doctor (`lib/doctorColor.ts`, hash del nombre); formulario con duración (15-120 min) y ubicación del catálogo `CFG#ubicaciones` (admin en Configuración > Operativo); aviso en vivo de choque de horario/día bloqueado (lectura de FormData en `onInput`, sin inputs controlados); "Bloquear día" crea `bloqueos` (BLOQ#) y las vistas marcan el día.
 
+- **Tablas** (`DataTable`): barra de filtros campo+valor+botón (datalist de columnas filtrables; input date si el campo es fecha) y menú "Acciones" con Descargar seleccionados (CSV) y Eliminar seleccionados; selección activa en todas las tablas (`selectable` por defecto). La agenda acepta deep-link `?view=dia&fecha=YYYY-MM-DD` (las push del admin abren el día de la cita).
+
 ## Decisiones (por qué está así)
 
 - **Altura de Layout = visualViewport.height** (`App.tsx`): el teclado en la app instalada se superponía y tapaba el input; dimensionar el layout al área visible lo resuelve en todos los modos (resizes-visual, resizes-content). Hay E2E que simulan el teclado encogiendo el viewport visual.
