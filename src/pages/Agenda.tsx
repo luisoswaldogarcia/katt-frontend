@@ -261,29 +261,35 @@ export default function Agenda() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Controls */}
-      <div className="px-4 pt-4 pb-2 shrink-0 flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M15 18l-6-6 6-6" /></svg>
-          </button>
-          <button onClick={() => navigate(1)} className="p-2 rounded-lg hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M9 18l6-6-6-6" /></svg>
-          </button>
-          <span className="text-sm font-medium capitalize">{headerLabel}</span>
+      <div className="px-4 pt-4 pb-2 shrink-0 space-y-2">
+        {/* Fila 1: fecha + filtro de doctor + Hoy */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M15 18l-6-6 6-6" /></svg>
+            </button>
+            <button onClick={() => navigate(1)} className="p-2 rounded-lg hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M9 18l6-6-6-6" /></svg>
+            </button>
+            <span className="text-sm font-medium capitalize">{headerLabel}</span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              data-testid="agenda-filtro-doctor"
+              value={filtroDoctor}
+              onChange={e => setFiltroDoctor(e.target.value)}
+              className="w-[7.5rem] truncate px-2 py-1.5 text-xs rounded-lg border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-900 focus:outline-none focus:ring-2 focus:ring-katt-500"
+            >
+              <option value="">Todos los doctores</option>
+              {doctoresFiltro.map(nombre => <option key={nombre} value={nombre}>{nombre}</option>)}
+            </select>
+            <button onClick={goToday} className="px-3 py-1.5 text-xs rounded-lg bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors">
+              Hoy
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <select
-            data-testid="agenda-filtro-doctor"
-            value={filtroDoctor}
-            onChange={e => setFiltroDoctor(e.target.value)}
-            className="w-[7.5rem] truncate px-2 py-1.5 text-xs rounded-lg border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-900 focus:outline-none focus:ring-2 focus:ring-katt-500"
-          >
-            <option value="">Todos los doctores</option>
-            {doctoresFiltro.map(nombre => <option key={nombre} value={nombre}>{nombre}</option>)}
-          </select>
-          <button onClick={goToday} className="px-3 py-1.5 text-xs rounded-lg bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors">
-            Hoy
-          </button>
+        {/* Fila 2: vistas + orden + bloqueo (cada grupo salta de línea si no cabe) */}
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="flex rounded-lg border border-katt-200 dark:border-katt-700 overflow-hidden text-xs">
             {(['dia', 'semana', 'mes'] as View[]).map(v => (
               <button
