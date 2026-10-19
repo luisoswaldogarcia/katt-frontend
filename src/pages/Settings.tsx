@@ -812,10 +812,15 @@ function WhatsAppTab() {
   const [mensaje, setMensaje] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [probando, setProbando] = useState(false)
+  const [cargado, setCargado] = useState(false)
 
+  // Se espera a que cargue la config antes de mostrar el formulario: si el
+  // usuario toca algo antes, la respuesta de la carga le pisaría sus cambios.
   useEffect(() => {
-    getConfig<WhatsAppCfg>('whatsapp', {}).then(v => setCfg(prev => ({ ...v, ...prev }))).catch(() => {})
-    api.get<MiCuentaWA>('whatsapp', 'mi-cuenta').then(v => setMia(prev => ({ ...v, ...prev }))).catch(() => {})
+    Promise.all([
+      getConfig<WhatsAppCfg>('whatsapp', {}).then(v => setCfg(prev => ({ ...v, ...prev }))).catch(() => {}),
+      api.get<MiCuentaWA>('whatsapp', 'mi-cuenta').then(v => setMia(prev => ({ ...v, ...prev }))).catch(() => {}),
+    ]).finally(() => setCargado(true))
   }, [])
 
   const activo = cfg.activo === true
@@ -860,6 +865,8 @@ function WhatsAppTab() {
 
   const inputCls = 'w-full px-3 py-2 text-sm rounded-xl border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-800 text-katt-700 dark:text-katt-200 focus:outline-none focus:ring-2 focus:ring-katt-500'
 
+  if (!cargado) return <p className="text-sm text-katt-500 dark:text-katt-400 p-4">Cargando…</p>
+
   return (
     <div className="space-y-4">
       {/* Único interruptor de la pestaña */}
@@ -868,11 +875,17 @@ function WhatsAppTab() {
           <p className={cardTitle}>Recordatorios de citas</p>
           <p className="text-xs text-katt-500 dark:text-katt-400">Se revisa cada 15 minutos y cada cita se recuerda una sola vez.</p>
         </div>
-        <label className="relative inline-flex items-center cursor-pointer shrink-0">
-          <input data-testid="whatsapp-master" type="checkbox" checked={activo} onChange={e => set({ activo: e.target.checked })} className="sr-only peer" />
-          <div data-testid="whatsapp-master-toggle" className="w-11 h-6 bg-katt-200 dark:bg-katt-700 peer-checked:bg-katt-500 rounded-full transition-colors"></div>
-          <div className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
-        </label>
+        <button
+          data-testid="whatsapp-master-toggle"
+          role="switch"
+          aria-checked={activo}
+          aria-label="Recordatorios de citas"
+          onClick={() => set({ activo: !activo })}
+          className="relative inline-flex items-center cursor-pointer shrink-0"
+        >
+          <div className={`w-11 h-6 rounded-full transition-colors ${activo ? 'bg-katt-500' : 'bg-katt-200 dark:bg-katt-700'}`}></div>
+          <div className={`absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full transition-transform pointer-events-none ${activo ? 'translate-x-5' : ''}`}></div>
+        </button>
       </div>
 
       <div className={activo ? 'space-y-4' : 'space-y-4 opacity-50 pointer-events-none'}>
@@ -993,11 +1006,12 @@ function WhatsAppTab() {
           </div>
         </div>
 
-        <button data-testid="whatsapp-guardar" onClick={guardarTodo} disabled={guardando} className="px-4 py-2 text-sm rounded-xl bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors disabled:opacity-50">
-          {guardando ? 'Guardando…' : 'Guardar configuración'}
-        </button>
-        {mensaje && <p className="text-xs text-katt-500 dark:text-katt-400">{mensaje}</p>}
       </div>
+
+      <button data-testid="whatsapp-guardar" onClick={guardarTodo} disabled={guardando} className="px-4 py-2 text-sm rounded-xl bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors disabled:opacity-50">
+        {guardando ? 'Guardando…' : 'Guardar configuración'}
+      </button>
+      {mensaje && <p className="text-xs text-katt-500 dark:text-katt-400">{mensaje}</p>}
     </div>
   )
 }

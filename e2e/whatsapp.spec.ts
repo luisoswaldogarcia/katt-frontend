@@ -15,15 +15,19 @@ test.describe('WhatsApp — recordatorios', () => {
     await expect(page.getByTestId('whatsapp-card')).toBeVisible()
   }
 
-  const master = () => page.getByTestId('whatsapp-master')
   const toggle = () => page.getByTestId('whatsapp-master-toggle')
+  // Estado deseado sin importar cómo arranque (la config persiste entre corridas)
+  async function master(on: boolean) {
+    const actual = await toggle().getAttribute('aria-checked')
+    if (actual !== String(on)) await toggle().click()
+    await expect(toggle()).toHaveAttribute('aria-checked', String(on))
+  }
 
   test('un solo interruptor: configura mensajes, cuándo y conexión', async () => {
     await abrirWhatsApp()
 
     // Único interruptor de la pestaña
-    await toggle().click()
-    await expect(master()).toBeChecked()
+    await master(true)
 
     // Mensaje al paciente con vista previa (datos únicos por corrida)
     const plantilla = `Recordatorio ${ts} para {paciente}: tu cita es el {fecha}.`
@@ -46,22 +50,20 @@ test.describe('WhatsApp — recordatorios', () => {
     await page.reload()
     await page.waitForTimeout(1500)
     await page.getByRole('button', { name: 'WhatsApp', exact: true }).click()
-    await expect(master()).toBeChecked()
+    await master(true)
     await expect(page.getByTestId('whatsapp-phone-id')).toHaveValue('phone-id-demo')
     await expect(page.getByTestId('whatsapp-dias')).toHaveValue('2')
     await expect(page.getByTestId('whatsapp-plantilla')).toHaveValue(plantilla)
 
     // Limpieza: apagar el interruptor maestro
-    await toggle().click()
-    await expect(master()).not.toBeChecked()
+    await master(false)
     await page.getByTestId('whatsapp-guardar').click()
     await expect(page.getByText('Configuración guardada ✓')).toBeVisible({ timeout: 10_000 })
   })
 
   test('cada usuario conecta su propio número (se usa automáticamente)', async () => {
     await abrirWhatsApp()
-    await toggle().click()
-    await expect(master()).toBeChecked()
+    await master(true)
     await page.getByTestId('mia-phone-id').fill(`pn-mio-${ts}`)
     await page.getByTestId('mia-token').fill('token-mio-demo')
     await page.getByTestId('whatsapp-guardar').click()
@@ -74,16 +76,14 @@ test.describe('WhatsApp — recordatorios', () => {
     await expect(page.getByTestId('mia-phone-id')).toHaveValue(`pn-mio-${ts}`)
     await expect(page.getByTestId('whatsapp-mi-cuenta')).toContainText('conectado')
 
-    await toggle().click()
-    await expect(master()).not.toBeChecked()
+    await master(false)
     await page.getByTestId('whatsapp-guardar').click()
     await expect(page.getByText('Configuración guardada ✓')).toBeVisible({ timeout: 10_000 })
   })
 
   test('configura a quién se le avisa y el mensaje del doctor', async () => {
     await abrirWhatsApp()
-    await toggle().click()
-    await expect(master()).toBeChecked()
+    await master(true)
     const avisos = page.getByTestId('whatsapp-avisos-card')
     await expect(avisos).toBeVisible()
 
@@ -98,8 +98,7 @@ test.describe('WhatsApp — recordatorios', () => {
 
     // Limpieza: apagar al doctor y el interruptor
     await avisos.locator('input[type="checkbox"]').nth(1).uncheck()
-    await toggle().click()
-    await expect(master()).not.toBeChecked()
+    await master(false)
     await page.getByTestId('whatsapp-guardar').click()
     await expect(page.getByText('Configuración guardada ✓')).toBeVisible({ timeout: 10_000 })
   })
