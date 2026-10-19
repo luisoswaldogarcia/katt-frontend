@@ -1,6 +1,8 @@
 import { useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react'
-import { citaStore, pacienteStore, doctorStore } from '../lib/demoStore'
+import { citaStore, pacienteStore, doctorStore, bloqueoStore } from '../lib/demoStore'
 import type { CitaData } from '../lib/demoStore'
+import { doctorColor } from '../lib/doctorColor'
+import { getConfig } from '../lib/configApi'
 import { labels } from '../lib/labels'
 import { ConfirmModal } from '../components/ConfirmModal'
 
@@ -36,6 +38,32 @@ function getDaysInMonth(d: Date): number {
 
 function normText(s: string): string {
   return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim()
+}
+
+const toMin = (hora: string) => Number(String(hora).slice(0, 2)) * 60 + Number(String(hora).slice(3, 5))
+const hhmm = (min: number) => `${String(Math.floor(min / 60) % 24).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
+
+// Aviso de choque de horario o día bloqueado (devuelve '' si es válida)
+function conflictoDe(fd: FormData, excluirId?: string): string {
+  const doctor = String(fd.get('doctor') || '')
+  const fecha = String(fd.get('fecha') || '')
+  const hora = String(fd.get('hora') || '')
+  const dur = Number(fd.get('duracion') || 30)
+  if (!doctor || !fecha || !hora) return ''
+  const bloq = bloqueoStore.getAll().find(b => b.fecha === fecha && (!b.doctor || b.doctor === doctor))
+  if (bloq) return `⚠ El doctor ${doctor} tiene el día bloqueado${bloq.motivo ? ` (${bloq.motivo})` : ''}`
+  const ini = toMin(hora)
+  const fin = ini + (dur > 0 ? dur : 30)
+  for (const c of citaStore.getByDateRange(fecha, fecha)) {
+    if (excluirId && c.id === excluirId) continue
+    if (c.doctor && c.doctor !== doctor) continue
+    const ci = toMin(c.hora)
+    const cf = ci + (c.duracion && c.duracion > 0 ? c.duracion : 30)
+    if (ini < cf && ci < fin) {
+      return `⚠ ${doctor} ya tiene una cita de ${c.hora} a ${c.horaFin || hhmm(cf)} con ${c.paciente || 'un paciente'} — no se pueden poner citas a la misma hora`
+    }
+  }
+  return ''
 }
 
 const inputClass = 'w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500'
@@ -96,7 +124,17 @@ export default function Agenda() {
 
   const [refreshKey, forceUpdate] = useState(0)
   const [filtroDoctor, setFiltroDoctor] = useState('')
+  const [aviso, setAviso] = useState('')
+  const [errorForm, setErrorForm] = useState('')
+  const [ubicaciones, setUbicaciones] = useState<string[]>([])
+  const [showBloqueo, setShowBloqueo] = useState(false)
+  const [bloqueos, setBloqueos] = useState(bloqueoStore.getAll())
   const today = formatDate(new Date())
+
+  useEffect(() => {
+    getConfig<string[]>('ubicaciones', []).then(setUbicaciones).catch(() => {})
+    bloqueoStore.fetch().then(() => setBloqueos(bloqueoStore.getAll())).catch(() => {})
+  }, [])
 
   // Si el paciente escrito no existe en la base, se crea como "paciente nuevo"
   async function crearPacienteSiNoExiste(nombre: string) {
@@ -126,14 +164,24 @@ export default function Agenda() {
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
-    await crearPacienteSiNoExiste(fd.get('paciente') as string)
-    await citaStore.create({
-      paciente: fd.get('paciente') as string,
-      doctor: fd.get('doctor') as string,
-      fecha: fd.get('fecha') as string,
-      hora: fd.get('hora') as string,
-      motivo: fd.get('motivo') as string,
-    })
+    const conf = conflictoDe(fd)
+    if (conf) { setAviso(conf); return }
+    setErrorForm('')
+    try {
+      await crearPacienteSiNoExiste(fd.get('paciente') as string)
+      await citaStore.create({
+        paciente: fd.get('paciente') as string,
+        doctor: fd.get('doctor') as string,
+        fecha: fd.get('fecha') as string,
+        hora: fd.get('hora') as string,
+        motivo: fd.get('motivo') as string,
+        duracion: Number(fd.get('duracion') || 30),
+        ubicacion: (fd.get('ubicacion') as string) || '',
+      })
+    } catch (err) {
+      setErrorForm(err instanceof Error ? err.message : 'No se pudo guardar')
+      return
+    }
     setShowForm(false)
     forceUpdate(n => n + 1)
     irAFecha(fd.get('fecha') as string)
@@ -143,14 +191,24 @@ export default function Agenda() {
     e.preventDefault()
     if (!editing) return
     const fd = new FormData(e.currentTarget)
-    await crearPacienteSiNoExiste(fd.get('paciente') as string)
-    await citaStore.update(editing.id, {
-      paciente: fd.get('paciente') as string,
-      doctor: fd.get('doctor') as string,
-      fecha: fd.get('fecha') as string,
-      hora: fd.get('hora') as string,
-      motivo: fd.get('motivo') as string,
-    })
+    const conf = conflictoDe(fd, editing.id)
+    if (conf) { setAviso(conf); return }
+    setErrorForm('')
+    try {
+      await crearPacienteSiNoExiste(fd.get('paciente') as string)
+      await citaStore.update(editing.id, {
+        paciente: fd.get('paciente') as string,
+        doctor: fd.get('doctor') as string,
+        fecha: fd.get('fecha') as string,
+        hora: fd.get('hora') as string,
+        motivo: fd.get('motivo') as string,
+        duracion: Number(fd.get('duracion') || 30),
+        ubicacion: (fd.get('ubicacion') as string) || '',
+      })
+    } catch (err) {
+      setErrorForm(err instanceof Error ? err.message : 'No se pudo guardar')
+      return
+    }
     setEditing(null)
     setSelected(null)
     forceUpdate(n => n + 1)
@@ -223,6 +281,13 @@ export default function Agenda() {
               </button>
             ))}
           </div>
+          <button
+            onClick={() => { setAviso(''); setErrorForm(''); setShowBloqueo(true) }}
+            className="px-3 py-1.5 text-xs rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            title="Bloquear un día completo para un doctor"
+          >
+            Bloquear día
+          </button>
         </div>
       </div>
 
@@ -235,7 +300,7 @@ export default function Agenda() {
 
       {/* FAB agregar cita */}
       <button
-        onClick={() => setShowForm(true)}
+        onClick={() => { setAviso(''); setErrorForm(''); setShowForm(true) }}
         onClickCapture={() => { pacienteStore.fetch().catch(() => {}); doctorStore.fetch().catch(() => {}) }}
         className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-katt-500 hover:bg-katt-600 text-white shadow-lg flex items-center justify-center transition-colors z-40"
         aria-label="Nueva cita"
@@ -253,13 +318,29 @@ export default function Agenda() {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12" /></svg>
               </button>
             </div>
-            <form onSubmit={handleCreate} className="space-y-3">
+            <form onSubmit={handleCreate} onInput={e => setAviso(conflictoDe(new FormData(e.currentTarget)))} className="space-y-3">
               <Autocomplete name="paciente" placeholder={labels.paciente} options={pacienteStore.getAll().map(p => p.nombre)} />
               <Autocomplete name="doctor" placeholder={labels.doctor} options={doctorStore.getAll().map(d => d.nombre)} />
               <input name="fecha" type="date" required defaultValue={formatDate(currentDate)} className={inputClass} />
-              <input name="hora" type="time" required className={inputClass} />
+              <div className="flex gap-2">
+                <input name="hora" type="time" required className={inputClass} />
+                <select name="duracion" defaultValue="30" className={inputClass} title="Duración de la consulta">
+                  <option value="15">15 min</option>
+                  <option value="30">30 min</option>
+                  <option value="45">45 min</option>
+                  <option value="60">1 hora</option>
+                  <option value="90">1.5 horas</option>
+                  <option value="120">2 horas</option>
+                </select>
+              </div>
+              <select name="ubicacion" className={inputClass} defaultValue="">
+                <option value="">Sin ubicación</option>
+                {ubicaciones.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
               <input name="motivo" placeholder="Motivo (opcional)" className={inputClass} />
-              <button type="submit" className="w-full px-4 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors">
+              {aviso && <p data-testid="aviso-conflicto" className="text-xs rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-3 py-2">{aviso}</p>}
+              {errorForm && <p data-testid="error-form" className="text-xs rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 px-3 py-2">{errorForm}</p>}
+              <button type="submit" disabled={!!aviso} className="w-full px-4 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors disabled:opacity-50">
                 Guardar
               </button>
             </form>
@@ -281,12 +362,13 @@ export default function Agenda() {
               <div><span className="text-katt-500 dark:text-katt-400">{labels.paciente}:</span> {selected.paciente}</div>
               <div><span className="text-katt-500 dark:text-katt-400">{labels.doctor}:</span> {selected.doctor}</div>
               <div><span className="text-katt-500 dark:text-katt-400">Fecha:</span> {selected.fecha}</div>
-              <div><span className="text-katt-500 dark:text-katt-400">Hora:</span> {selected.hora}</div>
+              <div><span className="text-katt-500 dark:text-katt-400">Hora:</span> {selected.hora}{selected.horaFin ? ` – ${selected.horaFin}` : ''}{selected.duracion ? ` (${selected.duracion} min)` : ''}</div>
+              {selected.ubicacion && <div><span className="text-katt-500 dark:text-katt-400">Ubicación:</span> {selected.ubicacion}</div>}
               <div><span className="text-katt-500 dark:text-katt-400">Motivo:</span> {selected.motivo}</div>
             </div>
             <div className="flex gap-2 pt-2">
               <button
-                onClick={() => setEditing(selected)}
+                onClick={() => { setAviso(''); setErrorForm(''); setEditing(selected) }}
                 className="flex-1 px-4 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors"
               >
                 Modificar
@@ -312,16 +394,89 @@ export default function Agenda() {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12" /></svg>
               </button>
             </div>
-            <form onSubmit={handleEdit} className="space-y-3">
+            <form onSubmit={handleEdit} onInput={e => setAviso(conflictoDe(new FormData(e.currentTarget), editing.id))} className="space-y-3">
               <Autocomplete name="paciente" placeholder={labels.paciente} options={pacienteStore.getAll().map(p => p.nombre)} defaultValue={editing.paciente} />
               <Autocomplete name="doctor" placeholder={labels.doctor} options={doctorStore.getAll().map(d => d.nombre)} defaultValue={editing.doctor} />
               <input name="fecha" type="date" required defaultValue={editing.fecha} className={inputClass} />
-              <input name="hora" type="time" required defaultValue={editing.hora} className={inputClass} />
+              <div className="flex gap-2">
+                <input name="hora" type="time" required defaultValue={editing.hora} className={inputClass} />
+                <select name="duracion" defaultValue={String(editing.duracion || 30)} className={inputClass} title="Duración de la consulta">
+                  <option value="15">15 min</option>
+                  <option value="30">30 min</option>
+                  <option value="45">45 min</option>
+                  <option value="60">1 hora</option>
+                  <option value="90">1.5 horas</option>
+                  <option value="120">2 horas</option>
+                </select>
+              </div>
+              <select name="ubicacion" className={inputClass} defaultValue={editing.ubicacion || ''}>
+                <option value="">Sin ubicación</option>
+                {ubicaciones.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
               <input name="motivo" placeholder="Motivo (opcional)" defaultValue={editing.motivo} className={inputClass} />
-              <button type="submit" className="w-full px-4 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors">
+              {aviso && <p data-testid="aviso-conflicto" className="text-xs rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-3 py-2">{aviso}</p>}
+              {errorForm && <p data-testid="error-form" className="text-xs rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 px-3 py-2">{errorForm}</p>}
+              <button type="submit" disabled={!!aviso} className="w-full px-4 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors disabled:opacity-50">
                 Guardar cambios
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bloquear día modal */}
+      {showBloqueo && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowBloqueo(false)}>
+          <div className="bg-white dark:bg-katt-900 rounded-xl p-5 w-full max-w-sm space-y-3 border border-katt-200 dark:border-katt-700" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-sm">Bloquear día</h3>
+              <button onClick={() => setShowBloqueo(false)} className="p-1 rounded hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <form
+              data-testid="form-bloqueo"
+              onSubmit={async e => {
+                e.preventDefault()
+                const fd = new FormData(e.currentTarget)
+                await bloqueoStore.create({
+                  fecha: fd.get('fecha') as string,
+                  doctor: fd.get('doctor') as string,
+                  motivo: fd.get('motivo') as string,
+                } as never)
+                setBloqueos(bloqueoStore.getAll())
+                forceUpdate(n => n + 1)
+                setShowBloqueo(false)
+              }}
+              className="space-y-3"
+            >
+              <Autocomplete name="doctor" placeholder={labels.doctor} options={doctorStore.getAll().map(d => d.nombre)} />
+              <input name="fecha" type="date" required defaultValue={formatDate(currentDate)} className={inputClass} />
+              <input name="motivo" placeholder="Motivo (opcional)" className={inputClass} />
+              <button type="submit" className="w-full px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">
+                Bloquear día
+              </button>
+            </form>
+            {bloqueos.length > 0 && (
+              <div className="space-y-1 pt-2 border-t border-katt-100 dark:border-katt-800">
+                <p className="text-xs font-medium text-katt-500 dark:text-katt-400">Días bloqueados</p>
+                {bloqueos.map(b => (
+                  <div key={b.id} className="flex items-center justify-between gap-2 text-xs text-katt-600 dark:text-katt-300">
+                    <span className="truncate">{b.fecha} · {b.doctor || 'Todos los doctores'}{b.motivo ? ` · ${b.motivo}` : ''}</span>
+                    <button
+                      onClick={async () => {
+                        await bloqueoStore.remove(b.id)
+                        setBloqueos(bloqueoStore.getAll())
+                        forceUpdate(n => n + 1)
+                      }}
+                      className="text-red-500 hover:underline shrink-0"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -352,15 +507,21 @@ function DayView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: Da
       <div className="text-sm font-medium text-katt-500 dark:text-katt-400">
         {citas.length} cita{citas.length !== 1 && 's'}
       </div>
+      {bloqueoStore.getAll().filter(b => b.fecha === key && (!filtroDoctor || !b.doctor || b.doctor === filtroDoctor)).map(b => (
+        <div key={b.id} className="px-2 py-1 text-[11px] rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 inline-block">
+          Bloqueado{b.doctor ? `: ${b.doctor}` : ''}{b.motivo ? ` · ${b.motivo}` : ''}
+        </div>
+      ))}
       {citas.length === 0 && <div className="text-sm text-katt-400 dark:text-katt-600 py-8 text-center">Sin citas para este día</div>}
       <div className="space-y-2">
         {citas.map(c => (
           <button
             key={c.id}
             onClick={() => onSelect(c)}
-            className="w-full text-left p-3 rounded-lg bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700 transition-colors flex items-center gap-3"
+            className="w-full text-left p-3 rounded-lg bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700 transition-colors flex items-center gap-3 border-l-4"
+            style={{ borderLeftColor: doctorColor(c.doctor).dot }}
           >
-            <div className="text-xs font-bold text-katt-500 dark:text-katt-400 w-12 shrink-0">{c.hora}</div>
+            <div className="text-xs font-bold text-katt-500 dark:text-katt-400 w-16 shrink-0">{c.hora}{c.horaFin ? `–${c.horaFin}` : ''}</div>
             <div className="min-w-0">
               <div className="text-sm font-medium truncate">{c.paciente}</div>
               <div className="text-xs text-katt-500 dark:text-katt-400 truncate">{c.doctor}{c.motivo ? ` · ${c.motivo}` : ''}</div>
@@ -448,6 +609,18 @@ function WeekView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: D
                 {d.getDate()}
               </div>
               <div className="min-w-0">
+                {(() => {
+                  const bloqs = bloqueos.filter(b => b.fecha === key && (!filtroDoctor || !b.doctor || b.doctor === filtroDoctor))
+                  return bloqs.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {bloqs.map(b => (
+                        <span key={b.id} className="px-2 py-0.5 text-[10px] rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300">
+                          Bloqueado{b.doctor ? `: ${b.doctor}` : ''}{b.motivo ? ` · ${b.motivo}` : ''}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null
+                })()}
                 <div className="text-sm font-semibold capitalize">
                   {d.toLocaleDateString('es', { weekday: 'long' })}
                   <span className="ml-2 text-xs font-normal text-katt-500 dark:text-katt-400">{d.toLocaleDateString('es', { month: 'long' })}</span>
@@ -466,9 +639,10 @@ function WeekView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: D
                   <button
                     key={c.id}
                     onClick={() => onSelect(c)}
-                    className="w-full text-left p-3 rounded-lg bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700 transition-colors flex items-center gap-3"
+                    className="w-full text-left p-3 rounded-lg bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700 transition-colors flex items-center gap-3 border-l-4"
+                    style={{ borderLeftColor: doctorColor(c.doctor).dot }}
                   >
-                    <div className="text-xs font-bold text-katt-500 dark:text-katt-400 w-12 shrink-0">{c.hora}</div>
+                    <div className="text-xs font-bold text-katt-500 dark:text-katt-400 w-16 shrink-0">{c.hora}{c.horaFin ? `–${c.horaFin}` : ''}</div>
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{c.paciente}</div>
                       <div className="text-xs text-katt-500 dark:text-katt-400 truncate">{c.doctor}{c.motivo ? ` · ${c.motivo}` : ''}</div>

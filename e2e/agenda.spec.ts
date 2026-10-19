@@ -72,6 +72,55 @@ test.describe('Agenda', () => {
     await expect(page.locator('table tbody tr').filter({ hasText: `Paciente E2E ${ts}` }).first()).toContainText('Paciente nuevo')
   })
 
+  test('duración, choque de horario y días bloqueados', async () => {
+    const doctor = `Doctor Choque ${ts}`
+    const fecha = '2026-11-10'
+    await navigateTo(page, '/agenda')
+    await page.waitForTimeout(800)
+
+    // Cita de 60 min → la fila muestra la hora fin
+    await page.locator('button[aria-label="Nueva cita"]').click()
+    await page.waitForTimeout(800)
+    await setInputByName(page, 'paciente', `Paciente Choque ${ts}`)
+    await setInputByName(page, 'doctor', doctor)
+    await setInputByName(page, 'fecha', fecha)
+    await setInputByName(page, 'hora', '10:00')
+    await page.locator('select[name="duracion"]').selectOption('60')
+    await page.locator('button[type="submit"]').filter({ hasText: 'Guardar' }).click()
+    await expect(page.locator('[data-testid="agenda-week"]')).toContainText(`Paciente Choque ${ts}`, { timeout: 10_000 })
+
+    // Segunda cita solapada → aviso y botón deshabilitado
+    await page.locator('button[aria-label="Nueva cita"]').click()
+    await page.waitForTimeout(800)
+    await setInputByName(page, 'paciente', `Paciente Solape ${ts}`)
+    await setInputByName(page, 'doctor', doctor)
+    await setInputByName(page, 'fecha', fecha)
+    await setInputByName(page, 'hora', '10:15')
+    const aviso = page.getByTestId('aviso-conflicto')
+    await expect(aviso).toBeVisible({ timeout: 5_000 })
+    await expect(aviso).toContainText('ya tiene una cita')
+    await expect(page.locator('button[type="submit"]').filter({ hasText: 'Guardar' })).toBeDisabled()
+    await page.locator('div.fixed.inset-0').first().click({ position: { x: 5, y: 5 } })
+    await page.waitForTimeout(400)
+
+    // Bloquear un día completo para un doctor → nueva cita rechazada con aviso
+    await page.locator('button', { hasText: 'Bloquear día' }).click()
+    await page.waitForTimeout(500)
+    await setInputByName(page, 'doctor', doctor)
+    await setInputByName(page, 'fecha', '2026-11-11')
+    await setInputByName(page, 'motivo', `Congreso ${ts}`)
+    await page.getByTestId('form-bloqueo').locator('button[type="submit"]').click()
+    await page.waitForTimeout(1200)
+
+    await page.locator('button[aria-label="Nueva cita"]').click()
+    await page.waitForTimeout(800)
+    await setInputByName(page, 'paciente', `Paciente Bloqueado ${ts}`)
+    await setInputByName(page, 'doctor', doctor)
+    await setInputByName(page, 'fecha', '2026-11-11')
+    await setInputByName(page, 'hora', '09:00')
+    await expect(page.getByTestId('aviso-conflicto')).toContainText('bloqueado', { timeout: 5_000 })
+  })
+
   test('filtro por doctor muestra solo las citas de ese doctor', async () => {
     await navigateTo(page, '/agenda')
     await page.waitForTimeout(1000)

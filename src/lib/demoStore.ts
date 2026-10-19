@@ -44,6 +44,16 @@ export interface CitaData {
   fecha: string
   hora: string
   motivo: string
+  duracion?: number
+  horaFin?: string
+  ubicacion?: string
+}
+
+export interface BloqueoData {
+  id: string
+  fecha: string
+  doctor: string
+  motivo?: string
 }
 
 export interface TareaData {
@@ -123,6 +133,7 @@ export function seedEmpresas(empresas: { id: string; nombre: string }[]) {
   empresaStore._seed(seeded)
 }
 
+export const bloqueoStore = createStore<BloqueoData>('bloqueos')
 export const tareaStore = createStore<TareaData>('tareas')
 
 export const citaStore = {

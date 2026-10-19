@@ -359,6 +359,7 @@ export default function Settings() {
               </div>
             )}
           </div>
+          <UbicacionesCard />
         </div>
       )}
 
@@ -715,6 +716,60 @@ function HuellaCard() {
         </button>
       </div>
       {estado && <p className="text-xs text-katt-500 dark:text-katt-400">{estado}</p>}
+    </div>
+  )
+}
+
+/* ─── Catálogo de ubicaciones (para las citas) ─── */
+
+function UbicacionesCard() {
+  const [items, setItems] = useState<string[]>([])
+  const [nueva, setNueva] = useState('')
+  const [msg, setMsg] = useState('')
+
+  useEffect(() => {
+    getConfig<string[]>('ubicaciones', []).then(setItems).catch(() => {})
+  }, [])
+
+  async function persistir(next: string[]) {
+    setItems(next)
+    try {
+      await saveConfig('ubicaciones', next)
+      setMsg('Guardado ✓')
+    } catch {
+      setMsg('No se pudo guardar')
+    }
+  }
+
+  return (
+    <div data-testid="ubicaciones-card" className={cardClass}>
+      <p className={cardTitle}>Ubicaciones</p>
+      <p className="text-xs text-gray-500">Lugares donde se atienden las citas (consultorios, sucursales…).</p>
+      <div className="space-y-2">
+        {items.map(u => (
+          <div key={u} className="flex items-center justify-between gap-2 text-sm text-katt-600 dark:text-katt-300">
+            <span className="truncate">{u}</span>
+            <button onClick={() => persistir(items.filter(i => i !== u))} className="text-red-500 hover:underline text-xs shrink-0">Quitar</button>
+          </div>
+        ))}
+        <div className="flex gap-2">
+          <input
+            data-testid="ubicacion-nueva"
+            value={nueva}
+            onChange={e => setNueva(e.target.value)}
+            placeholder="Nueva ubicación"
+            className={inputClass}
+          />
+          <button
+            data-testid="ubicacion-agregar"
+            onClick={() => { const v = nueva.trim(); if (v && !items.includes(v)) { setNueva(''); persistir([...items, v]) } }}
+            className={btnPrimary}
+          >
+            Agregar
+          </button>
+        </div>
+        {msg && <p className="text-xs text-katt-500 dark:text-katt-400">{msg}</p>}
+      </div>
     </div>
   )
 }
