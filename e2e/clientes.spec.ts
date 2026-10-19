@@ -1,4 +1,4 @@
-import { test } from 'playwright/test'
+import { test, expect } from 'playwright/test'
 import { DEMO_EMAIL, DEMO_PASSWORD, ts, uniq, login, navigateTo, pageContains, setInputValue } from './helpers'
 
 test.describe('Clientes CRUD', () => {
