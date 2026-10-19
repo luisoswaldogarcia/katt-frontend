@@ -13,7 +13,7 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'public',
       filename: 'sw.js',
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       manifest: {
         id: '/',
         name: 'Katt - Asistente Virtual',

@@ -8,6 +8,7 @@ import './lib/amplify'
 import { Sidebar } from './components/Sidebar'
 import { useViewportHeight } from './hooks/useKeyboardOffset'
 import { getLabels } from './lib/labels'
+import { registerSW } from 'virtual:pwa-register'
 import Login from './pages/Login'
 import SetupPassword from './pages/SetupPassword'
 import Home from './pages/Home'
@@ -144,6 +145,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <UpdateBanner />
       <Routes>
         <Route path="/setup" element={<SetupPassword />} />
         <Route path="*" element={authenticated
@@ -152,5 +154,36 @@ export default function App() {
         } />
       </Routes>
     </BrowserRouter>
+  )
+}
+
+/* ─── Aviso de actualización del sistema (service worker) ───
+   El SW cachea la app; cuando hay una versión nueva se avisa y el
+   usuario decide cuándo recargar para aplicar los cambios. */
+
+function UpdateBanner() {
+  const [pendiente, setPendiente] = useState(false)
+  const [updateSW, setUpdateSW] = useState<((reloadPage?: boolean) => Promise<void>) | null>(null)
+
+  useEffect(() => {
+    const sw = registerSW({
+      immediate: true,
+      onNeedRefresh: () => setPendiente(true),
+    })
+    setUpdateSW(() => sw)
+  }, [])
+
+  if (!pendiente) return null
+  return (
+    <div data-testid="update-banner" className="fixed bottom-4 left-4 right-4 z-[60] mx-auto max-w-md flex items-center justify-between gap-3 rounded-2xl border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-900 px-4 py-3 shadow-lg">
+      <p className="text-sm text-katt-600 dark:text-katt-300">El sistema se actualizó. Toca para ver los cambios.</p>
+      <button
+        data-testid="update-refresh"
+        onClick={() => updateSW?.(true)}
+        className="px-3 py-1.5 text-xs rounded-xl bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors shrink-0"
+      >
+        Actualizar
+      </button>
+    </div>
   )
 }

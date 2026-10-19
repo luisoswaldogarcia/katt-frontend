@@ -4,8 +4,6 @@ import { ThemeToggle } from '../components/ThemeToggle'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { labels, getLabels, saveLabels } from '../lib/labels'
 import type { Labels } from '../lib/labels'
-import { getBranding, saveBranding } from '../lib/branding'
-import type { Branding } from '../lib/branding'
 import type { CustomField, FieldType, Module } from '../lib/customFields'
 import { fieldTypeLabels, getCustomFields, saveCustomFields } from '../lib/customFields'
 import { getActiveEmpresaId, setActiveEmpresaId } from '../lib/modules'
@@ -52,7 +50,6 @@ export default function Settings() {
     })
   }, [])
   const [moduleLabels, setModuleLabels] = useState<Labels>(getLabels)
-  const [brandingState, setBrandingState] = useState<Branding>(getBranding)
   const [activeModule, setActiveModule] = useState<Module>('paciente')
   const [fields, setFields] = useState<Record<Module, CustomField[]>>({
     paciente: getCustomFields('paciente'),
@@ -190,46 +187,6 @@ export default function Settings() {
       {/* Tab: Operativo */}
       {tab === 'operativo' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Marca */}
-          <div className={cardClass}>
-            <p className={cardTitle}>Marca</p>
-            <p className="text-xs text-gray-500">Nombre e icono que se muestran en el sidebar.</p>
-            <div className="space-y-2">
-              <input
-                value={brandingState.appName}
-                onChange={e => {
-                  const updated = { ...brandingState, appName: e.target.value }
-                  setBrandingState(updated)
-                  saveBranding(updated)
-                }}
-                placeholder="Nombre de la app"
-                className={inputClass}
-              />
-              <div className="flex items-center gap-3">
-                <img src={brandingState.appIcon} alt="" className="w-10 h-10 rounded-full object-cover border border-katt-200 dark:border-katt-700" />
-                <label className={`${btnPrimary} cursor-pointer`}>
-                  Cambiar icono
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={e => {
-                      const file = e.target.files?.[0]
-                      if (!file) return
-                      const reader = new FileReader()
-                      reader.onload = () => {
-                        const updated = { ...brandingState, appIcon: reader.result as string }
-                        setBrandingState(updated)
-                        saveBranding(updated)
-                      }
-                      reader.readAsDataURL(file)
-                    }}
-                  />
-                </label>
-              </div>
-            </div>
-          </div>
-
           {/* Nombres de módulos */}
           <div className={cardClass}>
             <p className={cardTitle}>Nombres de módulos</p>

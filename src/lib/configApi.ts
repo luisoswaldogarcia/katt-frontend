@@ -8,8 +8,7 @@ export async function loadAllConfig(): Promise<Record<string, unknown>> {
   for (const [k, v] of Object.entries(data)) cache.set(k, v)
   allLoaded = true
   const { loadLabels } = await import('./labels')
-  const { loadBranding } = await import('./branding')
-  await Promise.all([loadLabels(), loadBranding()])
+  await loadLabels()
   return data
 }
 
