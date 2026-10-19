@@ -812,8 +812,8 @@ function WhatsAppTab() {
   const [probando, setProbando] = useState(false)
 
   useEffect(() => {
-    getConfig<WhatsAppCfg>('whatsapp', {}).then(setCfg).catch(() => {})
-    api.get<MiCuentaWA>('whatsapp', 'mi-cuenta').then(setMia).catch(() => {})
+    getConfig<WhatsAppCfg>('whatsapp', {}).then(v => setCfg(prev => ({ ...v, ...prev }))).catch(() => {})
+    api.get<MiCuentaWA>('whatsapp', 'mi-cuenta').then(v => setMia(prev => ({ ...v, ...prev }))).catch(() => {})
   }, [])
 
   const plantilla = cfg.plantilla ?? PLANTILLA_DEFAULT
