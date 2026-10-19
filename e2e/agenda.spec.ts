@@ -40,6 +40,25 @@ test.describe('Agenda', () => {
     await expect(page.locator('[data-testid="agenda-week"]')).toContainText(motivoCita, { timeout: 10_000 })
   })
 
+  test('cita: autocomplete de pacientes y alta de paciente nuevo', async () => {
+    await navigateTo(page, '/agenda')
+    await page.locator('button[aria-label="Nueva cita"]').click()
+    await page.waitForTimeout(1000)
+
+    // El autocomplete sugiere desde la base (coincidencia difusa del paciente creado antes)
+    const pacInput = page.locator('input[name="paciente"]')
+    await pacInput.fill('Paciente E2E')
+    await expect(page.locator('button').filter({ hasText: `Paciente E2E ${ts}` }).first()).toBeVisible({ timeout: 5_000 })
+    await page.locator('div.fixed.inset-0').first().click({ position: { x: 5, y: 5 } })
+    await page.waitForTimeout(500)
+
+    // Los pacientes con info incompleta salen como "Paciente nuevo" y hasta arriba
+    await navigateTo(page, '/paciente')
+    const primeraFila = page.locator('table tbody tr').first()
+    await expect(primeraFila).toContainText('Paciente nuevo', { timeout: 8_000 })
+    await expect(page.locator('table tbody tr').filter({ hasText: `Paciente E2E ${ts}` }).first()).toContainText('Paciente nuevo')
+  })
+
   test('filtro por doctor muestra solo las citas de ese doctor', async () => {
     await navigateTo(page, '/agenda')
     await page.waitForTimeout(1000)
@@ -60,11 +79,12 @@ test.describe('Agenda', () => {
     // Filtrar por ese doctor: su cita sigue visible
     const filtro = page.locator('[data-testid="agenda-filtro-doctor"]')
     await expect(filtro).toBeVisible()
+    await page.waitForTimeout(800)
     await filtro.selectOption(doctorFiltro)
     await expect(page.locator('[data-testid="agenda-week"]')).toContainText(motivoFiltro)
 
-    // Filtrar por un doctor sin citas esta semana: la cita del otro doctor desaparece
-    await filtro.selectOption(doctorUnico)
+    // Filtrar por otro doctor: la cita del primero desaparece
+    await filtro.selectOption('Pacheco')
     await expect(page.locator('[data-testid="agenda-week"]')).not.toContainText(motivoFiltro)
 
     // "Todos los doctores" vuelve a mostrar todo

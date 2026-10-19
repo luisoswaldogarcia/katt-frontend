@@ -34,6 +34,10 @@ function getDaysInMonth(d: Date): number {
   return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
 }
 
+function normText(s: string): string {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim()
+}
+
 const inputClass = 'w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500'
 
 function Autocomplete({ name, placeholder, options, defaultValue }: { name: string; placeholder: string; options: string[]; defaultValue?: string }) {
@@ -41,9 +45,15 @@ function Autocomplete({ name, placeholder, options, defaultValue }: { name: stri
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  const filtered = query.length > 0
-    ? options.filter(o => o.toLowerCase().includes(query.toLowerCase())).slice(0, 6)
-    : []
+  const q = normText(query)
+  const tokens = q.split(' ').filter(Boolean)
+  const filtered = (q.length > 0
+    ? options.filter(o => {
+        const n = normText(o)
+        return n.includes(q) || (tokens.length > 0 && tokens.every(t => n.includes(t)))
+      })
+    : options
+  ).slice(0, 6)
 
   return (
     <div ref={ref} className="relative">
@@ -88,6 +98,16 @@ export default function Agenda() {
   const [filtroDoctor, setFiltroDoctor] = useState('')
   const today = formatDate(new Date())
 
+  // Si el paciente escrito no existe en la base, se crea como "paciente nuevo"
+  async function crearPacienteSiNoExiste(nombre: string) {
+    const n = (nombre || '').trim()
+    if (!n) return
+    const existe = pacienteStore.getAll().some(p => normText(p.nombre || '') === normText(n))
+    if (!existe) {
+      await pacienteStore.create({ nombre: n, telefono: '', email: '', pendienteCompletar: true } as never)
+    }
+  }
+
   // Llevar el calendario a la fecha de una cita para que sea visible
   function irAFecha(fecha: string) {
     const [y, m, d] = (fecha || '').split('-').map(Number)
@@ -106,6 +126,7 @@ export default function Agenda() {
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
+    await crearPacienteSiNoExiste(fd.get('paciente') as string)
     await citaStore.create({
       paciente: fd.get('paciente') as string,
       doctor: fd.get('doctor') as string,
@@ -122,6 +143,7 @@ export default function Agenda() {
     e.preventDefault()
     if (!editing) return
     const fd = new FormData(e.currentTarget)
+    await crearPacienteSiNoExiste(fd.get('paciente') as string)
     await citaStore.update(editing.id, {
       paciente: fd.get('paciente') as string,
       doctor: fd.get('doctor') as string,
@@ -214,6 +236,7 @@ export default function Agenda() {
       {/* FAB agregar cita */}
       <button
         onClick={() => setShowForm(true)}
+        onClickCapture={() => { pacienteStore.fetch().catch(() => {}); doctorStore.fetch().catch(() => {}) }}
         className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-katt-500 hover:bg-katt-600 text-white shadow-lg flex items-center justify-center transition-colors z-40"
         aria-label="Nueva cita"
       >

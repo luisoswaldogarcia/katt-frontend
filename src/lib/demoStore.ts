@@ -3,6 +3,7 @@ import { api } from './api'
 export interface PacienteData {
   id: string
   nombre: string
+  pendienteCompletar?: boolean
   doctor: string
   proximaCita: string
   telefono: string
