@@ -12,7 +12,6 @@ const defaults: ModuleCatalogItem[] = [
   { key: 'doctor', nombre: 'Usuarios', descripcion: 'Administración de usuarios y roles', costo: 0 },
   { key: 'empresa', nombre: 'Empresas', descripcion: 'Gestión de empresas y sus configuraciones', costo: 0 },
   { key: 'agenda', nombre: 'Agenda', descripcion: 'Calendario y citas', costo: 149 },
-  { key: 'agente', nombre: 'Agente', descripcion: 'Asistente virtual con IA', costo: 499 },
   { key: 'tareas', nombre: 'Tareas', descripcion: 'Tablero kanban y listas de tareas', costo: 149 },
 ]
 

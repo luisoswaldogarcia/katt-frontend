@@ -32,6 +32,8 @@ npx playwright test         # E2E contra PRODUCCIÓN (baseURL por defecto del pl
 - **Playwright**: `count()` antes que `isEnabled()`/`isVisible()` en bucles de pasos (los boolean queries esperan elementos ausentes y se comen el timeout). Tras un clic, esperar a que el sistema quede en reposo antes del siguiente clic.
 - **Nada de secretos en git**: las claves llegan por entorno/parámetros de stack (ver `../backend/docs/guia.md`).
 
+- **Google Calendar** (`Settings` → pestaña "Google Calendar"): genera el enlace ICS por empresa (`GET /calendar/ics` del backend) y muestra los pasos para suscribirse "desde URL" en Google. La URL se arma con `BASE_URL.split('/api/v1')[0]` + `/ics/<empresaId>/<token>.ics`.
+
 ## Decisiones (por qué está así)
 
 - **Altura de Layout = visualViewport.height** (`App.tsx`): el teclado en la app instalada se superponía y tapaba el input; dimensionar el layout al área visible lo resuelve en todos los modos (resizes-visual, resizes-content). Hay E2E que simulan el teclado encogiendo el viewport visual.

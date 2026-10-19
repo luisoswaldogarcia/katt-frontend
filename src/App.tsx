@@ -11,7 +11,6 @@ import { getLabels } from './lib/labels'
 import Login from './pages/Login'
 import SetupPassword from './pages/SetupPassword'
 import Home from './pages/Home'
-import Agente from './pages/Agente'
 import Cliente from './pages/Cliente'
 import ClienteAlta from './pages/ClienteAlta'
 import ClienteDetalle from './pages/ClienteDetalle'
@@ -33,7 +32,6 @@ function Layout({ onLogout }: { onLogout: () => void }) {
   const lbl = getLabels()
   const titles: Record<string, string> = {
     '/': 'Inicio',
-    '/agente': 'Agente',
     '/paciente': lbl.paciente + 's',
     '/paciente/alta': 'Alta ' + lbl.paciente,
     '/agenda': 'Agenda',
@@ -91,7 +89,6 @@ function Layout({ onLogout }: { onLogout: () => void }) {
         <div className="flex-1 overflow-hidden">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/agente" element={<Agente />} />
             <Route path="/paciente" element={<Cliente />} />
             <Route path="/paciente/alta" element={<ClienteAlta />} />
             <Route path="/paciente/citas" element={<ClienteCitas />} />

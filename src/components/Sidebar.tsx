@@ -69,11 +69,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
             Inicio
-          </NavLink>
-          {modules.agente && puede(groups, 'agente', 'ver') && <NavLink
-            to="/agente"
-            onClick={onClose}
-            className={({ isActive }) =>
+          </NavLink>            className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 isActive
                   ? 'bg-katt-100 dark:bg-katt-800 text-katt-600 dark:text-katt-300 font-medium'

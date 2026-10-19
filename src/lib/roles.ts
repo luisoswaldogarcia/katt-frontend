@@ -1,7 +1,7 @@
 import { getConfig, saveConfig, getCached } from './configApi'
 
 // Módulos sobre los que aplican permisos
-export const MODULOS_PERMISOS = ['clientes', 'usuarios', 'agenda', 'tareas', 'documentos', 'agente'] as const
+export const MODULOS_PERMISOS = ['clientes', 'usuarios', 'agenda', 'tareas', 'documentos'] as const
 export type ModuloPermiso = (typeof MODULOS_PERMISOS)[number]
 
 export const ACCIONES = ['ver', 'crear', 'editar', 'eliminar'] as const
@@ -40,7 +40,6 @@ const defaults: Rol[] = [
       agenda: todas,
       tareas: todas,
       documentos: todas,
-      agente: todas,
     },
   },
   {
@@ -53,7 +52,6 @@ const defaults: Rol[] = [
       agenda: ['ver', 'crear', 'editar', 'eliminar'],
       tareas: ['ver', 'crear', 'editar'],
       documentos: ['ver', 'crear'],
-      agente: ['ver'],
     },
   },
 ]

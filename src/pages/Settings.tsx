@@ -10,6 +10,7 @@ import type { CustomField, FieldType, Module } from '../lib/customFields'
 import { fieldTypeLabels, getCustomFields, saveCustomFields } from '../lib/customFields'
 import { getActiveEmpresaId, setActiveEmpresaId } from '../lib/modules'
 import { getRoles, saveRoles, MODULOS_PERMISOS, ACCIONES } from '../lib/roles'
+import { api, BASE_URL } from '../lib/api'
 import type { Rol, Accion } from '../lib/roles'
 import { empresaStore } from '../lib/demoStore'
 import { getKanbanColumns, saveKanbanColumns, getTaskTypes, saveTaskTypes, getAllTableColumns, getVisibleTableColumns, saveVisibleTableColumns } from '../lib/kanban'
@@ -17,7 +18,7 @@ import type { TaskType, TaskTypeField } from '../lib/kanban'
 import { getDocTypeCatalog, saveDocTypeCatalog, getModuleDocTypeIds, saveModuleDocTypeIds } from '../lib/documents'
 import type { DocType } from '../lib/documents'
 
-type Tab = 'usuario' | 'sistema' | 'operativo' | 'documentos' | 'roles' | 'empresas'
+type Tab = 'usuario' | 'sistema' | 'operativo' | 'documentos' | 'roles' | 'empresas' | 'calendario'
 
 const tabClass = (active: boolean) =>
   `px-4 py-2 text-sm font-medium rounded-lg transition-colors text-left ${active ? 'bg-katt-500 text-white' : 'hover:bg-katt-100 dark:hover:bg-katt-800 text-gray-600 dark:text-gray-400'}`
@@ -112,6 +113,7 @@ export default function Settings() {
         {/* Tabs: horizontal en mobile, vertical sidebar en desktop */}
         <div className="flex gap-2 flex-wrap mb-4 md:mb-0 md:flex-col md:w-44 md:shrink-0">
           <button onClick={() => setTab('usuario')} className={tabClass(tab === 'usuario')}>Usuario</button>
+          <button onClick={() => setTab('calendario')} className={tabClass(tab === 'calendario')}>Google Calendar</button>
           {role === 'owner' && <button onClick={() => setTab('sistema')} className={tabClass(tab === 'sistema')}>Sistema</button>}
           {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('operativo')} className={tabClass(tab === 'operativo')}>Operativo</button>}
           {(role === 'owner' || role === 'admin') && <button onClick={() => setTab('documentos')} className={tabClass(tab === 'documentos')}>Documentos</button>}
@@ -123,6 +125,8 @@ export default function Settings() {
         <div className="flex-1 min-w-0">
 
       {/* Tab: Usuario */}
+      {tab === 'calendario' && <CalendarioTab />}
+
       {tab === 'usuario' && (
         <div className="max-w-md space-y-4">
           <div className={cardClass}>
@@ -754,6 +758,54 @@ function HuellaCard() {
   )
 }
 
+/* ─── Conexión con Google Calendar ─── */
+
+function CalendarioTab() {
+  const [url, setUrl] = useState('')
+  const [mensaje, setMensaje] = useState('')
+  const [cargando, setCargando] = useState(false)
+
+  async function generar() {
+    setCargando(true)
+    setMensaje('')
+    try {
+      const r = await api.get<{ token: string; empresaId: string }>('calendar', 'ics')
+      const base = BASE_URL.split('/api/v1')[0]
+      setUrl(`${base}/ics/${r.empresaId}/${r.token}.ics`)
+    } catch {
+      setMensaje('No se pudo generar el enlace. Intenta de nuevo.')
+    }
+    setCargando(false)
+  }
+
+  function copiar() {
+    navigator.clipboard?.writeText(url).then(() => setMensaje('Enlace copiado al portapapeles')).catch(() => setMensaje('No se pudo copiar'))
+  }
+
+  return (
+    <div data-testid="google-calendar-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-3">
+      <p className={cardTitle}>Conectar la agenda con Google Calendar</p>
+      <ol className="text-sm text-katt-600 dark:text-katt-300 space-y-1 list-decimal list-inside">
+        <li>Abre Google Calendar en la computadora.</li>
+        <li>A la derecha, en <strong>Otros calendarios</strong>, toca <strong>+</strong> y elige <strong>Desde URL</strong>.</li>
+        <li>Pega el enlace de abajo y toca <strong>Agregar calendario</strong>.</li>
+      </ol>
+      {!url ? (
+        <button data-testid="generar-ics" onClick={generar} disabled={cargando} className="px-4 py-2 text-sm rounded-xl bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors disabled:opacity-50">
+          {cargando ? 'Generando…' : 'Generar enlace de suscripción'}
+        </button>
+      ) : (
+        <div className="flex gap-2">
+          <input data-testid="ics-url" readOnly value={url} className="flex-1 min-w-0 px-3 py-2 text-xs rounded-xl border border-katt-200 dark:border-katt-700 bg-katt-50 dark:bg-katt-800 text-katt-700 dark:text-katt-200" />
+          <button onClick={copiar} className="px-3 py-2 text-xs rounded-xl border border-katt-200 dark:border-katt-700 hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors">Copiar</button>
+        </div>
+      )}
+      <p className="text-xs text-katt-500 dark:text-katt-400">Google revisa el enlace periódicamente (no es en tiempo real): los cambios en la agenda tardan un rato en reflejarse.</p>
+      {mensaje && <p className="text-xs text-katt-500 dark:text-katt-400">{mensaje}</p>}
+    </div>
+  )
+}
+
 /* ─── Catálogo de roles y permisos ─── */
 
 const MODULOS_LABELS: Record<string, string> = {
@@ -762,7 +814,6 @@ const MODULOS_LABELS: Record<string, string> = {
   agenda: 'Agenda',
   tareas: 'Tareas',
   documentos: 'Documentos',
-  agente: 'Agente',
 }
 
 function RolesTab() {
