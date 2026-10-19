@@ -258,7 +258,7 @@ export default function Agenda() {
               <Autocomplete name="doctor" placeholder={labels.doctor} options={doctorStore.getAll().map(d => d.nombre)} />
               <input name="fecha" type="date" required defaultValue={formatDate(currentDate)} className={inputClass} />
               <input name="hora" type="time" required className={inputClass} />
-              <input name="motivo" required placeholder="Motivo" className={inputClass} />
+              <input name="motivo" placeholder="Motivo (opcional)" className={inputClass} />
               <button type="submit" className="w-full px-4 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors">
                 Guardar
               </button>
@@ -317,7 +317,7 @@ export default function Agenda() {
               <Autocomplete name="doctor" placeholder={labels.doctor} options={doctorStore.getAll().map(d => d.nombre)} defaultValue={editing.doctor} />
               <input name="fecha" type="date" required defaultValue={editing.fecha} className={inputClass} />
               <input name="hora" type="time" required defaultValue={editing.hora} className={inputClass} />
-              <input name="motivo" required placeholder="Motivo" defaultValue={editing.motivo} className={inputClass} />
+              <input name="motivo" placeholder="Motivo (opcional)" defaultValue={editing.motivo} className={inputClass} />
               <button type="submit" className="w-full px-4 py-2 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-sm font-medium transition-colors">
                 Guardar cambios
               </button>
@@ -363,7 +363,7 @@ function DayView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: Da
             <div className="text-xs font-bold text-katt-500 dark:text-katt-400 w-12 shrink-0">{c.hora}</div>
             <div className="min-w-0">
               <div className="text-sm font-medium truncate">{c.paciente}</div>
-              <div className="text-xs text-katt-500 dark:text-katt-400 truncate">{c.doctor} · {c.motivo}</div>
+              <div className="text-xs text-katt-500 dark:text-katt-400 truncate">{c.doctor}{c.motivo ? ` · ${c.motivo}` : ''}</div>
             </div>
           </button>
         ))}
@@ -471,7 +471,7 @@ function WeekView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: D
                     <div className="text-xs font-bold text-katt-500 dark:text-katt-400 w-12 shrink-0">{c.hora}</div>
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{c.paciente}</div>
-                      <div className="text-xs text-katt-500 dark:text-katt-400 truncate">{c.doctor} · {c.motivo}</div>
+                      <div className="text-xs text-katt-500 dark:text-katt-400 truncate">{c.doctor}{c.motivo ? ` · ${c.motivo}` : ''}</div>
                     </div>
                   </button>
                 ))}

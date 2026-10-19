@@ -40,6 +40,18 @@ test.describe('Agenda', () => {
     await expect(page.locator('[data-testid="agenda-week"]')).toContainText(motivoCita, { timeout: 10_000 })
   })
 
+  test('el motivo es opcional: la cita se crea sin él', async () => {
+    await navigateTo(page, '/agenda')
+    await page.waitForTimeout(800)
+    await page.locator('button[aria-label="Nueva cita"]').click()
+    await page.waitForTimeout(800)
+    await setInputByName(page, 'paciente', `Paciente SinMotivo ${ts}`)
+    await setInputByName(page, 'doctor', `Doctor SinMotivo ${ts}`)
+    await setInputByName(page, 'hora', '16:00')
+    await page.locator('button[type="submit"]').filter({ hasText: 'Guardar' }).click()
+    await expect(page.locator('[data-testid="agenda-week"]')).toContainText(`Paciente SinMotivo ${ts}`, { timeout: 10_000 })
+  })
+
   test('cita: autocomplete de pacientes y alta de paciente nuevo', async () => {
     await navigateTo(page, '/agenda')
     await page.locator('button[aria-label="Nueva cita"]').click()
