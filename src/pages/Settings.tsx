@@ -782,6 +782,10 @@ interface WhatsAppCfg {
   accessToken?: string
   templateName?: string
   plantilla?: string
+  plantillaDoctor?: string
+  recordarPaciente?: boolean
+  recordarDoctor?: boolean
+  avisarAdmin?: boolean
   diasAntes?: number
   horaDesde?: number
   horaHasta?: number
@@ -964,6 +968,42 @@ function WhatsAppTab() {
           </div>
         </div>
         <p className="text-xs text-katt-500 dark:text-katt-400">Ejemplo: 1 día antes, entre las 9 y las 19 hrs. Los mensajes que no quepan en ese horario se mandan en la siguiente corrida dentro de la ventana (se revisa cada 15 minutos).</p>
+      </div>
+
+      {/* ¿A quién se le avisa? */}
+      <div data-testid="whatsapp-avisos-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-3">
+        <p className={cardTitle}>¿A quién se le avisa?</p>
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm text-katt-600 dark:text-katt-300">
+            <input type="checkbox" checked={cfg.recordarPaciente !== false} onChange={e => set({ recordarPaciente: e.target.checked })} />
+            Recordar al paciente (WhatsApp)
+          </label>
+          <label className="flex items-center gap-2 text-sm text-katt-600 dark:text-katt-300">
+            <input type="checkbox" checked={cfg.recordarDoctor === true} onChange={e => set({ recordarDoctor: e.target.checked })} />
+            Recordar al doctor (WhatsApp a su teléfono)
+          </label>
+          <label className="flex items-center gap-2 text-sm text-katt-600 dark:text-katt-300">
+            <input type="checkbox" checked={cfg.avisarAdmin === true} onChange={e => set({ avisarAdmin: e.target.checked })} />
+            Avisar al administrador (notificación del sistema — abre la agenda en el día de la cita)
+          </label>
+        </div>
+        {cfg.recordarDoctor && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-katt-500 dark:text-katt-400">Mensaje para el doctor</p>
+            <textarea
+              data-testid="whatsapp-plantilla-doctor"
+              rows={3}
+              value={cfg.plantillaDoctor ?? 'Hola {doctor}, tienes una cita con {paciente} el {fecha} a las {hora}.'}
+              onChange={e => set({ plantillaDoctor: e.target.value })}
+              className={inputCls}
+            />
+            <p data-testid="whatsapp-preview-doctor" className="text-sm rounded-xl bg-katt-50 dark:bg-katt-800 text-katt-700 dark:text-katt-200 p-3">
+              {renderPlantillaLocal(cfg.plantillaDoctor ?? 'Hola {doctor}, tienes una cita con {paciente} el {fecha} a las {hora}.', {
+                paciente: 'Rosa Robles', doctor: 'Dr. Pacheco', fecha: '21 de octubre', hora: '10:00', motivo: 'Limpieza', clinica: 'Tu clínica',
+              })}
+            </p>
+          </div>
+        )}
       </div>
 
       <button data-testid="whatsapp-guardar" onClick={guardar} disabled={guardando} className="px-4 py-2 text-sm rounded-xl bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors disabled:opacity-50">

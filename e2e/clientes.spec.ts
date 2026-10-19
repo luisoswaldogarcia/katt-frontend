@@ -89,4 +89,30 @@ test.describe('Clientes CRUD', () => {
     expect(await page.locator('table tbody tr').count()).toBeGreaterThan(0)
     await page.setViewportSize({ width: 1280, height: 720 })
   })
+
+  test('acciones de la tabla: descargar y eliminar seleccionados', async () => {
+    await navigateTo(page, '/paciente')
+    // El botón está deshabilitado sin selección
+    await expect(page.getByTestId('tabla-acciones')).toBeDisabled()
+
+    // Seleccionar dos filas y usar el menú
+    const checks = page.locator('table tbody input[type="checkbox"]')
+    await checks.nth(0).check()
+    await checks.nth(1).check()
+    await expect(page.getByTestId('tabla-acciones')).toBeEnabled()
+
+    // Descargar seleccionados genera un CSV
+    await page.getByTestId('tabla-acciones').click()
+    const downloadPromise = page.waitForEvent('download')
+    await page.getByTestId('accion-descargar').click()
+    const download = await downloadPromise
+    expect(download.suggestedFilename()).toContain('.csv')
+
+    // Eliminar seleccionados (con confirmación del navegador)
+    await page.getByTestId('tabla-acciones').click()
+    page.once('dialog', d => d.accept())
+    await page.getByTestId('accion-eliminar').click()
+    await page.waitForTimeout(2500)
+    expect(await checks.count()).toBeGreaterThan(0) // la tabla sigue funcionando
+  })
 })

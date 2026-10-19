@@ -24,5 +24,5 @@ export default function Cliente() {
       .sort((a, b) => Number(infoIncompleta(b)) - Number(infoIncompleta(a)))
     return { ...result, data }
   }
-  return <DataTable columns={cols} fetchPage={fetchPage} basePath={basePath} altaPath={altaPath} selectable onSelectionAction={(ids) => navigate('/paciente/citas', { state: { ids } })} selectionIcon={calendarIcon} />
+  return <DataTable columns={cols} fetchPage={fetchPage} basePath={basePath} altaPath={altaPath} selectable removeItem={store.remove} onSelectionAction={(ids) => navigate('/paciente/citas', { state: { ids } })} selectionIcon={calendarIcon} />
 }

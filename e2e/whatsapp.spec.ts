@@ -64,6 +64,22 @@ test.describe('WhatsApp — recordatorios', () => {
     await expect(mia).toContainText('guardado')
   })
 
+  test('configura a quién se le avisa y el mensaje del doctor', async () => {
+    await page.goto('/settings')
+    await page.getByRole('button', { name: 'WhatsApp', exact: true }).click()
+    const avisos = page.getByTestId('whatsapp-avisos-card')
+    await expect(avisos).toBeVisible()
+
+    // El checkbox del doctor muestra su template con vista previa
+    await avisos.locator('input[type="checkbox"]').nth(1).check()
+    await expect(page.getByTestId('whatsapp-preview-doctor')).toContainText('Dr. Pacheco')
+    await page.getByTestId('whatsapp-plantilla-doctor').fill('Doc {doctor}: cita con {paciente} el {fecha}.')
+    await expect(page.getByTestId('whatsapp-preview-doctor')).toContainText('Doc Dr. Pacheco: cita con Rosa Robles el 21 de octubre.')
+
+    await page.getByTestId('whatsapp-guardar').click()
+    await expect(page.getByText('Configuración guardada ✓')).toBeVisible({ timeout: 10_000 })
+  })
+
   test('el botón de prueba valida el teléfono', async () => {
     await page.goto('/settings')
     await page.getByRole('button', { name: 'WhatsApp', exact: true }).click()

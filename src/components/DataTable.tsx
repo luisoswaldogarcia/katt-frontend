@@ -22,12 +22,13 @@ interface Props {
   basePath: string
   altaPath: string
   selectable?: boolean
+  removeItem?: (id: string) => Promise<void>
   onSelectionAction?: (ids: number[]) => void
   selectionIcon?: React.ReactNode
   fabMenu?: FabMenuItem[]
 }
 
-export function DataTable({ columns, fetchPage, basePath, altaPath, selectable = false, onSelectionAction, selectionIcon, fabMenu }: Props) {
+export function DataTable({ columns, fetchPage, basePath, altaPath, selectable = true, removeItem, onSelectionAction, selectionIcon, fabMenu }: Props) {
   const navigate = useNavigate()
   const [data, setData] = useState<Record<string, unknown>[]>([])
   const [page, setPage] = useState(0)
@@ -40,6 +41,7 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
   const [sortAsc, setSortAsc] = useState(true)
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [fabOpen, setFabOpen] = useState(false)
+  const [accionesOpen, setAccionesOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const loadPage = useCallback(async (p: number) => {
@@ -64,6 +66,31 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
 
   const norm = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
   const columnasFiltrables = columns.filter(c => c.filterable)
+
+  function descargarSeleccionados() {
+    const filas = filtered.filter(r => selected.has(r.id as number))
+    const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const csv = [
+      columns.map(c => escape(c.label)).join(','),
+      ...filas.map(r => columns.map(c => escape(r[c.key])).join(',')),
+    ].join('\n')
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = 'seleccion.csv'
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+
+  async function eliminarSeleccionados() {
+    if (!removeItem) return
+    if (!window.confirm(`¿Eliminar ${selected.size} registro(s) seleccionado(s)?`)) return
+    for (const id of selected) await removeItem(String(id))
+    setSelected(new Set())
+    setAccionesOpen(false)
+    setPage(0)
+    loadPage(0)
+  }
 
   function aplicarFiltro() {
     const col = columnasFiltrables.find(c => norm(c.label) === norm(campoFiltro))
@@ -102,9 +129,9 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
     <div ref={scrollRef} onScroll={handleScroll} className="p-4 space-y-4 h-full overflow-y-auto">
 
 
-      {/* Filtro: campo (buscador) + valor + botón — compacto en móvil */}
-      {columnasFiltrables.length > 0 && (
-        <div data-testid="tabla-filtro" className="flex items-center gap-2 flex-wrap">
+      {/* Filtro + acciones: campo (buscador) + valor + botón — compacto en móvil */}
+      <div data-testid="tabla-filtro" className="flex items-center gap-2 flex-wrap">
+        {columnasFiltrables.length > 0 && (<>
           <input
             data-testid="filtro-campo"
             list="dt-campos-filtro"
@@ -141,8 +168,36 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
               Limpiar
             </button>
           )}
+        </>)}
+        <div className="relative ml-auto">
+          <button
+            data-testid="tabla-acciones"
+            onClick={() => setAccionesOpen(v => !v)}
+            disabled={selected.size === 0}
+            className="px-3 py-2 text-sm rounded-lg border border-katt-200 dark:border-katt-700 hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors disabled:opacity-50"
+          >
+            Acciones ({selected.size}) ▾
+          </button>
+          {accionesOpen && (
+            <div className="absolute right-0 mt-1 w-56 rounded-lg border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-900 shadow-lg z-20 overflow-hidden">
+              <button
+                data-testid="accion-descargar"
+                onClick={() => { descargarSeleccionados(); setAccionesOpen(false) }}
+                className="w-full text-left px-4 py-2.5 text-sm hover:bg-katt-50 dark:hover:bg-katt-800 transition-colors"
+              >
+                Descargar seleccionados
+              </button>
+              <button
+                data-testid="accion-eliminar"
+                onClick={eliminarSeleccionados}
+                className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              >
+                Eliminar seleccionados
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="overflow-x-auto rounded-lg border border-katt-200/50 dark:border-katt-800/50 bg-white/40 dark:bg-katt-900/40 backdrop-blur-xl shadow-lg">
         <table className="w-full text-sm">

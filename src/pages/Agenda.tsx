@@ -145,6 +145,16 @@ export default function Agenda() {
   const [bloqueos, setBloqueos] = useState(bloqueoStore.getAll())
   const today = formatDate(new Date())
 
+  // Deep-link desde notificaciones push: /agenda?fecha=YYYY-MM-DD&view=dia
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const view = params.get('view')
+    const fecha = params.get('fecha')
+    if (view === 'dia' || view === 'semana' || view === 'mes') setView(view)
+    if (fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) setCurrentDate(new Date(`${fecha}T12:00:00`))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     getConfig<string[]>('ubicaciones', []).then(setUbicaciones).catch(() => {})
     bloqueoStore.fetch().then(() => setBloqueos(bloqueoStore.getAll())).catch(() => {})

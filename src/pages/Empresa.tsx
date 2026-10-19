@@ -31,5 +31,5 @@ export default function Empresa() {
     return { ...result, data }
   }
 
-  return <DataTable columns={columns} fetchPage={fetchPage} basePath={basePath} altaPath={altaPath} />
+  return <DataTable columns={columns} fetchPage={fetchPage} basePath={basePath} altaPath={altaPath} removeItem={store.remove} />
 }

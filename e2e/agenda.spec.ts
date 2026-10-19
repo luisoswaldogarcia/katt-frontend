@@ -182,6 +182,15 @@ test.describe('Agenda', () => {
     await expect(page.locator('table tbody tr').filter({ hasText: nombre }).first()).toBeVisible({ timeout: 10_000 })
   })
 
+  test('deep-link ?view=dia&fecha= abre la agenda en el día de la cita', async () => {
+    await page.goto('/agenda?view=dia&fecha=2026-12-15')
+    await page.waitForTimeout(2500)
+    // La vista de día muestra la fecha pedida
+    const cabecera = await page.locator('body').innerText()
+    expect(cabecera.toLowerCase()).toContain('15')
+    expect(cabecera.toLowerCase()).toContain('diciembre')
+  })
+
   test('filtro por doctor muestra solo las citas de ese doctor', async () => {
     await navigateTo(page, '/agenda')
     await page.waitForTimeout(1000)
