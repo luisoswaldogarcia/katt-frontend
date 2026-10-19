@@ -3,7 +3,6 @@ import { citaStore, pacienteStore, doctorStore } from '../lib/demoStore'
 import type { CitaData } from '../lib/demoStore'
 import { labels } from '../lib/labels'
 import { ConfirmModal } from '../components/ConfirmModal'
-import { useKeyboardOffset } from '../hooks/useKeyboardOffset'
 
 type View = 'dia' | 'semana' | 'mes'
 
@@ -87,7 +86,6 @@ export default function Agenda() {
 
   const [refreshKey, forceUpdate] = useState(0)
   const [filtroDoctor, setFiltroDoctor] = useState('')
-  const keyboardOffset = useKeyboardOffset()
   const today = formatDate(new Date())
 
   // Llevar el calendario a la fecha de una cita para que sea visible
@@ -297,10 +295,7 @@ export default function Agenda() {
       </div>
 
       {/* Agente de citas (IA) */}
-      <div
-        className="shrink-0 border-t border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-950 px-4 py-3 space-y-2"
-        style={{ paddingBottom: keyboardOffset > 0 ? keyboardOffset + 12 : undefined }}
-      >
+      <div className="shrink-0 border-t border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-950 px-4 py-3 space-y-2">
         {agenteCard && (
           <div data-testid="agente-cita-respuesta" className="rounded-xl border border-katt-200 dark:border-katt-800 bg-katt-50 dark:bg-katt-900/50 p-3 space-y-2 max-h-64 overflow-y-auto text-sm">
             <div className="flex items-start gap-2">

@@ -56,6 +56,30 @@ test.describe('Agente de citas', () => {
     throw new Error('El flujo no llegó a la confirmación de la cita')
   })
 
+  test('el input queda sobre el teclado (viewport visual simulado)', async () => {
+    await navigateTo(page, '/agenda')
+    const input = page.locator('[data-testid="agente-cita-input"]')
+    await expect(input).toBeVisible({ timeout: 8_000 })
+
+    // Simular teclado: el viewport visual encoge 320px
+    await page.evaluate(() => {
+      const vv = window.visualViewport!
+      const full = vv.height
+      Object.defineProperty(vv, 'height', { get: () => full - 320, configurable: true })
+      vv.dispatchEvent(new Event('resize'))
+    })
+    await page.waitForTimeout(500)
+
+    const box = await input.boundingBox()
+    const visibleHeight = await page.evaluate(() => window.visualViewport!.height)
+    expect(box).not.toBeNull()
+    expect(box!.y + box!.height).toBeLessThanOrEqual(visibleHeight + 2)
+
+    // y sigue operativo
+    await input.fill('prueba teclado')
+    await expect(input).toHaveValue('prueba teclado')
+  })
+
   test('el cuadro acepta preguntas sin agendar y responde', async () => {
     test.setTimeout(180_000)
     await navigateTo(page, '/agenda')

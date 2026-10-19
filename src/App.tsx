@@ -6,6 +6,7 @@ import { loadAllConfig } from './lib/configApi'
 import { api } from './lib/api'
 import './lib/amplify'
 import { Sidebar } from './components/Sidebar'
+import { useViewportHeight } from './hooks/useKeyboardOffset'
 import { getLabels } from './lib/labels'
 import Login from './pages/Login'
 import SetupPassword from './pages/SetupPassword'
@@ -26,6 +27,7 @@ import EmpresaDetalle from './pages/EmpresaDetalle'
 import Settings from './pages/Settings'
 
 function Layout({ onLogout }: { onLogout: () => void }) {
+  const viewportHeight = useViewportHeight()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { pathname } = useLocation()
   const lbl = getLabels()
@@ -53,7 +55,10 @@ function Layout({ onLogout }: { onLogout: () => void }) {
     : 'Katt')
 
   return (
-    <div className="flex h-dvh overflow-hidden">
+    <div
+      className={`flex overflow-hidden ${viewportHeight ? '' : 'h-dvh'}`}
+      style={viewportHeight ? { height: viewportHeight } : undefined}
+    >
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0">
