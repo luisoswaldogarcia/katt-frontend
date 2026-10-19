@@ -67,4 +67,26 @@ test.describe('Clientes CRUD', () => {
       await page.waitForTimeout(2000)
     }
   })
+
+  test('filtro de tabla con campo + valor + botón (cabe en móvil)', async () => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await navigateTo(page, '/paciente')
+    const barra = page.getByTestId('tabla-filtro')
+    await expect(barra).toBeVisible()
+
+    // En móvil la barra no se sale de la pantalla
+    const box = await barra.boundingBox()
+    expect(box!.x + box!.width).toBeLessThanOrEqual(390)
+
+    // Filtrar por un campo buscado + valor que no existe → sin filas
+    await page.getByTestId('filtro-campo').fill('Estado')
+    await page.getByTestId('filtro-valor').fill('zzz-ninguno')
+    await page.getByTestId('filtro-aplicar').click()
+    await expect(page.locator('table tbody tr')).toHaveCount(0)
+
+    // Limpiar → vuelven todas
+    await page.getByTestId('filtro-limpiar').click()
+    expect(await page.locator('table tbody tr').count()).toBeGreaterThan(0)
+    await page.setViewportSize({ width: 1280, height: 720 })
+  })
 })

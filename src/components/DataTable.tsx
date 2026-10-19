@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ColumnFilter } from './FilterBar'
 import type { PageResult } from '../lib/demoStore'
 
 export interface Column {
@@ -35,6 +34,8 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState<Record<string, string>>({})
+  const [campoFiltro, setCampoFiltro] = useState('')
+  const [valorFiltro, setValorFiltro] = useState('')
   const [sortField, setSortField] = useState<string | null>(null)
   const [sortAsc, setSortAsc] = useState(true)
   const [selected, setSelected] = useState<Set<number>>(new Set())
@@ -61,7 +62,19 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
     }
   }
 
-  const handleFilter = (key: string, value: string) => setFilters(prev => ({ ...prev, [key]: value }))
+  const norm = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
+  const columnasFiltrables = columns.filter(c => c.filterable)
+
+  function aplicarFiltro() {
+    const col = columnasFiltrables.find(c => norm(c.label) === norm(campoFiltro))
+      || columnasFiltrables.find(c => norm(c.label).includes(norm(campoFiltro)) || norm(c.key).includes(norm(campoFiltro)))
+    if (!col) return
+    setFilters({ [col.key]: valorFiltro })
+  }
+  function limpiarFiltro() {
+    setCampoFiltro(''); setValorFiltro(''); setFilters({})
+  }
+  const colFiltroActiva = columnasFiltrables.find(c => filters[c.key] !== undefined)
 
   const handleSort = (field: string) => {
     if (sortField === field) setSortAsc(!sortAsc)
@@ -89,6 +102,48 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
     <div ref={scrollRef} onScroll={handleScroll} className="p-4 space-y-4 h-full overflow-y-auto">
 
 
+      {/* Filtro: campo (buscador) + valor + botón — compacto en móvil */}
+      {columnasFiltrables.length > 0 && (
+        <div data-testid="tabla-filtro" className="flex items-center gap-2 flex-wrap">
+          <input
+            data-testid="filtro-campo"
+            list="dt-campos-filtro"
+            value={campoFiltro}
+            onChange={e => setCampoFiltro(e.target.value)}
+            placeholder="Filtrar por…"
+            className="flex-1 min-w-[8rem] px-3 py-2 text-sm rounded-lg border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-900 focus:outline-none focus:ring-2 focus:ring-katt-500"
+          />
+          <datalist id="dt-campos-filtro">
+            {columnasFiltrables.map(c => <option key={c.key} value={c.label} />)}
+          </datalist>
+          <input
+            data-testid="filtro-valor"
+            type={colFiltroActiva?.filterType === 'date' || columnasFiltrables.find(c => norm(c.label) === norm(campoFiltro))?.filterType === 'date' ? 'date' : 'text'}
+            value={valorFiltro}
+            onChange={e => setValorFiltro(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') aplicarFiltro() }}
+            placeholder="Valor"
+            className="flex-1 min-w-[8rem] px-3 py-2 text-sm rounded-lg border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-900 focus:outline-none focus:ring-2 focus:ring-katt-500"
+          />
+          <button
+            data-testid="filtro-aplicar"
+            onClick={aplicarFiltro}
+            className="px-4 py-2 text-sm rounded-lg bg-katt-500 hover:bg-katt-600 text-white font-medium transition-colors"
+          >
+            Filtrar
+          </button>
+          {Object.keys(filters).length > 0 && (
+            <button
+              data-testid="filtro-limpiar"
+              onClick={limpiarFiltro}
+              className="px-3 py-2 text-sm rounded-lg border border-katt-200 dark:border-katt-700 hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-lg border border-katt-200/50 dark:border-katt-800/50 bg-white/40 dark:bg-katt-900/40 backdrop-blur-xl shadow-lg">
         <table className="w-full text-sm">
           <thead className="bg-white/60 dark:bg-katt-900/60">
@@ -106,19 +161,7 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
                   />
                 </th>
               )}
-              {columns.map(col => col.filterable ? (
-                <ColumnFilter
-                  key={col.key}
-                  label={col.label}
-                  field={col.key}
-                  type={col.filterType}
-                  value={filters[col.key] || ''}
-                  onChange={v => handleFilter(col.key, v)}
-                  onSort={() => handleSort(col.key)}
-                  sortActive={sortField === col.key}
-                  sortAsc={sortAsc}
-                />
-              ) : (
+              {columns.map(col => (
                 <th
                   key={col.key}
                   className={`text-left px-4 py-3 font-medium cursor-pointer select-none ${col.hiddenOn ? `hidden ${col.hiddenOn}:table-cell` : ''}`}
