@@ -36,6 +36,8 @@ npx playwright test         # E2E contra PRODUCCIÓN (baseURL por defecto del pl
 
 - **WhatsApp** (`Settings` → pestaña "WhatsApp"): conexión de WhatsApp Business (Phone Number ID + token de Meta + plantilla aprobada), plantilla del recordatorio con variables y vista previa, y horario de envíos (días antes + ventana horaria). Guarda en `CFG#whatsapp`; el envío de prueba va a `POST /whatsapp/test`.
 
+- **Agenda**: color sutil y estable por doctor (`lib/doctorColor.ts`, hash del nombre); formulario con duración (15-120 min) y ubicación del catálogo `CFG#ubicaciones` (admin en Configuración > Operativo); aviso en vivo de choque de horario/día bloqueado (lectura de FormData en `onInput`, sin inputs controlados); "Bloquear día" crea `bloqueos` (BLOQ#) y las vistas marcan el día.
+
 ## Decisiones (por qué está así)
 
 - **Altura de Layout = visualViewport.height** (`App.tsx`): el teclado en la app instalada se superponía y tapaba el input; dimensionar el layout al área visible lo resuelve en todos los modos (resizes-visual, resizes-content). Hay E2E que simulan el teclado encogiendo el viewport visual.
