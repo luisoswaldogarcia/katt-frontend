@@ -121,6 +121,41 @@ test.describe('Agenda', () => {
     await expect(page.getByTestId('aviso-conflicto')).toContainText('bloqueado', { timeout: 5_000 })
   })
 
+  test('ordena por doctor y luego hora (con selector para ver por hora)', async () => {
+    const fecha = '2026-11-20'
+    await navigateTo(page, '/agenda')
+    await page.waitForTimeout(800)
+
+    // Doctor Azul a las 15:00 y Doctor Verde a las 09:00 (el orden por hora sería inverso)
+    for (const [paciente, doctor, hora] of [
+      [`Paciente Orden A ${ts}`, `Doctor Azul ${ts}`, '15:00'],
+      [`Paciente Orden B ${ts}`, `Doctor Verde ${ts}`, '09:00'],
+    ] as const) {
+      await page.locator('button[aria-label="Nueva cita"]').click()
+      await page.waitForTimeout(700)
+      await setInputByName(page, 'paciente', paciente)
+      await setInputByName(page, 'doctor', doctor)
+      await setInputByName(page, 'fecha', fecha)
+      await setInputByName(page, 'hora', hora)
+      await page.locator('button[type="submit"]').filter({ hasText: 'Guardar' }).click()
+      await page.waitForTimeout(1000)
+    }
+
+    const dia = page.getByTestId('agenda-day').filter({ hasText: 'Paciente Orden' })
+    const filas = dia.getByTestId('agenda-cita')
+    await expect(filas).toHaveCount(2)
+
+    // Por defecto: agrupado por doctor (Azul antes que Verde, aunque Azul sea más tarde)
+    await expect(filas.nth(0)).toContainText('Doctor Azul')
+    await expect(filas.nth(1)).toContainText('Doctor Verde')
+    await expect(dia.getByTestId('agenda-grupo-doctor')).toHaveCount(2)
+
+    // Al cambiar a "Por hora": primero la de las 09:00
+    await page.getByTestId('agenda-orden').selectOption('hora')
+    await expect(dia.getByTestId('agenda-cita').nth(0)).toContainText('09:00')
+    await expect(dia.getByTestId('agenda-grupo-doctor')).toHaveCount(0)
+  })
+
   test('filtro por doctor muestra solo las citas de ese doctor', async () => {
     await navigateTo(page, '/agenda')
     await page.waitForTimeout(1000)

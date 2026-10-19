@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react'
+import { Fragment, useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react'
 import { citaStore, pacienteStore, doctorStore, bloqueoStore } from '../lib/demoStore'
 import type { CitaData } from '../lib/demoStore'
 import { doctorColor } from '../lib/doctorColor'
@@ -66,6 +66,19 @@ function conflictoDe(fd: FormData, excluirId?: string): string {
   return ''
 }
 
+type Orden = 'doctor' | 'hora'
+
+// Orden de las citas dentro de un día: por doctor y luego hora, u hora directa
+function ordenarCitas(citas: CitaData[], orden: Orden): CitaData[] {
+  return [...citas].sort((a, b) => {
+    if (orden === 'doctor') {
+      const d = String(a.doctor || '').localeCompare(String(b.doctor || ''), 'es')
+      if (d !== 0) return d
+    }
+    return toMin(a.hora) - toMin(b.hora)
+  })
+}
+
 const inputClass = 'w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500'
 
 function Autocomplete({ name, placeholder, options, defaultValue }: { name: string; placeholder: string; options: string[]; defaultValue?: string }) {
@@ -128,6 +141,7 @@ export default function Agenda() {
   const [errorForm, setErrorForm] = useState('')
   const [ubicaciones, setUbicaciones] = useState<string[]>([])
   const [showBloqueo, setShowBloqueo] = useState(false)
+  const [orden, setOrden] = useState<Orden>('doctor')
   const [bloqueos, setBloqueos] = useState(bloqueoStore.getAll())
   const today = formatDate(new Date())
 
@@ -281,6 +295,16 @@ export default function Agenda() {
               </button>
             ))}
           </div>
+          <select
+            data-testid="agenda-orden"
+            value={orden}
+            onChange={e => setOrden(e.target.value as Orden)}
+            className="px-2 py-1.5 text-xs rounded-lg border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-900 focus:outline-none focus:ring-2 focus:ring-katt-500"
+            title="Orden de las citas"
+          >
+            <option value="doctor">Por doctor</option>
+            <option value="hora">Por hora</option>
+          </select>
           <button
             onClick={() => { setAviso(''); setErrorForm(''); setShowBloqueo(true) }}
             className="px-3 py-1.5 text-xs rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -293,8 +317,8 @@ export default function Agenda() {
 
       {/* Views */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        {view === 'dia' && <div className="h-full overflow-y-auto px-4 pb-4"><DayView date={currentDate} today={today} onSelect={setSelected} filtroDoctor={filtroDoctor} refreshKey={refreshKey} /></div>}
-        {view === 'semana' && <WeekView date={currentDate} today={today} onSelect={setSelected} filtroDoctor={filtroDoctor} refreshKey={refreshKey} />}
+        {view === 'dia' && <div className="h-full overflow-y-auto px-4 pb-4"><DayView date={currentDate} today={today} onSelect={setSelected} filtroDoctor={filtroDoctor} refreshKey={refreshKey} orden={orden} /></div>}
+        {view === 'semana' && <WeekView date={currentDate} today={today} onSelect={setSelected} filtroDoctor={filtroDoctor} refreshKey={refreshKey} orden={orden} />}
         {view === 'mes' && <div className="h-full overflow-y-auto px-4 pb-4"><MonthView date={currentDate} today={today} onDayClick={d => { setCurrentDate(d); setView('dia') }} filtroDoctor={filtroDoctor} refreshKey={refreshKey} /></div>}
       </div>
 
@@ -494,7 +518,7 @@ export default function Agenda() {
 
 /* ─── Day View ─── */
 
-function DayView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: Date; today: string; onSelect: (c: CitaData) => void; filtroDoctor?: string; refreshKey?: number }) {
+function DayView({ date, today, onSelect, filtroDoctor, refreshKey, orden = 'doctor' }: { date: Date; today: string; onSelect: (c: CitaData) => void; filtroDoctor?: string; refreshKey?: number; orden?: Orden }) {
   const key = formatDate(date)
   const citas = useMemo(
     () => { void refreshKey; return citaStore.getByDateRange(key, key).filter(c => !filtroDoctor || c.doctor === filtroDoctor) },
@@ -514,9 +538,16 @@ function DayView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: Da
       ))}
       {citas.length === 0 && <div className="text-sm text-katt-400 dark:text-katt-600 py-8 text-center">Sin citas para este día</div>}
       <div className="space-y-2">
-        {citas.map(c => (
+        {ordenarCitas(citas, orden).map((c, i, arr) => (
+          <Fragment key={c.id}>
+            {orden === 'doctor' && (i === 0 || arr[i - 1].doctor !== c.doctor) && (
+              <div data-testid="agenda-grupo-doctor" className="flex items-center gap-2 pt-1">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: doctorColor(c.doctor).dot }} />
+                <span className="text-xs font-semibold text-katt-500 dark:text-katt-400">{c.doctor || 'Sin doctor'}</span>
+              </div>
+            )}
           <button
-            key={c.id}
+            data-testid="agenda-cita"
             onClick={() => onSelect(c)}
             className="w-full text-left p-3 rounded-lg bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700 transition-colors flex items-center gap-3 border-l-4"
             style={{ borderLeftColor: doctorColor(c.doctor).dot }}
@@ -527,6 +558,7 @@ function DayView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: Da
               <div className="text-xs text-katt-500 dark:text-katt-400 truncate">{c.doctor}{c.motivo ? ` · ${c.motivo}` : ''}</div>
             </div>
           </button>
+          </Fragment>
         ))}
       </div>
     </div>
@@ -537,7 +569,7 @@ function DayView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: Da
 // Agenda vertical tipo Outlook: Lunes arriba con sus citas, luego Martes, etc.
 // Scroll infinito en ambos sentidos: al acercarse a los extremos carga más semanas.
 
-function WeekView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: Date; today: string; onSelect: (c: CitaData) => void; filtroDoctor?: string; refreshKey?: number }) {
+function WeekView({ date, today, onSelect, filtroDoctor, refreshKey, orden = 'doctor' }: { date: Date; today: string; onSelect: (c: CitaData) => void; filtroDoctor?: string; refreshKey?: number; orden?: Orden }) {
   const anchorMonday = useMemo(() => getMonday(date), [date])
   const scrollRef = useRef<HTMLDivElement>(null)
   const [pastWeeks, setPastWeeks] = useState(0)
@@ -600,7 +632,7 @@ function WeekView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: D
       {days.map(d => {
         const key = formatDate(d)
         const isToday = key === today
-        const dayCitas = citasByDay[key] || []
+        const dayCitas = ordenarCitas(citasByDay[key] || [], orden)
         return (
           <div key={key} data-testid="agenda-day" className="pt-2 first:pt-0">
             {/* Encabezado del día (sticky) */}
@@ -635,9 +667,16 @@ function WeekView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: D
               <div className="text-xs text-katt-400 dark:text-katt-600 py-2 pl-14">Sin citas</div>
             ) : (
               <div className="space-y-2 py-1 pl-14">
-                {dayCitas.map(c => (
+                {dayCitas.map((c, i, arr) => (
+                  <Fragment key={c.id}>
+                    {orden === 'doctor' && (i === 0 || arr[i - 1].doctor !== c.doctor) && (
+                      <div data-testid="agenda-grupo-doctor" className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: doctorColor(c.doctor).dot }} />
+                        <span className="text-xs font-semibold text-katt-500 dark:text-katt-400">{c.doctor || 'Sin doctor'}</span>
+                      </div>
+                    )}
                   <button
-                    key={c.id}
+                    data-testid="agenda-cita"
                     onClick={() => onSelect(c)}
                     className="w-full text-left p-3 rounded-lg bg-katt-100 dark:bg-katt-800 hover:bg-katt-200 dark:hover:bg-katt-700 transition-colors flex items-center gap-3 border-l-4"
                     style={{ borderLeftColor: doctorColor(c.doctor).dot }}
@@ -648,6 +687,7 @@ function WeekView({ date, today, onSelect, filtroDoctor, refreshKey }: { date: D
                       <div className="text-xs text-katt-500 dark:text-katt-400 truncate">{c.doctor}{c.motivo ? ` · ${c.motivo}` : ''}</div>
                     </div>
                   </button>
+                  </Fragment>
                 ))}
               </div>
             )}
