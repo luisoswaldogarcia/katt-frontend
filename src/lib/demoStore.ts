@@ -76,6 +76,20 @@ function createStore<T extends { id: string }>(entity: string) {
   let cache: T[] = []
   let loaded = false
 
+  // Trae todas las páginas del API: con solo la primera, los registros nuevos
+  // (SK aleatorio) quedan fuera de los primeros 50 y "no existen" en la UI
+  async function fetchAll(): Promise<T[]> {
+    const all: T[] = []
+    let cursor: string | undefined
+    for (let pagina = 0; pagina < 20; pagina++) {
+      const res = await api.list<T>(entity, cursor)
+      all.push(...res.items)
+      if (!res.cursor) break
+      cursor = res.cursor
+    }
+    return all
+  }
+
   return {
     // Sync access (reads from cache)
     getAll: () => cache,
@@ -86,27 +100,16 @@ function createStore<T extends { id: string }>(entity: string) {
 
     // Async - fetches from API and updates cache
     fetch: async (): Promise<T[]> => {
-      // Trae todas las páginas: con solo la primera, los registros nuevos
-      // (SK aleatorio) se pierden fuera de los primeros 50 y "no existen" en la UI
-      const all: T[] = []
-      let cursor: string | undefined
-      for (let pagina = 0; pagina < 20; pagina++) {
-        const res = await api.list<T>(entity, cursor)
-        all.push(...res.items)
-        if (!res.cursor) break
-        cursor = res.cursor
-      }
-      cache = all
+      cache = await fetchAll()
       loaded = true
       return cache
     },
     isLoaded: () => loaded,
 
     getPage: async (_page: number, _limit = 15): Promise<PageResult<T>> => {
-      const res = await api.list<T>(entity)
-      cache = res.items
+      cache = await fetchAll()
       loaded = true
-      return { data: res.items, total: res.items.length, hasMore: !!res.cursor }
+      return { data: cache, total: cache.length, hasMore: false }
     },
 
     create: async (data: Omit<T, 'id'>): Promise<T> => {

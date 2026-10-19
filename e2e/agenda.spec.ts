@@ -123,7 +123,7 @@ test.describe('Agenda', () => {
 
   test('ordena por doctor y luego hora (con selector para ver por hora)', async () => {
     // fecha única por corrida (los datos de corridas previas no deben mezclarse)
-    const fecha = new Date(Date.UTC(2030, 0, 1 + (Math.floor(ts / 1000) % 900))).toISOString().split('T')[0]
+    const fecha = new Date(Date.UTC(2031, 0, 1 + (Math.floor(ts / 1000) % 20000))).toISOString().split('T')[0]
     await navigateTo(page, '/agenda')
     await page.waitForTimeout(800)
 
@@ -159,7 +159,7 @@ test.describe('Agenda', () => {
 
   test('el paciente nuevo se crea, aparece en la lista y hay botón de completar registro', async () => {
     const nombre = `Paciente Alta ${ts}`
-    const fecha = new Date(Date.UTC(2031, 0, 1 + (Math.floor(ts / 1000) % 900))).toISOString().split('T')[0]
+    const fecha = new Date(Date.UTC(2032, 0, 1 + (Math.floor(ts / 1000) % 20000))).toISOString().split('T')[0]
     await navigateTo(page, '/agenda')
     await page.waitForTimeout(800)
     await page.locator('button[aria-label="Nueva cita"]').click()
@@ -171,15 +171,15 @@ test.describe('Agenda', () => {
     await page.locator('button[type="submit"]').filter({ hasText: 'Guardar' }).click()
     await expect(page.locator('[data-testid="agenda-week"]')).toContainText(nombre, { timeout: 10_000 })
 
+    // En el detalle de la cita aparece el botón de completar registro
+    // (la agenda ya saltó a la fecha de la cita recién creada)
+    await page.getByTestId('agenda-cita').filter({ hasText: nombre }).first().click()
+    await expect(page.getByTestId('completar-registro')).toBeVisible({ timeout: 5_000 })
+    await page.locator('div.fixed.inset-0').first().click({ position: { x: 5, y: 5 } })
+
     // Aparece en la lista de pacientes (aunque haya más de 50)
     await navigateTo(page, '/paciente')
     await expect(page.locator('table tbody tr').filter({ hasText: nombre }).first()).toBeVisible({ timeout: 10_000 })
-
-    // En el detalle de la cita aparece el botón de completar registro
-    await navigateTo(page, '/agenda')
-    await page.locator('button[aria-label="Nueva cita"]').scrollIntoViewIfNeeded()
-    await page.getByTestId('agenda-cita').filter({ hasText: nombre }).first().click()
-    await expect(page.getByTestId('completar-registro')).toBeVisible({ timeout: 5_000 })
   })
 
   test('filtro por doctor muestra solo las citas de ese doctor', async () => {
