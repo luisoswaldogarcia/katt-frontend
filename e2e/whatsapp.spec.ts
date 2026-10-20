@@ -34,10 +34,10 @@ test.describe('WhatsApp — recordatorios', () => {
     await page.getByTestId('whatsapp-plantilla').fill(plantilla)
     await expect(page.getByTestId('whatsapp-preview')).toContainText(`Recordatorio ${ts} para Rosa Robles: tu cita es el 21 de octubre.`)
 
-    // Cuándo
-    await page.getByTestId('whatsapp-dias').fill('2')
-    await page.getByTestId('whatsapp-desde').fill('9')
-    await page.getByTestId('whatsapp-hasta').fill('19')
+    // Cuándo (primera regla)
+    await page.getByTestId('recordatorio-dias-0').fill('2')
+    await page.getByTestId('recordatorio-desde-0').fill('9')
+    await page.getByTestId('recordatorio-hasta-0').fill('19')
 
     // Conexión de la clínica (sin switch: se usa al tener credenciales)
     await page.getByTestId('whatsapp-phone-id').fill('phone-id-demo')
@@ -52,7 +52,7 @@ test.describe('WhatsApp — recordatorios', () => {
     await page.getByRole('button', { name: 'WhatsApp', exact: true }).click()
     await master(true)
     await expect(page.getByTestId('whatsapp-phone-id')).toHaveValue('phone-id-demo')
-    await expect(page.getByTestId('whatsapp-dias')).toHaveValue('2')
+    await expect(page.getByTestId('recordatorio-dias-0')).toHaveValue('2')
     await expect(page.getByTestId('whatsapp-plantilla')).toHaveValue(plantilla)
 
     // Limpieza: apagar el interruptor maestro
@@ -98,6 +98,41 @@ test.describe('WhatsApp — recordatorios', () => {
 
     // Limpieza: apagar al doctor y el interruptor
     await avisos.locator('input[type="checkbox"]').nth(1).uncheck()
+    await master(false)
+    await page.getByTestId('whatsapp-guardar').click()
+    await expect(page.getByText('Configuración guardada ✓')).toBeVisible({ timeout: 10_000 })
+  })
+
+  test('varios recordatorios: alta, persistencia y baja', async () => {
+    await abrirWhatsApp()
+    await master(true)
+
+    // Debe haber al menos una regla; agregar una segunda
+    await expect(page.getByTestId('recordatorio-0')).toBeVisible()
+    await page.getByTestId('recordatorio-agregar').click()
+    await expect(page.getByTestId('recordatorio-1')).toBeVisible()
+
+    await page.getByTestId('recordatorio-nombre-1').fill('2 horas antes')
+    await page.getByTestId('recordatorio-dias-1').fill('0')
+    await page.getByTestId('recordatorio-horas-1').fill('2')
+    await page.getByTestId('recordatorio-plantilla-1').fill('¡{paciente}! Tu cita es en 2 horas.')
+
+    await page.getByTestId('whatsapp-guardar').click()
+    await expect(page.getByText('Configuración guardada ✓')).toBeVisible({ timeout: 10_000 })
+
+    // Persisten ambas reglas al recargar
+    await page.reload()
+    await page.waitForTimeout(1500)
+    await page.getByRole('button', { name: 'WhatsApp', exact: true }).click()
+    await expect(page.getByTestId('recordatorio-nombre-1')).toHaveValue('2 horas antes')
+    await expect(page.getByTestId('recordatorio-horas-1')).toHaveValue('2')
+
+    // Quitar la segunda regla
+    await page.getByTestId('recordatorio-quitar-1').click()
+    await expect(page.getByTestId('recordatorio-1')).toHaveCount(0)
+    await page.getByTestId('whatsapp-guardar').click()
+    await expect(page.getByText('Configuración guardada ✓')).toBeVisible({ timeout: 10_000 })
+
     await master(false)
     await page.getByTestId('whatsapp-guardar').click()
     await expect(page.getByText('Configuración guardada ✓')).toBeVisible({ timeout: 10_000 })

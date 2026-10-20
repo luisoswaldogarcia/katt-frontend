@@ -776,8 +776,19 @@ function UbicacionesCard() {
 
 /* ─── WhatsApp: recordatorios de citas ─── */
 
+export interface ReglaRecordatorio {
+  id: string
+  nombre?: string
+  diasAntes?: number
+  horasAntes?: number
+  horaDesde?: number
+  horaHasta?: number
+  plantilla?: string
+}
+
 interface WhatsAppCfg {
   activo?: boolean // único interruptor de la pestaña
+  recordatorios?: ReglaRecordatorio[]
   phoneNumberId?: string // número de la clínica
   accessToken?: string
   templateName?: string
@@ -818,7 +829,21 @@ function WhatsAppTab() {
   // usuario toca algo antes, la respuesta de la carga le pisaría sus cambios.
   useEffect(() => {
     Promise.all([
-      getConfig<WhatsAppCfg>('whatsapp', {}).then(v => setCfg(prev => ({ ...v, ...prev }))).catch(() => {}),
+      getConfig<WhatsAppCfg>('whatsapp', {}).then(v => setCfg(prev => {
+      const merged = { ...v, ...prev }
+      if (!merged.recordatorios?.length) {
+        merged.recordatorios = [{
+          id: 'r1',
+          nombre: 'Recordatorio',
+          diasAntes: merged.diasAntes ?? 1,
+          horasAntes: 0,
+          horaDesde: merged.horaDesde ?? 9,
+          horaHasta: merged.horaHasta ?? 19,
+          plantilla: '',
+        }]
+      }
+      return merged
+    })).catch(() => {}),
       api.get<MiCuentaWA>('whatsapp', 'mi-cuenta').then(v => setMia(prev => ({ ...v, ...prev }))).catch(() => {}),
     ]).finally(() => setCargado(true))
   }, [])
@@ -832,6 +857,23 @@ function WhatsAppTab() {
   }
 
   function set(patch: Partial<WhatsAppCfg>) { setCfg(prev => ({ ...prev, ...patch })) }
+
+  function setRegla(id: string, patch: Partial<ReglaRecordatorio>) {
+    setCfg(prev => ({ ...prev, recordatorios: (prev.recordatorios || []).map(r => r.id === id ? { ...r, ...patch } : r) }))
+  }
+  function agregarRegla() {
+    setCfg(prev => ({
+      ...prev,
+      recordatorios: [...(prev.recordatorios || []), {
+        id: `r${Date.now()}`,
+        nombre: `Recordatorio ${(prev.recordatorios || []).length + 1}`,
+        diasAntes: 0, horasAntes: 2, horaDesde: 9, horaHasta: 19, plantilla: '',
+      }],
+    }))
+  }
+  function quitarRegla(id: string) {
+    setCfg(prev => ({ ...prev, recordatorios: (prev.recordatorios || []).filter(r => r.id !== id) }))
+  }
   function setMio(patch: Partial<MiCuentaWA>) { setMia(prev => ({ ...prev, ...patch })) }
 
   // Un solo guardado para toda la pestaña
@@ -916,7 +958,7 @@ function WhatsAppTab() {
           </div>
           {(cfg.recordarPaciente !== false) && (
             <div className="space-y-1">
-              <p className="text-xs font-medium text-katt-500 dark:text-katt-400">Mensaje al paciente</p>
+              <p className="text-xs font-medium text-katt-500 dark:text-katt-400">Mensaje al paciente (por defecto)</p>
               <textarea data-testid="whatsapp-plantilla" rows={3} value={plantilla} onChange={e => set({ plantilla: e.target.value })} className={inputCls} />
               <p data-testid="whatsapp-preview" className="text-sm rounded-xl bg-katt-50 dark:bg-katt-800 text-katt-700 dark:text-katt-200 p-3">{renderPlantillaLocal(plantilla, previewVars)}</p>
             </div>
@@ -930,24 +972,68 @@ function WhatsAppTab() {
           )}
         </div>
 
-        {/* ¿Cuándo? */}
+        {/* Recordatorios (múltiples reglas) */}
         <div data-testid="whatsapp-envios-card" className="rounded-2xl border border-katt-200 dark:border-katt-800 bg-white dark:bg-katt-900 p-4 space-y-3">
-          <p className={cardTitle}>¿Cuándo se mandan?</p>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Días antes de la cita</p>
-              <input data-testid="whatsapp-dias" type="number" min={0} max={30} value={cfg.diasAntes ?? 1} onChange={e => set({ diasAntes: Number(e.target.value) })} className={inputCls} />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Enviar desde las (hora)</p>
-              <input data-testid="whatsapp-desde" type="number" min={0} max={23} value={cfg.horaDesde ?? 9} onChange={e => set({ horaDesde: Number(e.target.value) })} className={inputCls} />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Hasta las (hora)</p>
-              <input data-testid="whatsapp-hasta" type="number" min={1} max={24} value={cfg.horaHasta ?? 19} onChange={e => set({ horaHasta: Number(e.target.value) })} className={inputCls} />
-            </div>
+          <div>
+            <p className={cardTitle}>¿Cuándo se mandan?</p>
+            <p className="text-xs text-katt-500 dark:text-katt-400">Puedes tener varios recordatorios — cada uno con su anticipación, su horario y su propio mensaje.</p>
           </div>
-          <p className="text-xs text-katt-500 dark:text-katt-400">Ejemplo: 1 día antes, entre las 9 y las 19 hrs. Lo que no quepa en la ventana se manda en la siguiente revisión.</p>
+          {(cfg.recordatorios || []).map((r, i) => (
+            <div key={r.id} data-testid={`recordatorio-${i}`} className="rounded-xl border border-katt-100 dark:border-katt-800 p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  data-testid={`recordatorio-nombre-${i}`}
+                  value={r.nombre ?? ''}
+                  onChange={e => setRegla(r.id, { nombre: e.target.value })}
+                  placeholder="Nombre (ej. Un día antes)"
+                  className="flex-1 px-3 py-2 text-sm rounded-lg border border-katt-200 dark:border-katt-700 bg-white dark:bg-katt-800 focus:outline-none focus:ring-2 focus:ring-katt-500"
+                />
+                {(cfg.recordatorios || []).length > 1 && (
+                  <button
+                    data-testid={`recordatorio-quitar-${i}`}
+                    onClick={() => quitarRegla(r.id)}
+                    className="px-3 py-2 text-xs rounded-lg border border-red-200 dark:border-red-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
+                  >
+                    Quitar
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div>
+                  <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Días antes</p>
+                  <input data-testid={`recordatorio-dias-${i}`} type="number" min={0} max={60} value={r.diasAntes ?? 0} onChange={e => setRegla(r.id, { diasAntes: Number(e.target.value) })} className={inputCls} />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Horas antes</p>
+                  <input data-testid={`recordatorio-horas-${i}`} type="number" min={0} max={23} value={r.horasAntes ?? 0} onChange={e => setRegla(r.id, { horasAntes: Number(e.target.value) })} className={inputCls} />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Enviar desde las</p>
+                  <input data-testid={`recordatorio-desde-${i}`} type="number" min={0} max={23} value={r.horaDesde ?? 9} onChange={e => setRegla(r.id, { horaDesde: Number(e.target.value) })} className={inputCls} />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-katt-500 dark:text-katt-400 mb-1">Hasta las</p>
+                  <input data-testid={`recordatorio-hasta-${i}`} type="number" min={1} max={24} value={r.horaHasta ?? 19} onChange={e => setRegla(r.id, { horaHasta: Number(e.target.value) })} className={inputCls} />
+                </div>
+              </div>
+              <textarea
+                data-testid={`recordatorio-plantilla-${i}`}
+                rows={2}
+                value={r.plantilla ?? ''}
+                onChange={e => setRegla(r.id, { plantilla: e.target.value })}
+                placeholder="Mensaje de este recordatorio (opcional — vacío usa el mensaje del paciente)"
+                className={inputCls}
+              />
+            </div>
+          ))}
+          <button
+            data-testid="recordatorio-agregar"
+            onClick={agregarRegla}
+            className="w-full px-4 py-2 text-sm rounded-xl border border-dashed border-katt-300 dark:border-katt-700 text-katt-600 dark:text-katt-300 hover:bg-katt-50 dark:hover:bg-katt-800 transition-colors"
+          >
+            + Agregar recordatorio
+          </button>
+          <p className="text-xs text-katt-500 dark:text-katt-400">Lo que no quepa en el horario se manda en la siguiente revisión (cada 15 minutos). Cada cita se recuerda una sola vez por recordatorio.</p>
         </div>
 
         {/* Conexión de envío */}
