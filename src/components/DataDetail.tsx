@@ -16,12 +16,13 @@ interface Props {
   basePath: string
   entityLabel: string
   onDelete: () => void
+  deleteMessage?: string
   bare?: boolean
   hideButtons?: boolean
   hideCustom?: boolean
 }
 
-export function DataDetail({ data, fields, module, basePath, entityLabel, onDelete, bare, hideButtons, hideCustom }: Props) {
+export function DataDetail({ data, fields, module, basePath, entityLabel, onDelete, deleteMessage, bare, hideButtons, hideCustom }: Props) {
   const navigate = useNavigate()
   const [customFields, setCustomFields] = useState(getCustomFields(module))
   const custom = data.custom as Record<string, unknown> | undefined
@@ -92,7 +93,7 @@ export function DataDetail({ data, fields, module, basePath, entityLabel, onDele
 
       {showConfirm && (
         <ConfirmModal
-          message={`¿Eliminar "${String(data.nombre)}"? Esta acción no se puede deshacer.`}
+          message={deleteMessage || `¿Eliminar "${String(data.nombre)}"? Esta acción no se puede deshacer.`}
           onConfirm={onDelete}
           onCancel={() => setShowConfirm(false)}
         />

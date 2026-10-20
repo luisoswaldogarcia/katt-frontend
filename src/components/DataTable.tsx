@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ConfirmModal } from './ConfirmModal'
 import type { PageResult } from '../lib/demoStore'
 
 export interface Column {
@@ -23,12 +24,16 @@ interface Props {
   altaPath: string
   selectable?: boolean
   removeItem?: (id: string) => Promise<void>
+  // Aviso antes de eliminar (p.ej. "estos pacientes tienen citas") y limpieza
+  // de registros relacionados (las citas de ese paciente/doctor)
+  deleteWarning?: (rows: Record<string, unknown>[]) => Promise<string | null> | string | null
+  beforeDelete?: (rows: Record<string, unknown>[]) => Promise<void>
   onSelectionAction?: (ids: number[]) => void
   selectionIcon?: React.ReactNode
   fabMenu?: FabMenuItem[]
 }
 
-export function DataTable({ columns, fetchPage, basePath, altaPath, selectable = true, removeItem, onSelectionAction, selectionIcon, fabMenu }: Props) {
+export function DataTable({ columns, fetchPage, basePath, altaPath, selectable = true, removeItem, deleteWarning, beforeDelete, onSelectionAction, selectionIcon, fabMenu }: Props) {
   const navigate = useNavigate()
   const [data, setData] = useState<Record<string, unknown>[]>([])
   const [page, setPage] = useState(0)
@@ -42,6 +47,9 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [fabOpen, setFabOpen] = useState(false)
   const [accionesOpen, setAccionesOpen] = useState(false)
+  const [porEliminar, setPorEliminar] = useState<Record<string, unknown>[] | null>(null)
+  const [avisoEliminar, setAvisoEliminar] = useState<string | null>(null)
+  const [eliminando, setEliminando] = useState<{ total: number; hechos: number } | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const loadPage = useCallback(async (p: number) => {
@@ -82,12 +90,28 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
     URL.revokeObjectURL(a.href)
   }
 
-  async function eliminarSeleccionados() {
-    if (!removeItem) return
-    if (!window.confirm(`¿Eliminar ${selected.size} registro(s) seleccionado(s)?`)) return
-    for (const id of selected) await removeItem(String(id))
-    setSelected(new Set())
+  async function pedirEliminar() {
+    const filas = filtered.filter(r => selected.has(r.id as number))
+    if (!removeItem || filas.length === 0) return
     setAccionesOpen(false)
+    const aviso = deleteWarning ? await deleteWarning(filas) : null
+    setAvisoEliminar(aviso)
+    setPorEliminar(filas)
+  }
+
+  async function confirmarEliminar() {
+    const filas = porEliminar || []
+    setPorEliminar(null)
+    setEliminando({ total: filas.length, hechos: 0 })
+    // Primero lo relacionado (citas), luego los registros, en lotes y con progreso
+    if (beforeDelete) await beforeDelete(filas).catch(() => {})
+    for (let i = 0; i < filas.length; i += 8) {
+      const lote = filas.slice(i, i + 8)
+      await Promise.allSettled(lote.map(r => removeItem!(String(r.id))))
+      setEliminando({ total: filas.length, hechos: Math.min(i + 8, filas.length) })
+    }
+    setEliminando(null)
+    setSelected(new Set())
     setPage(0)
     loadPage(0)
   }
@@ -170,10 +194,16 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
           )}
         </>)}
         <div className="relative ml-auto">
+          {eliminando && (
+            <div data-testid="tabla-eliminando" className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-katt-100 dark:bg-katt-800 text-katt-600 dark:text-katt-300">
+              <span className="w-4 h-4 border-2 border-katt-500 border-t-transparent rounded-full animate-spin" />
+              Eliminando {eliminando.hechos} de {eliminando.total}…
+            </div>
+          )}
           <button
             data-testid="tabla-acciones"
             onClick={() => setAccionesOpen(v => !v)}
-            disabled={selected.size === 0}
+            disabled={selected.size === 0 || !!eliminando}
             className="px-3 py-2 text-sm rounded-lg border border-katt-200 dark:border-katt-700 hover:bg-katt-100 dark:hover:bg-katt-800 transition-colors disabled:opacity-50"
           >
             Acciones ({selected.size}) ▾
@@ -189,7 +219,7 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
               </button>
               <button
                 data-testid="accion-eliminar"
-                onClick={eliminarSeleccionados}
+                onClick={pedirEliminar}
                 className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               >
                 Eliminar seleccionados
@@ -313,6 +343,13 @@ export function DataTable({ columns, fetchPage, basePath, altaPath, selectable =
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M12 5v14M5 12h14" /></svg>
         )}
       </button>
+      {porEliminar && (
+        <ConfirmModal
+          message={avisoEliminar || `¿Eliminar ${porEliminar.length} registro(s) seleccionado(s)?`}
+          onConfirm={confirmarEliminar}
+          onCancel={() => { setPorEliminar(null); setAvisoEliminar(null) }}
+        />
+      )}
     </div>
   )
 }

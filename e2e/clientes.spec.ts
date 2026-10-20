@@ -1,5 +1,5 @@
 import { test, expect } from 'playwright/test'
-import { DEMO_EMAIL, DEMO_PASSWORD, ts, uniq, login, navigateTo, pageContains, setInputValue } from './helpers'
+import { DEMO_EMAIL, DEMO_PASSWORD, ts, uniq, login, navigateTo, pageContains, setInputValue, setInputByName } from './helpers'
 
 test.describe('Clientes CRUD', () => {
   let page: import('playwright').Page
@@ -108,11 +108,60 @@ test.describe('Clientes CRUD', () => {
     const download = await downloadPromise
     expect(download.suggestedFilename()).toContain('.csv')
 
-    // Eliminar seleccionados (con confirmación del navegador)
+    // Eliminar seleccionados (confirmación con modal)
     await page.getByTestId('tabla-acciones').click()
-    page.once('dialog', d => d.accept())
     await page.getByTestId('accion-eliminar').click()
-    await page.waitForTimeout(2500)
+    const modal = page.getByRole('button', { name: 'Eliminar' }).last()
+    await modal.click()
+    await page.waitForTimeout(3000)
     expect(await checks.count()).toBeGreaterThan(0) // la tabla sigue funcionando
+  })
+
+  test('eliminación con citas: aviso, loader y cascada', async () => {
+    const nombre = `Paciente Borrar ${ts}`
+    const fecha = new Date(Date.UTC(2033, 0, 1 + (Math.floor(ts / 1000) % 20000))).toISOString().split('T')[0]
+
+    // Crear un paciente con una cita desde la agenda
+    await navigateTo(page, '/agenda')
+    await page.waitForTimeout(800)
+    await page.locator('button[aria-label="Nueva cita"]').click()
+    await page.waitForTimeout(700)
+    await setInputByName(page, 'paciente', nombre)
+    await setInputByName(page, 'doctor', `Doctor Borrar ${ts}`)
+    await setInputByName(page, 'fecha', fecha)
+    await setInputByName(page, 'hora', '13:00')
+    await page.locator('button[type="submit"]').filter({ hasText: 'Guardar' }).click()
+    await expect(page.locator('[data-testid="agenda-week"]')).toContainText(nombre, { timeout: 10_000 })
+
+    // Lentear los DELETE para poder ver el loader
+    await page.route(/\/api\/v1\/(clientes|agenda)\/[^/?]+$/, async route => {
+      if (route.request().method() === 'DELETE') await new Promise(r => setTimeout(r, 1500))
+      await route.continue()
+    })
+
+    // Filtrar por el paciente, seleccionarlo y eliminarlo
+    await navigateTo(page, '/paciente')
+    await page.getByTestId('filtro-campo').fill('Nombre')
+    await page.getByTestId('filtro-valor').fill(nombre)
+    await page.getByTestId('filtro-aplicar').click()
+    const fila = page.locator('table tbody tr').filter({ hasText: nombre })
+    await expect(fila).toHaveCount(1)
+    await fila.locator('input[type="checkbox"]').check()
+    await page.getByTestId('tabla-acciones').click()
+    await page.getByTestId('accion-eliminar').click()
+
+    // El aviso menciona las citas
+    await expect(page.getByText(/cita\(s\)/)).toBeVisible({ timeout: 5_000 })
+    await page.getByRole('button', { name: 'Eliminar' }).last().click()
+
+    // Aparece el loader mientras elimina
+    await expect(page.getByTestId('tabla-eliminando')).toBeVisible({ timeout: 5_000 })
+
+    // Al terminar: la fila ya no está y la cita tampoco
+    await expect(page.locator('table tbody tr').filter({ hasText: nombre })).toHaveCount(0, { timeout: 15_000 })
+    await page.unroute(/\/api\/v1\/(clientes|agenda)\/[^/?]+$/)
+    await navigateTo(page, '/agenda')
+    await page.waitForTimeout(1500)
+    await expect(page.locator('body')).not.toContainText(nombre)
   })
 })

@@ -3,6 +3,7 @@ import { entityConfigs } from '../lib/entityConfig'
 import { DataTable } from '../components/DataTable'
 import type { Column } from '../components/DataTable'
 import type { PageResult } from '../lib/demoStore'
+import { citaStore } from '../lib/demoStore'
 
 const { columns, basePath, altaPath, store } = entityConfigs.paciente
 
@@ -24,5 +25,22 @@ export default function Cliente() {
       .sort((a, b) => Number(infoIncompleta(b)) - Number(infoIncompleta(a)))
     return { ...result, data }
   }
-  return <DataTable columns={cols} fetchPage={fetchPage} basePath={basePath} altaPath={altaPath} selectable removeItem={store.remove} onSelectionAction={(ids) => navigate('/paciente/citas', { state: { ids } })} selectionIcon={calendarIcon} />
+  // Citas de los pacientes seleccionados (para avisar y eliminar en cascada)
+  const citasDePacientes = (filas: Record<string, unknown>[]) => {
+    const nombres = new Set(filas.map(f => String(f.nombre || '')))
+    return citaStore.getAll().filter(c => nombres.has(String(c.paciente || '')))
+  }
+  return <DataTable
+    columns={cols} fetchPage={fetchPage} basePath={basePath} altaPath={altaPath} selectable
+    removeItem={store.remove}
+    deleteWarning={async filas => {
+      const citas = citasDePacientes(filas)
+      return citas.length > 0
+        ? `Los pacientes seleccionados tienen ${citas.length} cita(s). Si los eliminas, esas citas también se eliminarán.`
+        : null
+    }}
+    beforeDelete={async filas => {
+      for (const c of citasDePacientes(filas)) await citaStore.remove(c.id)
+    }}
+    onSelectionAction={(ids) => navigate('/paciente/citas', { state: { ids } })} selectionIcon={calendarIcon} />
 }

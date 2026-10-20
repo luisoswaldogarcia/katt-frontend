@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { labels } from '../lib/labels'
-import { pacienteStore } from '../lib/demoStore'
+import { pacienteStore, citaStore } from '../lib/demoStore'
+import { ConfirmModal } from '../components/ConfirmModal'
 import { DataDetail } from '../components/DataDetail'
 import { Documents } from '../components/Documents'
 import { getCustomFields } from '../lib/customFields'
@@ -64,6 +65,8 @@ export default function ClienteDetalle() {
   const paciente = pacienteStore.getById(id!)
   const { notas, agregar, eliminar } = useNotas(id!)
   const [contenido, setContenido] = useState('')
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false)
+  const citasDelPaciente = citaStore.getAll().filter(c => String(c.paciente || '') === String(paciente?.nombre || ''))
 
   if (!paciente) {
     return <div className="p-4 text-center text-gray-500">{labels.paciente} no encontrado.</div>
@@ -147,10 +150,24 @@ export default function ClienteDetalle() {
           className="flex-1 px-3 py-1.5 rounded-lg bg-katt-500 hover:bg-katt-600 text-white text-xs font-medium transition-colors"
         >Editar</button>
         <button
-          onClick={async () => { await pacienteStore.remove(id!); navigate('/paciente') }}
+          onClick={() => setConfirmarEliminar(true)}
           className="flex-1 px-3 py-1.5 rounded-lg border border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs font-medium transition-colors"
         >Eliminar</button>
       </div>
+
+      {confirmarEliminar && (
+        <ConfirmModal
+          message={citasDelPaciente.length > 0
+            ? `Este paciente tiene ${citasDelPaciente.length} cita(s). Si lo eliminas, sus citas también se eliminarán.`
+            : `¿Eliminar este ${labels.paciente.toLowerCase()}?`}
+          onConfirm={async () => {
+            for (const c of citasDelPaciente) await citaStore.remove(c.id)
+            await pacienteStore.remove(id!)
+            navigate('/paciente')
+          }}
+          onCancel={() => setConfirmarEliminar(false)}
+        />
+      )}
     </div>
   )
 }

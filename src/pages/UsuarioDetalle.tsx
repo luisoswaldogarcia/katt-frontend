@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { labels } from '../lib/labels'
-import { doctorStore, empresaStore } from '../lib/demoStore'
+import { doctorStore, empresaStore, citaStore } from '../lib/demoStore'
 import { moduleLabels } from '../lib/modules'
 import type { ModuleConfig } from '../lib/modules'
 import { DataDetail } from '../components/DataDetail'
@@ -46,7 +46,18 @@ export default function UsuarioDetalle() {
         module="doctor"
         basePath="/doctor"
         entityLabel={labels.doctor}
-        onDelete={async () => { await doctorStore.remove(id!); navigate('/doctor') }}
+        deleteMessage={(() => {
+          const citas = citaStore.getAll().filter(c => String(c.doctor || '') === String(doctor?.nombre || ''))
+          return citas.length > 0
+            ? `Este doctor tiene ${citas.length} cita(s). Si lo eliminas, sus citas también se eliminarán.`
+            : undefined
+        })()}
+        onDelete={async () => {
+          const citas = citaStore.getAll().filter(c => String(c.doctor || '') === String(doctor?.nombre || ''))
+          for (const c of citas) await citaStore.remove(c.id)
+          await doctorStore.remove(id!)
+          navigate('/doctor')
+        }}
         bare
       />
 
