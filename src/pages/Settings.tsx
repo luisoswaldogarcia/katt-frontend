@@ -53,7 +53,7 @@ export default function Settings() {
   const [activeModule, setActiveModule] = useState<Module>('paciente')
   const [fields, setFields] = useState<Record<Module, CustomField[]>>({
     paciente: getCustomFields('paciente'),
-    doctor: getCustomFields('doctor'),
+    usuarios: getCustomFields('usuarios'),
     empresa: getCustomFields('empresa'),
   })
   const [activeEmpresa, setActiveEmpresa] = useState<string>(() => {

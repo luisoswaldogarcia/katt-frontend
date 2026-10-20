@@ -101,7 +101,7 @@ export default function UsuarioAlta() {
           Generar código QR (no enviar email de activación)
         </label>
       </div>
-      <EntityAlta entity="doctor" extraFields={displayFields} onBeforeSubmit={onBeforeSubmit} extraData={extraData} onAfterCreate={onAfterCreate} />
+      <EntityAlta entity="usuarios" extraFields={displayFields} onBeforeSubmit={onBeforeSubmit} extraData={extraData} onAfterCreate={onAfterCreate} />
 
       {qrData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setQrData(null); setQrUrl(null); navigate('/usuarios') }}>
