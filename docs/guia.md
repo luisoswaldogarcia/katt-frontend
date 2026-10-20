@@ -34,7 +34,8 @@ npx playwright test         # E2E contra PRODUCCIÓN (baseURL por defecto del pl
 
 - **Google Calendar** (`Settings` → pestaña "Google Calendar"): genera el enlace ICS por empresa (`GET /calendar/ics` del backend) y muestra los pasos para suscribirse "desde URL" en Google. La URL se arma con `BASE_URL` + `/ics/<empresaId>/<token>.ics` (BASE_URL ya incluye /api/v1).
 
-- **WhatsApp** (`Settings` → pestaña "WhatsApp")  - "Mi número": cada usuario conecta su propio número (`GET/POST /whatsapp/mi-cuenta`); los recordatorios de sus citas salen desde ahí.
+- **WhatsApp** (`Settings` → pestaña "WhatsApp")  - "¿Cuándo se mandan?": lista de recordatorios (varios), cada uno con días/horas de anticipación, ventana horaria y mensaje propio; se agregan/quitan desde la misma tarjeta.
+  - "Mi número": cada usuario conecta su propio número (`GET/POST /whatsapp/mi-cuenta`); los recordatorios de sus citas salen desde ahí.
 : conexión de WhatsApp Business (Phone Number ID + token de Meta + plantilla aprobada), plantilla del recordatorio con variables y vista previa, y horario de envíos (días antes + ventana horaria). Guarda en `CFG#whatsapp`; el envío de prueba va a `POST /whatsapp/test`.
 
 - **Agenda**: color sutil y estable por doctor (`lib/doctorColor.ts`, hash del nombre); formulario con duración (15-120 min) y ubicación del catálogo `CFG#ubicaciones` (admin en Configuración > Operativo); aviso en vivo de choque de horario/día bloqueado (lectura de FormData en `onInput`, sin inputs controlados); "Bloquear día" crea `bloqueos` (BLOQ#) y las vistas marcan el día.
