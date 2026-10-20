@@ -89,7 +89,7 @@ export default function UsuarioAlta() {
       setQrUrl(url)
       QRCode.toDataURL(url, { width: 300, margin: 2 }).then(setQrData)
     } else {
-      navigate('/doctor')
+      navigate('/usuarios')
     }
   }
 
@@ -104,7 +104,7 @@ export default function UsuarioAlta() {
       <EntityAlta entity="doctor" extraFields={displayFields} onBeforeSubmit={onBeforeSubmit} extraData={extraData} onAfterCreate={onAfterCreate} />
 
       {qrData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setQrData(null); setQrUrl(null); navigate('/doctor') }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setQrData(null); setQrUrl(null); navigate('/usuarios') }}>
           <div className="bg-white dark:bg-katt-900 rounded-xl p-6 max-w-sm mx-4 text-center space-y-4" onClick={e => e.stopPropagation()}>
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Código de activación temporal</p>
             <img src={qrData} alt="QR de activación" className="mx-auto" />
@@ -112,7 +112,7 @@ export default function UsuarioAlta() {
             <button onClick={() => { navigator.clipboard?.writeText(qrUrl || '') }} className="text-xs text-katt-500 hover:underline">
               Copiar enlace
             </button>
-            <button onClick={() => { setQrData(null); setQrUrl(null); navigate('/doctor') }} className="block w-full text-sm text-katt-500 hover:underline">
+            <button onClick={() => { setQrData(null); setQrUrl(null); navigate('/usuarios') }} className="block w-full text-sm text-katt-500 hover:underline">
               Cerrar
             </button>
           </div>

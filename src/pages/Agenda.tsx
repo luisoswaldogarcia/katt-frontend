@@ -1,5 +1,5 @@
 import { Fragment, useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react'
-import { citaStore, pacienteStore, doctorStore, bloqueoStore } from '../lib/demoStore'
+import { citaStore, pacienteStore, usuarioStore, usuariosQueAtienden, bloqueoStore } from '../lib/demoStore'
 import type { CitaData } from '../lib/demoStore'
 import { doctorColor } from '../lib/doctorColor'
 import { getConfig } from '../lib/configApi'
@@ -180,7 +180,7 @@ export default function Agenda() {
   const doctoresFiltro = useMemo(() => {
     void refreshKey // invalida la caché cuando cambian los datos
     const nombres = new Set<string>()
-    for (const d of doctorStore.getAll()) if (d.nombre) nombres.add(d.nombre)
+    for (const d of usuarioStore.getAll()) if (d.nombre) nombres.add(d.nombre)
     for (const c of citaStore.getAll()) if (c.doctor) nombres.add(c.doctor)
     return [...nombres].sort((a, b) => a.localeCompare(b))
   }, [refreshKey])
@@ -341,7 +341,7 @@ export default function Agenda() {
       {/* FAB agregar cita */}
       <button
         onClick={() => { setAviso(''); setErrorForm(''); setShowForm(true) }}
-        onClickCapture={() => { pacienteStore.fetch().catch(() => {}); doctorStore.fetch().catch(() => {}) }}
+        onClickCapture={() => { pacienteStore.fetch().catch(() => {}); usuarioStore.fetch().catch(() => {}) }}
         className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-katt-500 hover:bg-katt-600 text-white shadow-lg flex items-center justify-center transition-colors z-40"
         aria-label="Nueva cita"
       >
@@ -360,7 +360,7 @@ export default function Agenda() {
             </div>
             <form onSubmit={handleCreate} onInput={e => setAviso(conflictoDe(new FormData(e.currentTarget)))} className="space-y-3">
               <Autocomplete name="paciente" placeholder={labels.paciente} options={pacienteStore.getAll().map(p => p.nombre)} />
-              <Autocomplete name="doctor" placeholder={labels.doctor} options={doctorStore.getAll().map(d => d.nombre)} />
+              <Autocomplete name="doctor" placeholder={labels.doctor} options={usuariosQueAtienden().map(d => d.nombre)} />
               <input name="fecha" type="date" required defaultValue={formatDate(currentDate)} className={inputClass} />
               <div className="flex gap-2">
                 <input name="hora" type="time" required className={inputClass} />
@@ -449,7 +449,7 @@ export default function Agenda() {
             </div>
             <form onSubmit={handleEdit} onInput={e => setAviso(conflictoDe(new FormData(e.currentTarget), editing.id))} className="space-y-3">
               <Autocomplete name="paciente" placeholder={labels.paciente} options={pacienteStore.getAll().map(p => p.nombre)} defaultValue={editing.paciente} />
-              <Autocomplete name="doctor" placeholder={labels.doctor} options={doctorStore.getAll().map(d => d.nombre)} defaultValue={editing.doctor} />
+              <Autocomplete name="doctor" placeholder={labels.doctor} options={usuariosQueAtienden().map(d => d.nombre)} defaultValue={editing.doctor} />
               <input name="fecha" type="date" required defaultValue={editing.fecha} className={inputClass} />
               <div className="flex gap-2">
                 <input name="hora" type="time" required defaultValue={editing.hora} className={inputClass} />
@@ -503,7 +503,7 @@ export default function Agenda() {
               }}
               className="space-y-3"
             >
-              <Autocomplete name="doctor" placeholder={labels.doctor} options={doctorStore.getAll().map(d => d.nombre)} />
+              <Autocomplete name="doctor" placeholder={labels.doctor} options={usuariosQueAtienden().map(d => d.nombre)} />
               <input name="fecha" type="date" required defaultValue={formatDate(currentDate)} className={inputClass} />
               <input name="motivo" placeholder="Motivo (opcional)" className={inputClass} />
               <button type="submit" className="w-full px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">

@@ -38,6 +38,7 @@ npx playwright test         # E2E contra PRODUCCIÓN (baseURL por defecto del pl
   - "Mi número": cada usuario conecta su propio número (`GET/POST /whatsapp/mi-cuenta`); los recordatorios de sus citas salen desde ahí.
 : conexión de WhatsApp Business (Phone Number ID + token de Meta + plantilla aprobada), plantilla del recordatorio con variables y vista previa, y horario de envíos (días antes + ventana horaria). Guarda en `CFG#whatsapp`; el envío de prueba va a `POST /whatsapp/test`.
 
+- **Módulo Usuarios** (antes "Doctor"): rutas `/usuarios` (`/doctor` redirige), entidad `usuarios` (USR#). El doctor de la cita es un **usuario con rol doctor/médico** (`usuariosQueAtienden()` en `lib/demoStore.ts`); los campos personalizados migran de la config `custom-fields-doctor` a `custom-fields-usuarios`.
 - **Agenda**: color sutil y estable por doctor (`lib/doctorColor.ts`, hash del nombre); formulario con duración (15-120 min) y ubicación del catálogo `CFG#ubicaciones` (admin en Configuración > Operativo); aviso en vivo de choque de horario/día bloqueado (lectura de FormData en `onInput`, sin inputs controlados); "Bloquear día" crea `bloqueos` (BLOQ#) y las vistas marcan el día.
 
 - **Tablas** (`DataTable`): barra de filtros campo+valor+botón (datalist de columnas filtrables; input date si el campo es fecha) y menú "Acciones" con Descargar seleccionados (CSV) y Eliminar seleccionados; selección activa en todas las tablas (`selectable` por defecto). La agenda acepta deep-link `?view=dia&fecha=YYYY-MM-DD` (las push del admin abren el día de la cita).

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { getSession, signOut } from './lib/auth'
 import { preloadStores } from './lib/demoStore'
 import { loadAllConfig } from './lib/configApi'
@@ -36,8 +36,8 @@ function Layout({ onLogout }: { onLogout: () => void }) {
     '/paciente': lbl.paciente + 's',
     '/paciente/alta': 'Alta ' + lbl.paciente,
     '/agenda': 'Agenda',
-    '/doctor': lbl.doctor,
-    '/doctor/alta': 'Alta ' + lbl.doctor,
+    '/usuarios': lbl.usuarios,
+    '/usuarios/alta': 'Alta ' + lbl.usuario,
     '/paciente/citas': 'Agendar citas',
     '/empresa': lbl.empresa,
     '/empresa/alta': 'Alta ' + lbl.empresa,
@@ -47,8 +47,8 @@ function Layout({ onLogout }: { onLogout: () => void }) {
   const title = titles[pathname]
     || (pathname.startsWith('/paciente/editar') ? 'Editar ' + lbl.paciente
     : pathname.startsWith('/paciente/') ? lbl.paciente
-    : pathname.startsWith('/doctor/editar') ? 'Editar ' + lbl.doctor
-    : pathname.startsWith('/doctor/') ? lbl.doctor
+    : pathname.startsWith('/usuarios/editar') ? 'Editar ' + lbl.usuario
+    : pathname.startsWith('/usuarios/') ? lbl.usuario
     : pathname.startsWith('/empresa/editar') ? 'Editar ' + lbl.empresa
     : pathname.startsWith('/empresa/') ? lbl.empresa
     : 'Katt')
@@ -96,10 +96,12 @@ function Layout({ onLogout }: { onLogout: () => void }) {
             <Route path="/paciente/editar/:id" element={<ClienteAlta />} />
             <Route path="/paciente/:id" element={<ClienteDetalle />} />
             <Route path="/agenda" element={<Agenda />} />
-            <Route path="/doctor" element={<Usuario />} />
-            <Route path="/doctor/alta" element={<UsuarioAlta />} />
-            <Route path="/doctor/editar/:id" element={<UsuarioAlta />} />
-            <Route path="/doctor/:id" element={<UsuarioDetalle />} />
+            <Route path="/usuarios" element={<Usuario />} />
+            <Route path="/usuarios/alta" element={<UsuarioAlta />} />
+            <Route path="/usuarios/editar/:id" element={<UsuarioAlta />} />
+            <Route path="/usuarios/:id" element={<UsuarioDetalle />} />
+            {/* Ruta antigua: redirige a /usuarios */}
+            <Route path="/doctor/*" element={<Navigate to="/usuarios" replace />} />
             <Route path="/empresa" element={<Empresa />} />
             <Route path="/empresa/alta" element={<EmpresaAlta />} />
             <Route path="/empresa/editar/:id" element={<EmpresaAlta />} />

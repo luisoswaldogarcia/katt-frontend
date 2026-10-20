@@ -216,7 +216,7 @@ export default function Settings() {
               <button onClick={() => setShowFieldForm(true)} className={btnSmall}>+ Campo</button>
             </div>
             <div className="flex gap-2">
-              {([['paciente', labels.paciente], ['doctor', labels.doctor]] as [Module, string][]).map(([mod, label]) => (
+              {([['paciente', labels.paciente], ['usuarios', labels.usuario]] as [Module, string][]).map(([mod, label]) => (
                 <button
                   key={mod}
                   onClick={() => setActiveModule(mod)}
@@ -381,7 +381,7 @@ export default function Settings() {
       {showFieldForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowFieldForm(false)}>
           <div onClick={e => e.stopPropagation()} className="w-full max-w-sm bg-white dark:bg-katt-900 rounded-xl p-5 space-y-4 border border-katt-200 dark:border-katt-800">
-            <h3 className="font-bold text-sm">Nuevo campo para {activeModule === 'paciente' ? labels.paciente : activeModule === 'doctor' ? labels.doctor : labels.empresa}</h3>
+            <h3 className="font-bold text-sm">Nuevo campo para {activeModule === 'paciente' ? labels.paciente : activeModule === 'usuarios' ? labels.usuario : labels.empresa}</h3>
             <input
               placeholder="Nombre del campo"
               value={newField.label || ''}

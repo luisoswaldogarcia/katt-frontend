@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { pacienteStore, citaStore, doctorStore } from '../lib/demoStore'
+import { pacienteStore, citaStore, usuarioStore } from '../lib/demoStore'
 import type { CitaData } from '../lib/demoStore'
 
 const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
@@ -15,7 +15,7 @@ export default function ClienteCitas() {
   const { state } = useLocation() as { state: { ids: string[] } | null }
   const ids: string[] = state?.ids || []
   const pacientes = ids.map(id => pacienteStore.getById(id)).filter(Boolean)
-  const doctores = doctorStore.getAll()
+  const doctores = usuarioStore.getAll()
 
   const [ver, setVer] = useState(0)
   const [modal, setModal] = useState<string | null>(null)

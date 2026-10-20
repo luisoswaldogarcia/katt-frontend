@@ -2,7 +2,7 @@ import { entityConfigs } from '../lib/entityConfig'
 import { DataTable } from '../components/DataTable'
 import { citaStore } from '../lib/demoStore'
 
-const { columns, basePath, altaPath, store } = entityConfigs.doctor
+const { columns, basePath, altaPath, store } = entityConfigs.usuarios
 
 export default function Usuario() {
   // Citas de los doctores seleccionados (para avisar y eliminar en cascada)

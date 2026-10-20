@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { labels } from '../lib/labels'
-import { pacienteStore, doctorStore, citaStore, tareaStore } from '../lib/demoStore'
+import { pacienteStore, usuarioStore, citaStore, tareaStore } from '../lib/demoStore'
 import { getModules } from '../lib/modules'
 import { getKanbanColumns } from '../lib/kanban'
 
@@ -46,7 +46,7 @@ export default function Home() {
   const navigate = useNavigate()
   const modules = getModules()
   const totalPacientes = pacienteStore.getAll().length
-  const totalDoctores = doctorStore.getAll().length
+  const totalDoctores = usuarioStore.getAll().length
   const tareasPendientes = tareaStore.getAll().filter(t => t.estado !== getKanbanColumns().slice(-1)[0]).length
   const citasPorSemana = getCitasPorSemana()
   const maxCitas = Math.max(...citasPorSemana.map(d => d.count), 1)
@@ -59,9 +59,9 @@ export default function Home() {
           <p className="text-2xl font-bold text-katt-600 dark:text-katt-300">{totalPacientes}</p>
           <p className="text-xs text-gray-500">{labels.paciente}s</p>
         </div>
-        <div onClick={() => navigate('/doctor')} className="cursor-pointer p-4 rounded-xl bg-katt-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800 hover:border-katt-500 transition-colors">
+        <div onClick={() => navigate('/usuarios')} className="cursor-pointer p-4 rounded-xl bg-katt-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800 hover:border-katt-500 transition-colors">
           <p className="text-2xl font-bold text-katt-600 dark:text-katt-300">{totalDoctores}</p>
-          <p className="text-xs text-gray-500">{labels.doctor}es</p>
+          <p className="text-xs text-gray-500">{labels.usuarios}</p>
         </div>
         {modules.agenda && <div onClick={() => navigate('/agenda')} className="cursor-pointer p-4 rounded-xl bg-katt-50 dark:bg-katt-900 border border-katt-200 dark:border-katt-800 hover:border-katt-500 transition-colors">
           <p className="text-2xl font-bold text-katt-600 dark:text-katt-300">{citasHoy.length}</p>
@@ -151,7 +151,7 @@ export default function Home() {
         <div className="rounded-xl border border-katt-200 dark:border-katt-800 p-4 space-y-3">
           <h3 className="text-sm font-bold">{labels.paciente}s por {labels.doctor.toLowerCase()}</h3>
           <div className="space-y-2">
-            {doctorStore.getAll().map(d => {
+            {usuarioStore.getAll().map(d => {
               const count = pacienteStore.getAll().filter(p => p.doctor === d.nombre).length
               return (
                 <div key={d.id} className="flex items-center justify-between text-sm">

@@ -12,7 +12,7 @@ export interface PacienteData {
   custom?: Record<string, unknown>
 }
 
-export interface DoctorData {
+export interface UsuarioData {
   id: string
   nombre: string
   rol: string
@@ -131,7 +131,17 @@ function createStore<T extends { id: string }>(entity: string) {
 }
 
 export const pacienteStore = createStore<PacienteData>('clientes')
-export const doctorStore = createStore<DoctorData>('usuarios')
+export const usuarioStore = createStore<UsuarioData>('usuarios')
+
+// Usuarios que pueden aparecer como "doctor" de una cita: el rol doctor/médico
+// (el doctor es un tipo de rol). Si ningún usuario cumple, se muestran todos
+// para no dejar la agenda vacía con datos antiguos.
+export function usuariosQueAtienden(): UsuarioData[] {
+  const all = usuarioStore.getAll()
+  const atienden = all.filter(u => /doctor|medic/i.test(String(u.rol || '')))
+  return atienden.length ? atienden : all
+}
+
 export const empresaStore = createStore<EmpresaData>('empresas')
 
 // Seed empresas cache from /me response (for owners who see all empresas)
@@ -160,7 +170,7 @@ export const citaStore = {
 export async function preloadStores() {
   await Promise.allSettled([
     pacienteStore.fetch(),
-    doctorStore.fetch(),
+    usuarioStore.fetch(),
     empresaStore.fetch(),
     tareaStore.fetch(),
     citaStore.fetch(),

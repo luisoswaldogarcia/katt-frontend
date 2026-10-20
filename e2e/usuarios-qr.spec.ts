@@ -16,7 +16,7 @@ test.describe('Usuarios — QR de activación', () => {
   })
 
   test('debe mostrar checkbox "Generar código QR" en el formulario', async () => {
-    await navigateTo(page, '/doctor/alta')
+    await navigateTo(page, '/usuarios/alta')
     await page.waitForTimeout(1000)
 
     const checkbox = page.locator('input[type="checkbox"]')
@@ -27,7 +27,7 @@ test.describe('Usuarios — QR de activación', () => {
   })
 
   test('crear usuario CON QR — debe mostrar modal con código QR', async () => {
-    await navigateTo(page, '/doctor/alta')
+    await navigateTo(page, '/usuarios/alta')
     await page.waitForTimeout(1000)
 
     const checkbox = page.locator('input[type="checkbox"]')
@@ -70,7 +70,7 @@ test.describe('Usuarios — QR de activación', () => {
   test('crear usuario CON QR sin email/telefono/pass — debe funcionar', async () => {
     const qrMinName = `QRmin_${uniq('usr')}`
 
-    await navigateTo(page, '/doctor/alta')
+    await navigateTo(page, '/usuarios/alta')
     await page.waitForTimeout(1000)
 
     const checkbox = page.locator('input[type="checkbox"]')
@@ -100,7 +100,7 @@ test.describe('Usuarios — QR de activación', () => {
     const noQrName = `NoQR_${uniq('usr')}`
     const noQrEmail = `noqr${ts}@test.com`
 
-    await navigateTo(page, '/doctor/alta')
+    await navigateTo(page, '/usuarios/alta')
     await page.waitForTimeout(1000)
 
     const checkbox = page.locator('input[type="checkbox"]')
@@ -118,7 +118,7 @@ test.describe('Usuarios — QR de activación', () => {
     await setInputValue(page, 'Email', noQrEmail)
 
     await page.locator('button').filter({ hasText: 'Guardar' }).click()
-    await page.waitForURL('**/doctor**', { timeout: 10_000 }).catch(() => {})
+    await page.waitForURL('**/usuarios**', { timeout: 10_000 }).catch(() => {})
     await page.waitForTimeout(2000)
 
     const modal = page.locator('text=Código de activación temporal')
@@ -193,7 +193,7 @@ test.describe('Setup password (vía QR)', () => {
   test('flujo completo: crear usuario QR + abrir setup + cambiar password + fingerprint omit', async () => {
     // 1. Admin crea usuario con QR
     const fullName = `Full_${uniq('usr')}`
-    await navigateTo(adminPage, '/doctor/alta')
+    await navigateTo(adminPage, '/usuarios/alta')
     await adminPage.waitForTimeout(1000)
 
     // Interceptar la respuesta de la API para obtener el token
@@ -266,7 +266,7 @@ test.describe('Setup password (vía QR)', () => {
   test('QR token persiste hasta abrir URL (no expira por tiempo)', async () => {
     // 1. Admin crea usuario con QR
     const persistName = `Persist_${uniq('usr')}`
-    await navigateTo(adminPage, '/doctor/alta')
+    await navigateTo(adminPage, '/usuarios/alta')
     await adminPage.waitForTimeout(1000)
 
     const signupToken = await new Promise<string>(resolve => {

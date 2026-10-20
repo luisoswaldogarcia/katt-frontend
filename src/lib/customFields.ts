@@ -27,7 +27,7 @@ export interface CustomField {
   max?: number
 }
 
-export type Module = 'paciente' | 'doctor' | 'empresa'
+export type Module = 'paciente' | 'usuarios' | 'empresa'
 
 const pacienteDefaults: CustomField[] = [
   { id: 'sexo', label: 'Sexo', type: 'select', required: false, options: ['Masculino', 'Femenino', 'Otro'] },
@@ -40,12 +40,25 @@ function defaultsFor(module: Module): CustomField[] {
   return module === 'paciente' ? pacienteDefaults : []
 }
 
+// La config guardada del módulo 'doctor' pasa a 'usuarios'
+const legacyKey: Record<string, string> = { usuarios: 'custom-fields-doctor' }
+
 export async function fetchCustomFields(module: Module): Promise<CustomField[]> {
-  return getConfig<CustomField[]>(`custom-fields-${module}`, defaultsFor(module))
+  const actual = await getConfig<CustomField[]>(`custom-fields-${module}`, [])
+  if (!actual?.length && legacyKey[module]) {
+    const legacy = await getConfig<CustomField[]>(legacyKey[module], [])
+    if (legacy?.length) return legacy
+  }
+  return actual?.length ? actual : defaultsFor(module)
 }
 
 export function getCustomFields(module: Module): CustomField[] {
-  return getCached<CustomField[]>(`custom-fields-${module}`, defaultsFor(module))
+  const actual = getCached<CustomField[]>(`custom-fields-${module}`, [])
+  if (!actual?.length && legacyKey[module]) {
+    const legacy = getCached<CustomField[]>(legacyKey[module], [])
+    if (legacy?.length) return legacy
+  }
+  return actual?.length ? actual : defaultsFor(module)
 }
 
 export async function saveCustomFields(module: Module, fields: CustomField[]) {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { labels } from '../lib/labels'
-import { empresaStore, doctorStore } from '../lib/demoStore'
+import { empresaStore, usuarioStore } from '../lib/demoStore'
 import { saveEmpresaModules, moduleLabels, getModules } from '../lib/modules'
 import type { ModuleConfig } from '../lib/modules'
 import { getModuleCatalog } from '../lib/moduleCatalog'
@@ -19,7 +19,7 @@ export default function EmpresaDetalle() {
     return <div className="p-4 text-center text-gray-500">{labels.empresa} no encontrada.</div>
   }
 
-  const usuarios = doctorStore.getAll().filter(u => u.empresaId === empresa.id)
+  const usuarios = usuarioStore.getAll().filter(u => u.empresaId === empresa.id)
   const currentModules = getModules()
   const catalog = getModuleCatalog()
 

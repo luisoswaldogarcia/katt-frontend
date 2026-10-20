@@ -1,5 +1,6 @@
 import { labels } from './labels'
-import { pacienteStore, doctorStore, empresaStore } from './demoStore'
+import { pacienteStore, usuarioStore, empresaStore } from './demoStore'
+import { getRoles } from './roles'
 import type { Column } from '../components/DataTable'
 import type { FormField } from '../components/DataForm'
 
@@ -33,7 +34,7 @@ export const entityConfigs: Record<string, EntityConfig> = {
     altaPath: '/paciente/alta',
     module: 'paciente',
   },
-  doctor: {
+  usuarios: {
     columns: [
       { key: 'nombre', label: 'Nombre', filterable: true },
       { key: 'rol', label: 'Rol', filterable: true },
@@ -42,14 +43,14 @@ export const entityConfigs: Record<string, EntityConfig> = {
     ],
     fields: [
       { key: 'nombre', label: 'Nombre' },
-      { key: 'rol', label: 'Rol', type: 'select', options: ['Owner', 'Administrador', 'Médico'] },
+      { key: 'rol', label: 'Rol', type: 'select', options: getRoles().map(r => r.nombre) },
       { key: 'telefono', label: 'Teléfono', type: 'tel' },
       { key: 'email', label: 'Email', type: 'email' },
     ],
-    store: doctorStore as unknown as EntityConfig['store'],
-    basePath: '/doctor',
-    altaPath: '/doctor/alta',
-    module: 'doctor',
+    store: usuarioStore as unknown as EntityConfig['store'],
+    basePath: '/usuarios',
+    altaPath: '/usuarios/alta',
+    module: 'usuarios',
   },
   empresa: {
     columns: [

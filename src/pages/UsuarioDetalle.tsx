@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { labels } from '../lib/labels'
-import { doctorStore, empresaStore, citaStore } from '../lib/demoStore'
+import { usuarioStore, empresaStore, citaStore } from '../lib/demoStore'
 import { moduleLabels } from '../lib/modules'
 import type { ModuleConfig } from '../lib/modules'
 import { DataDetail } from '../components/DataDetail'
@@ -11,11 +11,11 @@ const listItem = "flex items-center justify-between px-3 py-2 rounded-lg bg-gray
 export default function UsuarioDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const doctor = doctorStore.getById(id!)
+  const doctor = usuarioStore.getById(id!)
   const [, forceUpdate] = useState(0)
 
   if (!doctor) {
-    return <div className="p-4 text-center text-gray-500">{labels.doctor} no encontrado.</div>
+    return <div className="p-4 text-center text-gray-500">{labels.usuario} no encontrado.</div>
   }
 
   const empresa = doctor.empresaId ? empresaStore.getById(doctor.empresaId) : null
@@ -29,7 +29,7 @@ export default function UsuarioDetalle() {
 
   function toggleModule(key: string) {
     const updated = { ...userModules, [key]: !userModules[key] }
-    doctorStore.update(id!, { modules: updated })
+    usuarioStore.update(id!, { modules: updated })
     forceUpdate(n => n + 1)
   }
 
@@ -45,7 +45,7 @@ export default function UsuarioDetalle() {
         ]}
         module="doctor"
         basePath="/doctor"
-        entityLabel={labels.doctor}
+        entityLabel={labels.usuario}
         deleteMessage={(() => {
           const citas = citaStore.getAll().filter(c => String(c.doctor || '') === String(doctor?.nombre || ''))
           return citas.length > 0
@@ -55,8 +55,8 @@ export default function UsuarioDetalle() {
         onDelete={async () => {
           const citas = citaStore.getAll().filter(c => String(c.doctor || '') === String(doctor?.nombre || ''))
           for (const c of citas) await citaStore.remove(c.id)
-          await doctorStore.remove(id!)
-          navigate('/doctor')
+          await usuarioStore.remove(id!)
+          navigate('/usuarios')
         }}
         bare
       />
