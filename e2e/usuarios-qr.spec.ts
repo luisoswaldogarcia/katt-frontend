@@ -15,14 +15,14 @@ test.describe('Usuarios — QR de activación', () => {
     await page?.close()
   })
 
-  test('debe mostrar checkbox "Generar código QR" en el formulario', async () => {
+  test('debe mostrar la opción de acceso a la aplicación', async () => {
     await navigateTo(page, '/usuarios/alta')
     await page.waitForTimeout(1000)
 
     const checkbox = page.locator('input[type="checkbox"]')
     await expect(checkbox).toBeVisible({ timeout: 5_000 })
 
-    const label = page.locator('text=Generar código QR')
+    const label = page.locator('text=Tiene acceso a la aplicación')
     await expect(label).toBeVisible()
   })
 

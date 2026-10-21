@@ -96,9 +96,15 @@ export default function UsuarioAlta() {
   return (
     <>
       <div className="px-4 pt-4">
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
-          <input type="checkbox" checked={generateQr} onChange={e => setGenerateQr(e.target.checked)} className="rounded" />
-          Generar código QR (no enviar email de activación)
+        <label className="flex items-start gap-2 text-sm cursor-pointer">
+          <input type="checkbox" checked={generateQr} onChange={e => setGenerateQr(e.target.checked)} className="rounded mt-0.5" />
+          <span>
+            Tiene acceso a la aplicación
+            <span className="block text-xs text-katt-500 dark:text-katt-400">
+              Se activa con un código QR: la persona escanea, define su contraseña y entra.
+              Sin esto, el usuario queda solo como registro de la clínica.
+            </span>
+          </span>
         </label>
       </div>
       <EntityAlta entity="usuarios" extraFields={displayFields} onBeforeSubmit={onBeforeSubmit} extraData={extraData} onAfterCreate={onAfterCreate} />
