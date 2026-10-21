@@ -43,8 +43,8 @@ export default function UsuarioDetalle() {
           { key: 'telefono', label: 'Teléfono' },
           { key: 'email', label: 'Email' },
         ]}
-        module="doctor"
-        basePath="/doctor"
+        module="usuarios"
+        basePath="/usuarios"
         entityLabel={labels.usuario}
         deleteMessage={(() => {
           const citas = citaStore.getAll().filter(c => String(c.doctor || '') === String(doctor?.nombre || ''))

@@ -67,7 +67,10 @@ export function DataForm({ fields, module, basePath, initialData, onSubmit, isEd
   const inputClass = "w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-katt-950 border border-katt-200 dark:border-katt-700 text-sm focus:outline-none focus:ring-2 focus:ring-katt-500"
 
   const scrollIntoView = (e: React.FocusEvent<HTMLElement>) => {
-    setTimeout(() => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)
+    // e.currentTarget deja de existir al salir del handler (eventos React):
+    // se captura el elemento antes del timeout o truena con null
+    const el = e.currentTarget
+    setTimeout(() => el?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)
   }
 
   return (

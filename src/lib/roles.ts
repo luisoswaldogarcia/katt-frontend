@@ -54,6 +54,30 @@ const defaults: Rol[] = [
       documentos: ['ver', 'crear'],
     },
   },
+  {
+    id: 'doctor',
+    nombre: 'Doctor',
+    grupo: 'user',
+    permisos: {
+      clientes: ['ver', 'crear', 'editar'],
+      usuarios: [],
+      agenda: ['ver', 'crear', 'editar', 'eliminar'],
+      tareas: ['ver', 'crear', 'editar'],
+      documentos: ['ver', 'crear'],
+    },
+  },
+  {
+    id: 'recepcion',
+    nombre: 'Recepcionista',
+    grupo: 'user',
+    permisos: {
+      clientes: ['ver', 'crear', 'editar', 'eliminar'],
+      usuarios: [],
+      agenda: ['ver', 'crear', 'editar', 'eliminar'],
+      tareas: ['ver', 'crear', 'editar'],
+      documentos: ['ver', 'crear'],
+    },
+  },
 ]
 
 // El config puede traer el catálogo como string JSON o corrupto: nunca debe romper la UI
@@ -64,7 +88,11 @@ function coerce(value: unknown): Rol[] {
   }
   if (!Array.isArray(v)) return defaults
   const roles = (v as any[]).filter(r => r && typeof r.id === 'string' && typeof r.nombre === 'string')
-  return roles.length ? (roles as Rol[]) : defaults
+  if (!roles.length) return defaults
+  // Los roles por defecto que falten (p.ej. Doctor) se agregan al catálogo guardado
+  const merged = [...roles] as Rol[]
+  for (const d of defaults) if (!merged.some(r => r.id === d.id)) merged.push(d)
+  return merged
 }
 
 export async function fetchRoles(): Promise<Rol[]> {
